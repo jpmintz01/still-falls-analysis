@@ -9,7 +9,7 @@ library(rcompanion)
 library(DescTools)
 library(tibble)
 library(caret)
-library(tcltk2)
+library(zoo)
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
@@ -180,8 +180,8 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 
 #-------------------runtime-------------------
 #choose and read the experiment data file
-datafile <- read.csv(tk_choose.files(caption = "Choose experiment data file"))
-# datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
+filepath <- file.choose()
+datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
 good_data <- stripFails(datafile) #strip the fails off the man datafile
 new_data <- stripBadCols(good_data)  #some error here...
@@ -190,10 +190,9 @@ num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 num_rps_rounds <- new_data$session.config.num_RPS_rounds[[1]]
 
 #choose and readthe all_data data file
-all_data <- read.csv(tk_choose.files(caption = "Choose training data file"))
-# filepath <- file.choose()
+filepath <- file.choose()
 # #read the file with headers
-# all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
+all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
 
 
 
@@ -398,7 +397,13 @@ for (i in pw_ids) {
 }
 v<- pw_array-pw_pred_array
 w<- rowSums(v, dims = 2)
-#--------------Rock-Paper-Scissors-----------------
+
+
+
+
+
+#--------------Rock-Paper-Scissors data pull & transformation-----------------
+#bind the columns advisor_choice and adversary type
 rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
 #rps_vs_human_totals <- rowSums()#pwChangeColNames(rps_vs_human_cols, num_pw_rounds) #get a matrix of rps choices (row:player)x(column:round) with only the rps vs human
 names(rps_cols) <-  gsub(pattern = "rps.", replacement = "", x = names(rps_cols)) # removes the leading 'rps.' - just a cleanup
@@ -494,6 +499,20 @@ rps_array[is.na(rps_array)] <- 0
 # df[,"rps_human_total"] <- rowSums(rps_cols=="human")/(3*num_rps_rounds)
 # df[,"rps_ai_total"] <- rowSums(rps_cols=="AI")/(3*num_rps_rounds)
 # df[,"rps_hexp_v_hadv"] <- rowSums(rps_cols=="Peace")/num_pw_rounds
+
+
+#---------------Demographic Info Pull----------------------
+demo_ids <- subset(new_data, select=participant.label) #
+demo_data <- bind_cols(demo_ids, new_data[grepl('^post_game_survey.1.player.*$', names(new_data))]) #bind ids with data
+# need to check pervious line to make sure it doesn't mix them up!
+names(demo_data) <-  gsub(pattern = "participant.label", replacement = "id", x = names(demo_data)) #replace participant.label column name with "id"
+
+names(demo_data) <-  gsub(pattern = "post_game_survey.1.player.", replacement = "", x = names(demo_data)) # removes the leading 'post_game_survey.1.player.' - just a cleanup
+demo_data$id_in_group <- NULL #remove id_in_group column since it doesn't matter
+demo_data$payoff <- NULL #remove payoff column since it doesn't matter
+demo_data$age <- 2019-demo_data$age  #convert birth year to age (approximate based on month born...)
+
+
 
 
 
