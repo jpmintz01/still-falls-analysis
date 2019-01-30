@@ -41,15 +41,17 @@ saveFails <- function (data){
   ## maybe compare these two in a logical function instead of the previous post_game_survey 
   #participant._index_in_pages should be >= participant._max_page_index to indicate a player completed the game
   fail_data <- unique(fail_data) #strip duplicates that failed multiple checks
-  fail_labels <- fail_data$participant.label
-  #return (fail_labels) #return just the labels of the participants who fail
+
+  fail_data <- subset(fail_data, participant.label!="")
+
   return (fail_data) #return an entire data frame of failed participants including POSSIBLE fails from contamination - researcher must check this string to see what they wrote...
 }
 #strip the fails out
 stripFails <- function (data){
   # good_data <- stripBadRows(data, "informed_consent.1.player.agree_to_participate", "TRUE")
   # good_data <- stripBadRows(good_data, "post_game_survey.1.player.attention_check", "Georgia")  
-  good_data <- subset(data, participant._current_app_name=="post_game_survey") 
+  good_data <- subset(data, participant._current_app_name=="post_game_survey")
+  good_data <- subset(good_data, post_game_survey.1.player.attention_check=="Georgia")
   ## maybe compare these two in a logical function instead of the previous post_game_survey 
   #participant._index_in_pages should be >= participant._max_page_index to indicate a player completed the game
   good_data <- unique(good_data) #remove duplicates
@@ -511,9 +513,19 @@ names(demo_data) <-  gsub(pattern = "post_game_survey.1.player.", replacement = 
 demo_data$id_in_group <- NULL #remove id_in_group column since it doesn't matter
 demo_data$payoff <- NULL #remove payoff column since it doesn't matter
 demo_data$age <- 2019-demo_data$age  #convert birth year to age (approximate based on month born...)
+demo_data$machine_learning_experience <- as.integer(sub("^(\\d{1}).*$", "\\1", demo_data$machine_learning_experience)) #converts machine learning experience to single digit number 1-5
 
-
-
+demo_data$game_theory_experience <- as.integer(sub("^(\\d{1}).*$", "\\1", demo_data$game_theory_experience)) #converts game theory experience to single digit number 1-5
+demo_data$gender <- as.factor(demo_data$gender)
+demo_data$service <- as.factor(demo_data$service)
+demo_data$school <- as.factor(demo_data$school)
+demo_data$rank[startsWith(demo_data$rank, "M")] <- 4  #converts "Major" or anything startswith M to a 4
+demo_data$rank[startsWith(demo_data$rank, "m")] <- 4  #converts "Major" or anything startswith M to a 4
+demo_data$rank[grepl('4', demo_data$rank)] <- 4#converts "O-4" or anything with a 4 to a 4
+demo_data$rank[startsWith(demo_data$rank, "L")] <- 5 #converts "Lt Col" or anything startswith to a 5
+demo_data$rank[startsWith(demo_data$rank, "l")] <- 5 #converts "Lt Col" or anything startswith to a 5
+demo_data$rank[grepl('5', demo_data$rank)] <- 5#converts "O-5" or anything with a 5 to a 5
+demo_data$rank[startsWith(demo_data$rank, "COL")] <- 6 #converts "Lt Col" or anything startswith COL to a 6
 
 
 #--------------Data Visualization------------------
