@@ -526,9 +526,22 @@ demo_data$rank[startsWith(demo_data$rank, "L")] <- 5 #converts "Lt Col" or anyth
 demo_data$rank[startsWith(demo_data$rank, "l")] <- 5 #converts "Lt Col" or anything startswith to a 5
 demo_data$rank[grepl('5', demo_data$rank)] <- 5#converts "O-5" or anything with a 5 to a 5
 demo_data$rank[startsWith(demo_data$rank, "COL")] <- 6 #converts "Lt Col" or anything startswith COL to a 6
-
-
+demo_data$pw_order <- as.integer(sub("^.............(.).*", "\\1", demo_data$self_participant_vars_dump))
+demo_data$rps_order <- as.integer(sub('.*rps_order\\\'\\:\\ (...).*', '\\1', demo_data$self_participant_vars_dump)) #could also pull directly from self.participant.vars dump from 'first_rps_adv': "
+demo_data$consent <- as.factor(sub('.*consent\\\'\\:\\ (....).*', '\\1', demo_data$self_participant_vars_dump))
 #--------------Data Visualization------------------
+#demo data visualization
+#ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
+#ggplot(demo_data) + geom_histogram( aes(years_military_experience) )
+#ggplot(demo_data) + geom_histogram(stat="count", aes(school) )
+#ggplot(demo_data) + geom_histogram(stat="count", aes(rank) )
+#ggplot(demo_data) + geom_histogram(stat="count", aes(service) )
+# genders <- c(length(which(demo_data$gender=="Male")), length(which(demo_data$gender=="Female")))
+# pie(genders) #need a better chart here
+#ggplot(demo_data) + geom_histogram(stat="count", aes(game_theory_experience) )
+# ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience) )
+
+
 # (!require(rcompanion)){install.packages("rcompanion")}
 # XT<- xtabs( ~Adversary + Choice_of_Advisor, rps_long) #need to change this variable name
 # prop.table(XT)
