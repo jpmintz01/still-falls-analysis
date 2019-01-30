@@ -9,6 +9,7 @@ library(rcompanion)
 library(DescTools)
 library(tibble)
 library(caret)
+library(tcltk2)
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
@@ -178,10 +179,9 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 
 
 #-------------------runtime-------------------
-#choose the experiment data file
-filepath <- file.choose()
-#read the file with headers
-datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
+#choose and read the experiment data file
+datafile <- read.csv(tk_choose.files(caption = "Choose experiment data file"))
+# datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
 good_data <- stripFails(datafile) #strip the fails off the man datafile
 new_data <- stripBadCols(good_data)  #some error here...
@@ -189,10 +189,11 @@ num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 #split off the columns which describe pw_vs_human
 num_rps_rounds <- new_data$session.config.num_RPS_rounds[[1]]
 
-#choose the all_data data file
-filepath <- file.choose()
-#read the file with headers
-all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
+#choose and readthe all_data data file
+all_data <- read.csv(tk_choose.files(caption = "Choose training data file"))
+# filepath <- file.choose()
+# #read the file with headers
+# all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
 
 
 
