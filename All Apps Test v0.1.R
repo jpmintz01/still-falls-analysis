@@ -302,8 +302,13 @@ contin <- 0
 r1 <- 1/3
 r2 <- 2/3
 human_adv_choices <- c(1, 1,	0,	1,	0,	0,	0,	1,	1,	0)
+human_tft_choices <- c(1, 1,  1,  0,  1,  0,  0,  0,  1,  1)
+
 hai_adv_choices <- c(1,	0,	1,	1,	0,	1,	1,	1,	1,	0)
+hai_tft_choices <- c(1,	1,	0,	1,	1,	0,	1,	1,	1,	1)
+
 ai_adv_choices <- c(0,	0,	0,	1,	1,	0,	0,	0,	1,	0)
+ai_tft_choices <- c(1,	0,	0,	0,	1,	1,	0,	0,	0,	1)
 
 pw_all_data_colnames <- c("X","period","my.decision","risk","delta","r1","r2","error","data","my.round1decision","my.decision1","my.decision2","my.decision3","my.decision4","my.decision5","my.decision6","my.decision7","my.decision8","my.decision9","other.decision1","other.decision2", "other.decision3" ,"other.decision4" ,"other.decision5", "other.decision6", "other.decision7", "other.decision8" ,"other.decision9", "my.payoff1","my.payoff2","my.payoff3", "my.payoff4","my.payoff5","my.payoff6","my.payoff7","my.payoff8","my.payoff9","other.payoff1","other.payoff2","other.payoff3","other.payoff4","other.payoff5","other.payoff6","other.payoff7","other.payoff8","other.payoff9","r","s","t","p","infin", "contin","group")
 pw_all_data <- matrix(NA, nrow=nrow(pw_cols), ncol=length(pw_all_data_colnames))
