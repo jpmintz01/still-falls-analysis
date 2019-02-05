@@ -248,26 +248,27 @@ pw_cols <- rbind(pw_human_cols,pw_HAI_cols,pw_AI_cols)
 
 pw_cols$Adversary <- as.factor(pw_cols$Adversary)
 pw_ids <- levels(factor(pw_cols$id))
-row.names <- c("AI","Human","Human+AI")
-col.names <- c("Peace", "War")
-pw_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
-#creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
-Adversary_list <- c("AI","Human","Human+AI")
-Choice_list <- c("Peace", "War")
-for (i in pw_ids) {
-  a <- subset(pw_cols, id==i)
-  for (j in Adversary_list) {
-    b <- subset (a, Adversary==j)
-    for (k in Choice_list){
-      pw_array[j,k,i] <- sum(b$Choice==k)
-    }
-  }
-}
-
-pw_HvAI_array <- pw_array[-3,,] 
-rownames(pw_HvAI_array)[1:2] <- rownames(pw_HvAI_array)[2:1] #swap rownames
-pw_HvAI_array[1:2,,] <- pw_HvAI_array[2:1,,] #swap row values (to make Human first)
-pw_HvHAI_array <- pw_array[-1,,]
+pw_array <- xtabs(~Adversary+Choice+id, data=pw_cols) #more R-like way of creating the array than the ten lines below
+# row.names <- c("AI","Human","Human+AI")
+# col.names <- c("Peace", "War")
+# pw_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
+# #creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
+# Adversary_list <- c("AI","Human","Human+AI")
+# Choice_list <- c("Peace", "War")
+# for (i in pw_ids) {
+#   a <- subset(pw_cols, id==i)
+#   for (j in Adversary_list) {
+#     b <- subset (a, Adversary==j)
+#     for (k in Choice_list){
+#       pw_array[j,k,i] <- sum(b$Choice==k)
+#     }
+#   }
+# }
+# 
+# pw_HvAI_array <- pw_array[-3,,] 
+# rownames(pw_HvAI_array)[1:2] <- rownames(pw_HvAI_array)[2:1] #swap rownames
+# pw_HvAI_array[1:2,,] <- pw_HvAI_array[2:1,,] #swap row values (to make Human first)
+# pw_HvHAI_array <- pw_array[-1,,]
 
 pw_percent_matrix <- matrix(nrow=length(pw_ids),ncol=3)
 rownames(pw_percent_matrix) <- pw_ids
@@ -382,7 +383,7 @@ q <- rbind(o,r,t)
 
 
 p<-pw_all_data
-p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into 
+p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
 names(p)[4] <- "outcome"
 compare_my_d_w_outcome <- p$my.decision == p$outcome
 num_pred_eq_actual <- length(which(compare_my_d_w_outcome))
@@ -391,7 +392,8 @@ perc_pred_eq_actual <- num_pred_eq_actual/nrow(p)
 v<-p$outcome
 w<- arrange(pw_cols, id)
 x<- cbind(w, v)
-colnames(x)[5] <- "Predicted"
+colnames(x)[5] <- "Predicted" 
+#can i use xtabs here better than this for-loop nonsense?
 pw_pred_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
 for (i in pw_ids) {
   a <- subset(x, id==i)
@@ -462,25 +464,26 @@ rps_long$Round <- gsub(pattern=".adv_1_type", replacement="",x=rps_long$Round)
 rps_long$Round <- as.integer(rps_long$Round)
 rps_long$Adversary <- as.factor(rps_long$Adversary)
 rps_ids <- levels(rps_long$id)
-row.names <- c("AI","Human","Human+AI")
-col.names <- c("AI", "human", "none")
-rps_array <- array(NA, dim = c(3,3,length(rps_ids)), dimnames=list(row.names, col.names, rps_ids))
+rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long) #more R-like way of creating rps_array than the next ten or so lines
+# row.names <- c("AI","Human","Human+AI")
+# col.names <- c("AI", "human", "none")
+# rps_array <- array(NA, dim = c(3,3,length(rps_ids)), dimnames=list(row.names, col.names, rps_ids))
 #creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
-Adversary_list <- c("AI","Human","Human+AI")
-Advisor_list <- c("AI", "human", "none")
-for (i in rps_ids) {
-  a <- subset(rps_long, id==i)
-  for (j in Adversary_list) {
-    b <- subset (a, Adversary==j)
-    for (k in Advisor_list){
-      rps_array[j,k,i] <- sum(b$Choice_of_Advisor==k)
-    }
-  }
-}
-rps_HvAI_array <- rps_array[-3,,] 
-rownames(rps_HvAI_array)[1:2] <- rownames(rps_HvAI_array)[2:1] #swap rownames
-rps_HvAI_array[1:2,,] <- rps_HvAI_array[2:1,,] #swap row values (to make Human first)
-rps_HvHAI_array <- rps_array[-1,,]
+# Adversary_list <- c("AI","Human","Human+AI")
+# Advisor_list <- c("AI", "human", "none")
+# for (i in rps_ids) {
+#   a <- subset(rps_long, id==i)
+#   for (j in Adversary_list) {
+#     b <- subset (a, Adversary==j)
+#     for (k in Advisor_list){
+#       rps_array[j,k,i] <- sum(b$Choice_of_Advisor==k)
+#     }
+#   }
+# }
+# rps_HvAI_array <- rps_array[-3,,] 
+# rownames(rps_HvAI_array)[1:2] <- rownames(rps_HvAI_array)[2:1] #swap rownames
+# rps_HvAI_array[1:2,,] <- rps_HvAI_array[2:1,,] #swap row values (to make Human first)
+# rps_HvHAI_array <- rps_array[-1,,]
 #   print(i)
 #   a <- count(subset(rps_long, id==i),id, Adversary, Choice_of_Advisor)
 #   print(a)
@@ -491,7 +494,7 @@ rps_HvHAI_array <- rps_array[-1,,]
 #   print(data.matrix(c))
 #   rps_array[,,i] <- data.matrix(c)
 # }
-rps_array[is.na(rps_array)] <- 0
+# rps_array[is.na(rps_array)] <- 0
 # ftable(rps_array) #from stats
 
 #note: subset(subset(rps_long, id=="2r212l3b"), Adversary=="Human")
@@ -506,7 +509,6 @@ rps_array[is.na(rps_array)] <- 0
 # df[,"rps_human_total"] <- rowSums(rps_cols=="human")/(3*num_rps_rounds)
 # df[,"rps_ai_total"] <- rowSums(rps_cols=="AI")/(3*num_rps_rounds)
 # df[,"rps_hexp_v_hadv"] <- rowSums(rps_cols=="Peace")/num_pw_rounds
-
 
 #---------------Demographic Info Pull----------------------
 demo_ids <- subset(new_data, select=participant.label) #
@@ -531,9 +533,17 @@ demo_data$rank[startsWith(demo_data$rank, "L")] <- 5 #converts "Lt Col" or anyth
 demo_data$rank[startsWith(demo_data$rank, "l")] <- 5 #converts "Lt Col" or anything startswith to a 5
 demo_data$rank[grepl('5', demo_data$rank)] <- 5#converts "O-5" or anything with a 5 to a 5
 demo_data$rank[startsWith(demo_data$rank, "COL")] <- 6 #converts "Lt Col" or anything startswith COL to a 6
-demo_data$pw_order <- as.integer(sub("^.............(.).*", "\\1", demo_data$self_participant_vars_dump))
-demo_data$rps_order <- as.integer(sub('.*rps_order\\\'\\:\\ (...).*', '\\1', demo_data$self_participant_vars_dump)) #could also pull directly from self.participant.vars dump from 'first_rps_adv': "
+demo_data$rank <- as.factor(demo_data$rank)
+demo_data$pw_order <- as.factor(sub("^.............(.).*", "\\1", demo_data$self_participant_vars_dump))
+demo_data$rps_order <- as.factor(sub('.*rps_order\\\'\\:\\ (...).*', '\\1', demo_data$self_participant_vars_dump)) #could also pull directly from self.participant.vars dump from 'first_rps_adv': "
 demo_data$consent <- as.factor(sub('.*consent\\\'\\:\\ (....).*', '\\1', demo_data$self_participant_vars_dump))
+demo_relevant_data <- demo_data[,c("id","pw_order","rps_order","age","gender","service","school","rank","years_military_experience","game_theory_experience","machine_learning_experience")] #add major and post_grad as coded factors
+
+
+##--------------combined data---------------------
+##-----RPS w/demographic------
+rps_all <- merge(melt(rps_array), demo_relevant_data, by="id")
+
 #--------------Data Visualization------------------
 #demo data visualization
 #ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
@@ -572,25 +582,25 @@ demo_data$consent <- as.factor(sub('.*consent\\\'\\:\\ (....).*', '\\1', demo_da
 #            conf.level=0.95, 
 #            method="sisonglaz")
 print("-----------RPS analysis------------")
-f <- count(rps_long, id, Adversary, Choice_of_Advisor)
-print("Anova")
-rmaModel <- lmer(n ~ Choice_of_Advisor +(1|id), data = f)
-anova(rmaModel)
+# f <- count(rps_long, id, Adversary, Choice_of_Advisor)
+# print("Anova")
+# rmaModel <- lmer(n ~ Choice_of_Advisor +(1|id), data = f)
+# anova(rmaModel)
 
 # print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
 print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
 print("Chi squared test p-values: ")
 for (i in rps_ids){
   print(paste(i, as.character(chisq.test(rps_array[,,i])["p.value"])))
 }
-for (i in rps_ids){
-  print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
-}
-for (i in rps_ids){
-  print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
-}
+# for (i in rps_ids){
+#   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
+# }
+# for (i in rps_ids){
+#   print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
+# }
 print("fisher test p-values: ")
 for (i in rps_ids){
   print(paste(i, as.character(fisher.test(rps_array[,,i])["p.value"])))
@@ -608,36 +618,40 @@ cramerV(m)
 #   print(paste(i, as.character(mcnemar.test(rps_array[,,i])["p.value"])))
 # }
 
+#display summary
+rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
+rps_summary
+
 print("-----------PW analysis------------")
-f <- count(pw_cols, id, Adversary, Choice)
-print("Anova")
-rmaModel <- lmer(n ~ Choice +(1|id), data = f)
-anova(rmaModel)
+# f <- count(pw_cols, id, Adversary, Choice)
+# print("Anova")
+# rmaModel <- lmer(n ~ Choice +(1|id), data = f)
+# anova(rmaModel)
 
 
 
 # print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvHAI_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvAI_array)["p.value"])))
-print("Chi squared test p-values: ")
-for (i in pw_ids){
-  print(paste(i, as.character(chisq.test(pw_array[,,i])["p.value"])))
-}
-for (i in pw_ids){
-  print(paste(i, as.character(chisq.test(pw_HvAI_array[,,i])["p.value"])))
-}
-for (i in pw_ids){
-  print(paste(i, as.character(chisq.test(pw_HvHAI_array[,,i])["p.value"])))
-}
-print("fisher test p-values: ")
-for (i in pw_ids){
-  print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
-}
-print("wilcox test p-values: ")
-for (i in pw_ids){
-  print(paste(i, as.character(wilcox.test(pw_array[,,i])["p.value"])))
-}
-print("CramerV phi: ")
-n <- rowSums(pw_array, dims = 2)
-cramerV(n)
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvHAI_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvAI_array)["p.value"])))
+# print("Chi squared test p-values: ")
+# for (i in pw_ids){
+#   print(paste(i, as.character(chisq.test(pw_array[,,i])["p.value"])))
+# }
+# for (i in pw_ids){
+#   print(paste(i, as.character(chisq.test(pw_HvAI_array[,,i])["p.value"])))
+# }
+# for (i in pw_ids){
+#   print(paste(i, as.character(chisq.test(pw_HvHAI_array[,,i])["p.value"])))
+# }
+# print("fisher test p-values: ")
+# for (i in pw_ids){
+#   print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
+# }
+# print("wilcox test p-values: ")
+# for (i in pw_ids){
+#   print(paste(i, as.character(wilcox.test(pw_array[,,i])["p.value"])))
+# }
+# print("CramerV phi: ")
+# n <- rowSums(pw_array, dims = 2)
+# cramerV(n)
