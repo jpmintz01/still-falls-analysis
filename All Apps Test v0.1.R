@@ -465,6 +465,10 @@ rps_long$Round <- as.integer(rps_long$Round)
 rps_long$Adversary <- as.factor(rps_long$Adversary)
 rps_ids <- levels(rps_long$id)
 rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long) #more R-like way of creating rps_array than the next ten or so lines
+rps_long_last5 <- rps_long[rps_long$Round %in% c(1:5,11:15,21:25),]
+rps_last5_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long_last)
+rps_last5_sum <- rowSums(rps_long_last_array, dims=2)
+#last five rounds only
 # row.names <- c("AI","Human","Human+AI")
 # col.names <- c("AI", "human", "none")
 # rps_array <- array(NA, dim = c(3,3,length(rps_ids)), dimnames=list(row.names, col.names, rps_ids))
@@ -555,6 +559,9 @@ merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
 pw_all <- merge(merged_pw, demo_relevant_data, by="id")
 colnames(pw_all)[colnames(pw_all)=="value.x"] <- "Obs"
 colnames(pw_all)[colnames(pw_all)=="value.y"] <- "Pred"
+pw_all$Obs_perc_Peace <- (pw_all[pw_all$Choice=="Peace",]$Obs)/10
+pw_all$Pred_perc_Peace <- (pw_all[pw_all$Choice=="Peace",]$Pred)/10
+#add a column for difference between obs&pred_perc
 
 #--------------Data Visualization------------------
 #demo data visualization
