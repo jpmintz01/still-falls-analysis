@@ -542,7 +542,19 @@ demo_relevant_data <- demo_data[,c("id","pw_order","rps_order","age","gender","s
 
 ##--------------combined data---------------------
 ##-----RPS w/demographic------
-rps_all <- merge(melt(rps_array), demo_relevant_data, by="id")
+melted_rps <- melt(rps_array)
+colnames(melted_rps) <- c("Adversary","Choice_of_Advisor","id","value")
+rps_all <- merge(melted_rps, demo_relevant_data, by="id")
+
+##-----PW w/demographic-------
+melted_pw <- melt(pw_array)
+melted_pw_pred <- melt(pw_pred_array)
+colnames(melted_pw) <- c("Adversary","Choice","id","value")
+colnames(melted_pw_pred) <- c("Adversary","Choice","id","pred_value")
+merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
+pw_all <- merge(merged_pw, demo_relevant_data, by="id")
+colnames(pw_all)[colnames(pw_all)=="value.x"] <- "Obs"
+colnames(pw_all)[colnames(pw_all)=="value.y"] <- "Pred"
 
 #--------------Data Visualization------------------
 #demo data visualization
@@ -655,3 +667,6 @@ print("-----------PW analysis------------")
 # print("CramerV phi: ")
 # n <- rowSums(pw_array, dims = 2)
 # cramerV(n)
+pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
+pw_summary
+
