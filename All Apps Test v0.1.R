@@ -463,6 +463,8 @@ names(rps_long)[4] <- "Choice_of_Advisor"
 rps_long$Round <- gsub(pattern=".adv_1_type", replacement="",x=rps_long$Round)
 rps_long$Round <- as.integer(rps_long$Round)
 rps_long$Adversary <- as.factor(rps_long$Adversary)
+rps_sum <- table(rps_long$Adversary,rps_long$Choice_of_Advisor)
+rps_prop <- prop.table(rps_sum)*100
 rps_ids <- levels(rps_long$id)
 rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long) #more R-like way of creating rps_array than the next ten or so lines
 rps_long_last5 <- rps_long[rps_long$Round %in% c(1:5,11:15,21:25),]
@@ -640,6 +642,28 @@ cramerV(m)
 #display summary
 rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
 rps_summary
+
+
+contrasts(rps_long$Adversary) = contr.sum(3)
+contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
+naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
+summary(naiveglm)
+anova(naiveglm, test="Chisq")
+Anova(naiveglm, type="III")
+hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
+summary(hoops)
+Anova(hoops, type="III")
+
+contrasts(rps_long_last5$Adversary) = contr.sum(3)
+contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
+naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
+summary(naiveglm)
+anova(naiveglm, test="Chisq")
+Anova(naiveglm, type="III")
+hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
+summary(hoops)
+Anova(hoops, type="III")
+
 
 print("-----------PW analysis------------")
 # f <- count(pw_cols, id, Adversary, Choice)
