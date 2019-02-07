@@ -249,12 +249,12 @@ pw_cols <- rbind(pw_human_cols,pw_HAI_cols,pw_AI_cols)
 pw_cols$Adversary <- as.factor(pw_cols$Adversary)
 pw_ids <- levels(factor(pw_cols$id))
 pw_array <- xtabs(~Adversary+Choice+id, data=pw_cols) #more R-like way of creating the array than the ten lines below
-# row.names <- c("AI","Human","Human+AI")
-# col.names <- c("Peace", "War")
+row.names <- c("AI","Human","Human+AI")
+col.names <- c("Peace", "War")
 # pw_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
 # #creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
-# Adversary_list <- c("AI","Human","Human+AI")
-# Choice_list <- c("Peace", "War")
+Adversary_list <- c("AI","Human","Human+AI")
+Choice_list <- c("Peace", "War")
 # for (i in pw_ids) {
 #   a <- subset(pw_cols, id==i)
 #   for (j in Adversary_list) {
@@ -406,9 +406,16 @@ for (i in pw_ids) {
 }
 v<- pw_array-pw_pred_array
 w<- rowSums(v, dims = 2)
-
-
-
+x<- pw_array/pw_pred_array
+pw_pred_sum <- rowSums(pw_pred_array, dims =2)
+pw_sum <- rowSums(pw_array, dims=2)
+pw_sum_pred_peace <- pw_sum
+pw_sum_pred_peace[,2] <- pw_pred_sum[,1]
+colnames(pw_sum_pred_peace) <- c("Obs","Pred")
+pw_round_1s <- pw_cols[pw_cols$Round == 1,]
+pw_round_1s$id <- factor(pw_round_1s$id)
+pw_round_1s$Choice <- factor(pw_round_1s$Choice)
+pw_round_1s_sum <- rowSums(xtabs(~Adversary+Choice+id, data=pw_round_1s), dims=2)
 
 
 #--------------Rock-Paper-Scissors data pull & transformation-----------------
@@ -468,15 +475,15 @@ rps_prop <- prop.table(rps_sum)*100
 rps_ids <- levels(rps_long$id)
 rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long) #more R-like way of creating rps_array than the next ten or so lines
 rps_long_last5 <- rps_long[rps_long$Round %in% c(1:5,11:15,21:25),]
-rps_last5_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long_last)
-rps_last5_sum <- rowSums(rps_long_last_array, dims=2)
+rps_last5_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long_last5)
+rps_last5_sum <- rowSums(rps_last5_array, dims=2)
 #last five rounds only
-# row.names <- c("AI","Human","Human+AI")
-# col.names <- c("AI", "human", "none")
+row.names <- c("AI","Human","Human+AI")
+col.names <- c("AI", "human", "none")
 # rps_array <- array(NA, dim = c(3,3,length(rps_ids)), dimnames=list(row.names, col.names, rps_ids))
 #creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
-# Adversary_list <- c("AI","Human","Human+AI")
-# Advisor_list <- c("AI", "human", "none")
+Adversary_list <- c("AI","Human","Human+AI")
+Advisor_list <- c("AI", "human", "none")
 # for (i in rps_ids) {
 #   a <- subset(rps_long, id==i)
 #   for (j in Adversary_list) {
@@ -559,10 +566,10 @@ colnames(melted_pw) <- c("Adversary","Choice","id","value")
 colnames(melted_pw_pred) <- c("Adversary","Choice","id","pred_value")
 merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
 pw_all <- merge(merged_pw, demo_relevant_data, by="id")
-colnames(pw_all)[colnames(pw_all)=="value.x"] <- "Obs"
-colnames(pw_all)[colnames(pw_all)=="value.y"] <- "Pred"
-pw_all$Obs_perc_Peace <- (pw_all[pw_all$Choice=="Peace",]$Obs)/10
-pw_all$Pred_perc_Peace <- (pw_all[pw_all$Choice=="Peace",]$Pred)/10
+colnames(pw_all)[colnames(pw_all)=="value"] <- "Obs"
+colnames(pw_all)[colnames(pw_all)=="pred_value"] <- "Pred"
+pw_all$Obs_perc_Peace <- pw_all$Obs/10
+pw_all$Pred_perc_Peace <- pw_all$Pred/10
 #add a column for difference between obs&pred_perc
 
 #--------------Data Visualization------------------
@@ -610,29 +617,51 @@ print("-----------RPS analysis------------")
 
 # print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
 print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
+print(paste("CMT p-value (last5): ", as.character(mantelhaen.test(rps_last5_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
-print("Chi squared test p-values: ")
-for (i in rps_ids){
-  print(paste(i, as.character(chisq.test(rps_array[,,i])["p.value"])))
-}
+print("Chi Squared test not valid for individual participants because some expected values are < 5")
+# print("Chi squared test p-values: ")
+# for (i in rps_ids){
+#   print(paste(i, as.character(chisq.test(rps_array[,,i])["p.value"])))
+# }
+print("Chi-Squared for group")
+chisq.test(rps_sum)
+print("Chi-Squared for group (last5)")
+chisq.test(rps_last5_sum)
 # for (i in rps_ids){
 #   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
 # }
 # for (i in rps_ids){
 #   print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
 # }
+rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA,"Last5"=NA)
+
+
 print("fisher test p-values: ")
 for (i in rps_ids){
-  print(paste(i, as.character(fisher.test(rps_array[,,i])["p.value"])))
+  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
-print("wilcox p-values: ")
+
+print("fisher test p-values (last5): ")
 for (i in rps_ids){
-  print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
+  rps_fisher_test[rps_fisher_test$id==i,"Last5"] <- fisher.test(rps_last5_array[,,i])["p.value"]<0.05
 }
-print("CramerV phi: ")
-m <- rowSums(rps_array, dims = 2)
-cramerV(m)
+print ("RPS ID's which showed difference in choices by Adversary: ")
+rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
+
+print("friedman.test")
+friedman.test(t(rps_sum))
+print("friedman.test (last5)")
+friedman.test(t(rps_last5_sum))
+
+# print("wilcox p-values not relevant for 3-level independent variable: ")
+# for (i in rps_ids){
+#   print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
+# }
+# print("CramerV phi: ")
+# m <- rowSums(rps_array, dims = 2)
+# cramerV(m)
 
 # print("mcnemar test p-values: ")
 # for (i in rps_ids){
@@ -700,4 +729,14 @@ print("-----------PW analysis------------")
 # cramerV(n)
 pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
 pw_summary
+pw_sum
 
+print("PW Round 1 Friedman test")
+friedman.test(Choice ~ Adversary | id, data = pw_round_1s)
+
+print("PW Round 1 - id's of participants who varied their round 1 choice by adversary (at all): ")
+pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
+for (i in pw_ids) {
+  pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
+}
+print(pw_varied_round1[pw_varied_round1$Varied,]$id)
