@@ -185,7 +185,8 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 filepath <- file.choose()
 datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
-good_data <- stripFails(datafile) #strip the fails off the man datafile
+# good_data <- stripFails(datafile) #strip the fails off the man datafile
+good_data <- stripBadCols(datafile)
 new_data <- stripBadCols(good_data)  #some error here...
 num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 #split off the columns which describe pw_vs_human
@@ -247,6 +248,8 @@ colnames(pw_AI_cols) <- c("id","Round","Adversary","Choice")
 pw_cols <- rbind(pw_human_cols,pw_HAI_cols,pw_AI_cols)
 
 pw_cols$Adversary <- as.factor(pw_cols$Adversary)
+pw_cols <- pw_cols[!is.na(pw_cols$Choice),] #strip the ones who never did pw
+pw_cols <- pw_cols[pw_cols$id!="0pr16",] #strip off the test case
 pw_ids <- levels(factor(pw_cols$id))
 pw_array <- xtabs(~Adversary+Choice+id, data=pw_cols) #more R-like way of creating the array than the ten lines below
 row.names <- c("AI","Human","Human+AI")
@@ -269,12 +272,17 @@ Choice_list <- c("Peace", "War")
 # rownames(pw_HvAI_array)[1:2] <- rownames(pw_HvAI_array)[2:1] #swap rownames
 # pw_HvAI_array[1:2,,] <- pw_HvAI_array[2:1,,] #swap row values (to make Human first)
 # pw_HvHAI_array <- pw_array[-1,,]
+pw_round_1s <- pw_cols[pw_cols$Round == 1,]
+pw_round_1s <- pw_round_1s[!is.na(pw_round_1s$Choice),]
+pw_round_1s$id <- factor(pw_round_1s$id)
+pw_round_1s$Choice <- factor(pw_round_1s$Choice)
+pw_round_1s_sum <- rowSums(xtabs(~Adversary+Choice+id, data=pw_round_1s), dims=2)
 
-pw_percent_matrix <- matrix(nrow=length(pw_ids),ncol=3)
-rownames(pw_percent_matrix) <- pw_ids
-for (i in pw_ids){
-  pw_percent_matrix[i,] <- pw_array[,"Peace",i]/pw_array[,"War",i]
-}
+# pw_percent_matrix <- matrix(nrow=length(pw_ids),ncol=3)
+# rownames(pw_percent_matrix) <- pw_ids
+# for (i in pw_ids){
+#   pw_percent_matrix[i,] <- pw_array[,"Peace",i]/pw_array[,"War",i]
+# }
 # pw_vs_human <- bind_cols(new_data[grepl('^prisoner.*')])
 # rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
 # pw_vs_human <- pwChangeColNames(pw_vs_human_cols, num_pw_rounds) #get a matrix of pw choices (row:player)x(column:round) with only the pw version (pw or pw_2) played
@@ -311,7 +319,7 @@ hai_tft_choices <- c(1,	1,	0,	1,	1,	0,	1,	1,	1,	1)
 ai_adv_choices <- c(0,	0,	0,	1,	1,	0,	0,	0,	1,	0)
 ai_tft_choices <- c(1,	0,	0,	0,	1,	1,	0,	0,	0,	1)
 
-pw_all_data_colnames <- c("X","period","my.decision","risk","delta","r1","r2","error","data","my.round1decision","my.decision1","my.decision2","my.decision3","my.decision4","my.decision5","my.decision6","my.decision7","my.decision8","my.decision9","other.decision1","other.decision2", "other.decision3" ,"other.decision4" ,"other.decision5", "other.decision6", "other.decision7", "other.decision8" ,"other.decision9", "my.payoff1","my.payoff2","my.payoff3", "my.payoff4","my.payoff5","my.payoff6","my.payoff7","my.payoff8","my.payoff9","other.payoff1","other.payoff2","other.payoff3","other.payoff4","other.payoff5","other.payoff6","other.payoff7","other.payoff8","other.payoff9","r","s","t","p","infin", "contin","group")
+pw_all_data_colnames <- c("X","id","Adversary","period","my.decision","risk","delta","r1","r2","error","data","my.round1decision","my.decision1","my.decision2","my.decision3","my.decision4","my.decision5","my.decision6","my.decision7","my.decision8","my.decision9","other.decision1","other.decision2", "other.decision3" ,"other.decision4" ,"other.decision5", "other.decision6", "other.decision7", "other.decision8" ,"other.decision9", "my.payoff1","my.payoff2","my.payoff3", "my.payoff4","my.payoff5","my.payoff6","my.payoff7","my.payoff8","my.payoff9","other.payoff1","other.payoff2","other.payoff3","other.payoff4","other.payoff5","other.payoff6","other.payoff7","other.payoff8","other.payoff9","r","s","t","p","infin", "contin","group")
 pw_all_data <- matrix(NA, nrow=nrow(pw_cols), ncol=length(pw_all_data_colnames))
 colnames(pw_all_data) <- pw_all_data_colnames
 pw_all_data <- as.data.frame(pw_all_data)
@@ -328,6 +336,8 @@ pw_all_data$r1 <- 1/3
 pw_all_data$r2 <- 2/3
 d<- arrange(pw_cols, id)
 pw_all_data$period <- d$Round
+pw_all_data$Adversary <- d$Adversary
+pw_all_data$id <- d$id
 pw_all_data$my.decision <- d$Choice  #need to change to coop/defect?
 pw_all_data$other.decision <- rep(c(human_adv_choices, hai_adv_choices, ai_adv_choices), nrow(pw_all_data)/30) #delete this after use
 
@@ -412,10 +422,7 @@ pw_sum <- rowSums(pw_array, dims=2)
 pw_sum_pred_peace <- pw_sum
 pw_sum_pred_peace[,2] <- pw_pred_sum[,1]
 colnames(pw_sum_pred_peace) <- c("Obs","Pred")
-pw_round_1s <- pw_cols[pw_cols$Round == 1,]
-pw_round_1s$id <- factor(pw_round_1s$id)
-pw_round_1s$Choice <- factor(pw_round_1s$Choice)
-pw_round_1s_sum <- rowSums(xtabs(~Adversary+Choice+id, data=pw_round_1s), dims=2)
+
 
 
 #--------------Rock-Paper-Scissors data pull & transformation-----------------
@@ -571,7 +578,9 @@ colnames(pw_all)[colnames(pw_all)=="pred_value"] <- "Pred"
 pw_all$Obs_perc_Peace <- pw_all$Obs/10
 pw_all$Pred_perc_Peace <- pw_all$Pred/10
 #add a column for difference between obs&pred_perc
-
+#_------pw_all_data plus damo
+pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
+# write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
 #--------------Data Visualization------------------
 #demo data visualization
 #ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
@@ -732,7 +741,7 @@ pw_summary
 pw_sum
 
 print("PW Round 1 Friedman test")
-friedman.test(Choice ~ Adversary | id, data = pw_round_1s)
+friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))
 
 print("PW Round 1 - id's of participants who varied their round 1 choice by adversary (at all): ")
 pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
@@ -740,3 +749,5 @@ for (i in pw_ids) {
   pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
 }
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
+
+
