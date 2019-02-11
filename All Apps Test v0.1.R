@@ -52,6 +52,12 @@ stripFails <- function (data){
   # good_data <- stripBadRows(good_data, "post_game_survey.1.player.attention_check", "Georgia")  
   good_data <- subset(data, participant._current_app_name=="post_game_survey")
   good_data <- subset(good_data, post_game_survey.1.player.attention_check=="Georgia")
+  
+  #temporarily strip out obvious non-believers in human competitors
+  good_data <- good_data[good_data$participant.label %in% setdiff(good_data$participant.label, c("gdg26","s4441","7ic14","oez14")),]
+
+
+  
   ## maybe compare these two in a logical function instead of the previous post_game_survey 
   #participant._index_in_pages should be >= participant._max_page_index to indicate a player completed the game
   good_data <- unique(good_data) #remove duplicates
@@ -185,8 +191,8 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 filepath <- file.choose()
 datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
-# good_data <- stripFails(datafile) #strip the fails off the man datafile
-good_data <- stripBadCols(datafile)
+good_data <- stripFails(datafile) #strip the fails off the man datafile
+# good_data <- stripBadCols(datafile)
 new_data <- stripBadCols(good_data)  #some error here...
 num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 #split off the columns which describe pw_vs_human
