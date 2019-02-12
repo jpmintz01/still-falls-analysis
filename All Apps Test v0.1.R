@@ -54,7 +54,7 @@ stripFails <- function (data){
   good_data <- subset(good_data, post_game_survey.1.player.attention_check=="Georgia")
   
   #temporarily strip out obvious non-believers in human competitors
-  good_data <- good_data[good_data$participant.label %in% setdiff(good_data$participant.label, c("gdg26","s4441","7ic14","oez14")),]
+
 
 
   
@@ -213,12 +213,13 @@ names(pw_cols) <-  gsub(pattern = "participant.label", replacement = "id", x = n
 pw_cols[pw_cols==""]<-NA #cut out all the "" values and replace with NA
 pw_first <- subset(pw_cols, is.na(prisoner_multiplayer_2.1.player.decision_vs_adv_1))
 pw_first[,(32:61)] <- NULL
-play_order <- list(rep(1,nrow(pw_first)))
-pw_first <- add_column(pw_first, play_order, .after="id")
+
+# pw_first$Order <- 1
+
 pw_second <- subset(pw_cols, is.na(prisoner_multiplayer.1.player.decision_vs_adv_1))
 pw_second[,(2:31)] <- NULL
-play_order <- list(rep(2,nrow(pw_first)))
-pw_second <- add_column(pw_second, play_order, .after="id")
+# pw_second$Order <- 2
+
 # a <- as.data.table(a)[,(32:61):=NULL]
 names(pw_first) <-  gsub(pattern = "prisoner_multiplayer.", replacement = "", x = names(pw_first)) # removes the leading 'rps.' - just a cleanup
 names(pw_second) <-  gsub(pattern = "prisoner_multiplayer_2.", replacement = "", x = names(pw_second)) # removes the leading 'rps.' - just a cleanup
@@ -256,6 +257,8 @@ pw_cols <- rbind(pw_human_cols,pw_HAI_cols,pw_AI_cols)
 pw_cols$Adversary <- as.factor(pw_cols$Adversary)
 pw_cols <- pw_cols[!is.na(pw_cols$Choice),] #strip the ones who never did pw
 pw_cols <- pw_cols[pw_cols$id!="0pr16",] #strip off the test case
+# pw_cols <- pw_cols[!(pw_cols$id %in% c("gdg26","s4441","7ic14","oez14")),] #strip off those who didn't believe the humans in the game were real
+
 pw_ids <- levels(factor(pw_cols$id))
 pw_array <- xtabs(~Adversary+Choice+id, data=pw_cols) #more R-like way of creating the array than the ten lines below
 row.names <- c("AI","Human","Human+AI")
@@ -571,6 +574,8 @@ demo_relevant_data <- demo_data[,c("id","pw_order","rps_order","age","gender","s
 melted_rps <- melt(rps_array)
 colnames(melted_rps) <- c("Adversary","Choice_of_Advisor","id","value")
 rps_all <- merge(melted_rps, demo_relevant_data, by="id")
+# rps_all <- separate(rps_all, rps_order, c("RPS1st","RPS2nd","RPS3rd"), sep=c(1,2), remove=FALSE)
+
 
 ##-----PW w/demographic-------
 melted_pw <- melt(pw_array)
@@ -664,13 +669,18 @@ for (i in rps_ids){
 }
 print ("RPS ID's which showed difference in choices by Adversary: ")
 rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
+rps_sum_showed_difference <- xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,])
+# print("friedman.test")
+# friedman.test(t(rps_sum))
+# print("friedman.test (last5)")
+# friedman.test(t(rps_last5_sum))
 
-print("friedman.test")
-friedman.test(t(rps_sum))
-print("friedman.test (last5)")
-friedman.test(t(rps_last5_sum))
 
-# print("wilcox p-values not relevant for 3-level independent variable: ")
+friedman.test(rps_sum)
+wilcox.test(rps_sum[-1,]) 
+wilcox.test(rps_sum[-2,])
+wilcox.test(rps_sum[-3,])
+# print("wilcox p-values not relevant for 3-level independent variable: " - is that true?
 # for (i in rps_ids){
 #   print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
 # }
@@ -687,26 +697,35 @@ friedman.test(t(rps_last5_sum))
 rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
 rps_summary
 
+rps_long_test <- rps_long
+substrRight <- function(x, n){
+substr(x, nchar(x)-n+1, nchar(x))
+}
+rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
+rps_long_test[rps_long_test$Round == "0"]$Round <- 10
+rps_long_test[rps_long_test$Round == "0",]$Round <- 10
+rps_long_test$Round <- as.integer(rps_long_test$Round)
+rps_long_test[order(rps_long_test$Round),]
 
-contrasts(rps_long$Adversary) = contr.sum(3)
-contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
-naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
-summary(naiveglm)
-anova(naiveglm, test="Chisq")
-Anova(naiveglm, type="III")
-hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
-summary(hoops)
-Anova(hoops, type="III")
-
-contrasts(rps_long_last5$Adversary) = contr.sum(3)
-contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
-naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
-summary(naiveglm)
-anova(naiveglm, test="Chisq")
-Anova(naiveglm, type="III")
-hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
-summary(hoops)
-Anova(hoops, type="III")
+# contrasts(rps_long$Adversary) = contr.sum(3)
+# contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
+# naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
+# summary(naiveglm)
+# anova(naiveglm, test="Chisq")
+# Anova(naiveglm, type="III")
+# hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
+# summary(hoops)
+# Anova(hoops, type="III")
+# 
+# contrasts(rps_long_last5$Adversary) = contr.sum(3)
+# contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
+# naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
+# summary(naiveglm)
+# anova(naiveglm, test="Chisq")
+# Anova(naiveglm, type="III")
+# hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
+# summary(hoops)
+# Anova(hoops, type="III")
 
 
 print("-----------PW analysis------------")
