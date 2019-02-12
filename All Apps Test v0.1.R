@@ -368,19 +368,13 @@ pw_all_data$other.decision <- NULL #delete other.decision column since it has no
 pw_all_data$X <- c(1:nrow(pw_all_data))
 #begin machine learning section
 predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
-# control <- rfeControl(functions = rfFuncs,
-#                       method = "repeatedcv",
-#                       repeats = 3,
-#                       verbose = FALSE)
-# Pred_Profile <- rfe(all_data[,predictors], all_data$my.decision, rfeControl = control)
-
 #this line below uses all_data to train static model
 lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
 outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
 levels(outcomes_1) <- c("Peace","War")
 #this line below uses all_data to train line 2 in the dynamic model (the first dynamic row) - could use something else
-lmFit1<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data, method = 'glm', na.action = na.pass)
+lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_2 <- predict(lmFit1, pw_all_data)
 levels(outcomes_2) <- c("Peace","War")
@@ -392,6 +386,13 @@ lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:d
 outcomes_3_10 <- predict(lmFit2, pw_all_data)
 levels(outcomes_3_10) <- c("Peace","War")
 
+# # test nnet  (meh, doesn't converge)
+# all_data_subset <- all_data[,c("my.decision","my.round1decision","my.decision1","other.decision1","period")]
+# all_data_subset$my.decision <- as.numeric(all_data_subset$my.decision)
+# all_data_subset$my.decision[all_data_subset$my.decision==2] <- 0
+# f <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+period")
+# all_data_subset <- na.omit(all_data_subset)
+# nn <- neuralnet(f,data=all_data_subset,hidden=3,linear.output=FALSE)
 
 
 #need to fix levels and stack outcome and outcomes
@@ -403,15 +404,17 @@ q <- rbind(o,r,t)
 
 p<-pw_all_data
 p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
-names(p)[4] <- "outcome"
-compare_my_d_w_outcome <- p$my.decision == p$outcome
-num_pred_eq_actual <- length(which(compare_my_d_w_outcome))
-perc_pred_eq_actual <- num_pred_eq_actual/nrow(p)
+colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
+p$outcome <- as.factor(p$outcome)
+perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
 
+
+row.names <- c("AI","Human","Human+AI")
+col.names <- c("Peace", "War")
 v<-p$outcome
 w<- arrange(pw_cols, id)
 x<- cbind(w, v)
-colnames(x)[5] <- "Predicted" 
+colnames(x)[colnames(x) =="v"] <- "Predicted"
 #can i use xtabs here better than this for-loop nonsense?
 pw_pred_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
 for (i in pw_ids) {
@@ -702,10 +705,9 @@ substrRight <- function(x, n){
 substr(x, nchar(x)-n+1, nchar(x))
 }
 rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
-rps_long_test[rps_long_test$Round == "0"]$Round <- 10
 rps_long_test[rps_long_test$Round == "0",]$Round <- 10
 rps_long_test$Round <- as.integer(rps_long_test$Round)
-rps_long_test[order(rps_long_test$Round),]
+# rps_long_test[order(rps_long_test$Round),]
 
 # contrasts(rps_long$Adversary) = contr.sum(3)
 # contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
@@ -774,5 +776,20 @@ for (i in pw_ids) {
   pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
 }
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
+
+#compares observed and predicted across all rounds, where groups are 
+pw_cmh_array <- array(NA, dim = c(2,2,3), dimnames=list(c("Obs","Pred"), c("Peace","War"), c("AI","Human","Human+AI")))
+pw_cmh_array[1,,1] <- rowSums(pw_array, dims=2)[1,]
+pw_cmh_array[1,,2] <- rowSums(pw_array, dims=2)[2,]
+pw_cmh_array[1,,3] <- rowSums(pw_array, dims=2)[3,]
+pw_cmh_array[2,,1] <- rowSums(pw_pred_array, dims=2)[1,]
+pw_cmh_array[2,,2] <- rowSums(pw_pred_array, dims=2)[2,]
+pw_cmh_array[2,,3] <- rowSums(pw_pred_array, dims=2)[3,]
+mantelhaen.test(pw_cmh_array) 
+print("which array dim does this CMH test for a difference across?")
+
+pw_played <- c("yyj35","yda14", "w9c21", "v6i85", "txk36", "n1i23", "i5b85", "h0s22", "b8g12", "b1462", "9mp31", "8mh76", "3z144")
+pw_array_played <- pw_array[,,pw_played]
+pw_pred_array_played <- pw_pred_array[,,pw_played]
 
 
