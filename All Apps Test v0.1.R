@@ -700,6 +700,7 @@ wilcox.test(rps_sum[-3,])
 rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
 rps_summary
 
+#rps_long_test converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
 rps_long_test <- rps_long
 substrRight <- function(x, n){
 substr(x, nchar(x)-n+1, nchar(x))
@@ -707,6 +708,8 @@ substr(x, nchar(x)-n+1, nchar(x))
 rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
 rps_long_test[rps_long_test$Round == "0",]$Round <- 10
 rps_long_test$Round <- as.integer(rps_long_test$Round)
+plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
+
 # rps_long_test[order(rps_long_test$Round),]
 
 # contrasts(rps_long$Adversary) = contr.sum(3)
@@ -766,6 +769,8 @@ print("-----------PW analysis------------")
 pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
 pw_summary
 pw_sum
+pw_pred_sum
+perc_pred_eq_actual
 
 print("PW Round 1 Friedman test")
 friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))
@@ -778,18 +783,19 @@ for (i in pw_ids) {
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
 
 #compares observed and predicted across all rounds, where groups are 
-pw_cmh_array <- array(NA, dim = c(2,2,3), dimnames=list(c("Obs","Pred"), c("Peace","War"), c("AI","Human","Human+AI")))
-pw_cmh_array[1,,1] <- rowSums(pw_array, dims=2)[1,]
-pw_cmh_array[1,,2] <- rowSums(pw_array, dims=2)[2,]
-pw_cmh_array[1,,3] <- rowSums(pw_array, dims=2)[3,]
-pw_cmh_array[2,,1] <- rowSums(pw_pred_array, dims=2)[1,]
-pw_cmh_array[2,,2] <- rowSums(pw_pred_array, dims=2)[2,]
-pw_cmh_array[2,,3] <- rowSums(pw_pred_array, dims=2)[3,]
-mantelhaen.test(pw_cmh_array) 
-print("which array dim does this CMH test for a difference across?")
+# pw_cmh_array <- array(NA, dim = c(2,2,3), dimnames=list(c("Obs","Pred"), c("Peace","War"), c("AI","Human","Human+AI")))
+# pw_cmh_array[1,,1] <- rowSums(pw_array, dims=2)[1,]
+# pw_cmh_array[1,,2] <- rowSums(pw_array, dims=2)[2,]
+# pw_cmh_array[1,,3] <- rowSums(pw_array, dims=2)[3,]
+# pw_cmh_array[2,,1] <- rowSums(pw_pred_array, dims=2)[1,]
+# pw_cmh_array[2,,2] <- rowSums(pw_pred_array, dims=2)[2,]
+# pw_cmh_array[2,,3] <- rowSums(pw_pred_array, dims=2)[3,]
+# mantelhaen.test(pw_cmh_array) 
+# print("which array dim does this CMH test for a difference across?")
 
-pw_played <- c("yyj35","yda14", "w9c21", "v6i85", "txk36", "n1i23", "i5b85", "h0s22", "b8g12", "b1462", "9mp31", "8mh76", "3z144")
-pw_array_played <- pw_array[,,pw_played]
-pw_pred_array_played <- pw_pred_array[,,pw_played]
+# these are the players who played "strategically" (not a fixed strategy, and did not indicate non-belief)
+# pw_played <- c("yyj35","yda14", "w9c21", "v6i85", "txk36", "n1i23", "i5b85", "h0s22", "b8g12", "b1462", "9mp31", "8mh76", "3z144")
+# pw_array_played <- pw_array[,,pw_played]
+# pw_pred_array_played <- pw_pred_array[,,pw_played]
 
-
+plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
