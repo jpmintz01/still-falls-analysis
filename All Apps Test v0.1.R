@@ -9,6 +9,7 @@ library(rcompanion)
 library(DescTools)
 library(tibble)
 library(caret)
+library(MASS)
 library(zoo)
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -434,8 +435,8 @@ pw_sum <- rowSums(pw_array, dims=2)
 pw_sum_pred_peace <- pw_sum
 pw_sum_pred_peace[,2] <- pw_pred_sum[,1]
 colnames(pw_sum_pred_peace) <- c("Obs","Pred")
-
-
+pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",]))
+pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols))
 
 #--------------Rock-Paper-Scissors data pull & transformation-----------------
 #bind the columns advisor_choice and adversary type
@@ -541,6 +542,10 @@ Advisor_list <- c("AI", "human", "none")
 # df[,"rps_human_total"] <- rowSums(rps_cols=="human")/(3*num_rps_rounds)
 # df[,"rps_ai_total"] <- rowSums(rps_cols=="AI")/(3*num_rps_rounds)
 # df[,"rps_hexp_v_hadv"] <- rowSums(rps_cols=="Peace")/num_pw_rounds
+rps_long_none_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="none",]))
+rps_long_AI_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="AI",]))
+rps_long_human_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="human",]))
+rps_long_by_id <- as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_long))
 
 #---------------Demographic Info Pull----------------------
 demo_ids <- subset(new_data, select=participant.label) #
@@ -632,116 +637,26 @@ pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
 # MultinomCI(XT, 
 #            conf.level=0.95, 
 #            method="sisonglaz")
-print("-----------RPS analysis------------")
-# f <- count(rps_long, id, Adversary, Choice_of_Advisor)
-# print("Anova")
-# rmaModel <- lmer(n ~ Choice_of_Advisor +(1|id), data = f)
-# anova(rmaModel)
-
-# print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
-print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
-print(paste("CMT p-value (last5): ", as.character(mantelhaen.test(rps_last5_array)["p.value"])))
-# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
-# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
-print("Chi Squared test not valid for individual participants because some expected values are < 5")
-# print("Chi squared test p-values: ")
-# for (i in rps_ids){
-#   print(paste(i, as.character(chisq.test(rps_array[,,i])["p.value"])))
-# }
-print("Chi-Squared for group")
-chisq.test(rps_sum)
-print("Chi-Squared for group (last5)")
-chisq.test(rps_last5_sum)
-# for (i in rps_ids){
-#   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
-# }
-# for (i in rps_ids){
-#   print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
-# }
-rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA,"Last5"=NA)
-
-
-print("fisher test p-values: ")
-for (i in rps_ids){
-  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
-}
-
-print("fisher test p-values (last5): ")
-for (i in rps_ids){
-  rps_fisher_test[rps_fisher_test$id==i,"Last5"] <- fisher.test(rps_last5_array[,,i])["p.value"]<0.05
-}
-print ("RPS ID's which showed difference in choices by Adversary: ")
-rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-rps_sum_showed_difference <- xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,])
-# print("friedman.test")
-# friedman.test(t(rps_sum))
-# print("friedman.test (last5)")
-# friedman.test(t(rps_last5_sum))
-
-
-friedman.test(rps_sum)
-wilcox.test(rps_sum[-1,]) 
-wilcox.test(rps_sum[-2,])
-wilcox.test(rps_sum[-3,])
-# print("wilcox p-values not relevant for 3-level independent variable: " - is that true?
-# for (i in rps_ids){
-#   print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
-# }
-# print("CramerV phi: ")
-# m <- rowSums(rps_array, dims = 2)
-# cramerV(m)
-
-# print("mcnemar test p-values: ")
-# for (i in rps_ids){
-#   print(paste(i, as.character(mcnemar.test(rps_array[,,i])["p.value"])))
-# }
-
-#display summary
-rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
-rps_summary
-
-#rps_long_test converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
-rps_long_test <- rps_long
-substrRight <- function(x, n){
-substr(x, nchar(x)-n+1, nchar(x))
-}
-rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
-rps_long_test[rps_long_test$Round == "0",]$Round <- 10
-rps_long_test$Round <- as.integer(rps_long_test$Round)
-plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
-
-# rps_long_test[order(rps_long_test$Round),]
-
-# contrasts(rps_long$Adversary) = contr.sum(3)
-# contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
-# naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
-# summary(naiveglm)
-# anova(naiveglm, test="Chisq")
-# Anova(naiveglm, type="III")
-# hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
-# summary(hoops)
-# Anova(hoops, type="III")
-# 
-# contrasts(rps_long_last5$Adversary) = contr.sum(3)
-# contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
-# naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
-# summary(naiveglm)
-# anova(naiveglm, test="Chisq")
-# Anova(naiveglm, type="III")
-# hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
-# summary(hoops)
-# Anova(hoops, type="III")
 
 
 print("-----------PW analysis------------")
-# f <- count(pw_cols, id, Adversary, Choice)
-# print("Anova")
-# rmaModel <- lmer(n ~ Choice +(1|id), data = f)
-# anova(rmaModel)
+print("tests for parametric assumptions")
+#tests on all Peace choices across all players
+shapiro.test(rowSums(pw_cols_peace_by_id)) #test for normality (#normal)
+#normality tests "by adversary"
+shapiro.test(pw_cols_peace_by_id$AI) #not normal
+shapiro.test(pw_cols_peace_by_id$Human) #normal
+shapiro.test(pw_cols_peace_by_id$`Human+AI`) #normal
+
+m <- aov(Freq ~ Adversary, data = pw_cols_by_id[pw_cols_by_id$Choice=="Peace",])
+shapiro.test(residuals(m)) #not normal
 
 
 
-# print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
+
+
+
+#print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvHAI_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvAI_array)["p.value"])))
@@ -799,3 +714,133 @@ print(pw_varied_round1[pw_varied_round1$Varied,]$id)
 # pw_pred_array_played <- pw_pred_array[,,pw_played]
 
 plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
+
+
+print("-----------RPS analysis------------")
+print("tests for normality")
+#tests on all "none" choices across all players
+shapiro.test(rowSums(rps_long_none_by_id))#not normal
+#tests on all "AI" choices across all players
+shapiro.test(rowSums(rps_long_AI_by_id)) #not normal
+#tests on all "human" choices across all players
+shapiro.test(rowSums(rps_long_human_by_id)) #not normal
+
+#normality tests "by adversary" - not needed because all data (above) isn't normal
+# shapiro.test(rps_long_none_by_id$AI) #not normal
+# shapiro.test(rps_long_human_by_id$AI) #not normal
+# shapiro.test(rps_long_AI_by_id$AI) #not normal
+# shapiro.test(rps_long_none_by_id$Human) #not normal
+# shapiro.test(rps_long_human_by_id$Human) #not normal
+# shapiro.test(rps_long_AI_by_id$Human) #not normal
+# shapiro.test(rps_long_none_by_id$`Human+AI`) #not normal
+# shapiro.test(rps_long_human_by_id$`Human+AI`) #not normal
+# shapiro.test(rps_long_AI_by_id$`Human+AI`) #not normal
+#other tests for normality - not needed because all data (above) isn't normal
+# m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
+# shapiro.test(residuals(m)) #not normal
+# 
+# m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
+# shapiro.test(residuals(m))#not normal
+# 
+# m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
+# shapiro.test(residuals(m))#not normal
+
+# print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
+print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
+print("and what does CMT p-value tell us?")
+
+# print(paste("CMT p-value (last5): ", as.character(mantelhaen.test(rps_last5_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
+# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
+print("Chi-Squared for group")
+chisq.test(rps_sum)
+# print("Chi-Squared for group (last5)")
+# chisq.test(rps_last5_sum)
+print("Chi Squared test not valid for individual participants because some expected values are < 5")
+
+# for (i in rps_ids){
+#   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
+# }
+# for (i in rps_ids){
+#   print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
+# }
+print("use fisher test instead")
+rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
+
+print("fisher test p-values: ")
+for (i in rps_ids){
+  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
+}
+
+# print("fisher test p-values (last5): ")
+# for (i in rps_ids){
+#   rps_fisher_test[rps_fisher_test$id==i,"Last5"] <- fisher.test(rps_last5_array[,,i])["p.value"]<0.05
+# }
+print ("RPS ID's which showed difference in choices by Adversary: ")
+rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
+rps_sum_showed_difference <- xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,])
+
+
+friedman.test(rps_sum) # need to check if this needs to be transposed (t(rps_sum))
+wilcox.test(rps_sum[-1,]) 
+wilcox.test(rps_sum[-2,])
+wilcox.test(rps_sum[-3,])
+
+
+friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
+friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
+friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
+
+# print("wilcox p-values not relevant for 3-level independent variable: " - is that true?
+# for (i in rps_ids){
+#   print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
+# }
+# print("CramerV phi: ")
+# m <- rowSums(rps_array, dims = 2)
+# cramerV(m)
+
+# print("mcnemar test p-values: ")
+# for (i in rps_ids){
+#   print(paste(i, as.character(mcnemar.test(rps_array[,,i])["p.value"])))
+# }
+
+#display summary
+rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
+rps_summary
+
+#rps_long_test converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
+rps_long_test <- rps_long
+substrRight <- function(x, n){
+substr(x, nchar(x)-n+1, nchar(x))
+}
+rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
+rps_long_test[rps_long_test$Round == "0",]$Round <- 10
+rps_long_test$Round <- as.integer(rps_long_test$Round)
+plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
+#create "by id" count tables
+
+
+
+# rps_long_test[order(rps_long_test$Round),]
+
+# contrasts(rps_long$Adversary) = contr.sum(3)
+# contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
+# naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
+# summary(naiveglm)
+# anova(naiveglm, test="Chisq")
+# Anova(naiveglm, type="III")
+# hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
+# summary(hoops)
+# Anova(hoops, type="III")
+# 
+# contrasts(rps_long_last5$Adversary) = contr.sum(3)
+# contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
+# naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
+# summary(naiveglm)
+# anova(naiveglm, test="Chisq")
+# Anova(naiveglm, type="III")
+# hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
+# summary(hoops)
+# Anova(hoops, type="III")
+
+
