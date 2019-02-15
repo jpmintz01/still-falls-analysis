@@ -11,6 +11,7 @@ library(tibble)
 library(caret)
 library(MASS)
 library(zoo)
+library(vcd)
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
@@ -819,7 +820,8 @@ rps_long_test$Round <- as.integer(rps_long_test$Round)
 plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
 #create "by id" count tables
 
-
+#non-binomial test?  for what?
+summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq") )
 
 # rps_long_test[order(rps_long_test$Round),]
 
