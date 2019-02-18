@@ -12,6 +12,7 @@ library(caret)
 library(MASS)
 library(zoo)
 library(vcd)
+library(neuralnet)
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
@@ -391,6 +392,8 @@ pw_all_data$other.decision <- NULL #delete other.decision column since it has no
 pw_all_data$X <- c(1:nrow(pw_all_data))
 #begin machine learning section
 predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
+
+lmFit_exp_2_10 <- train(my.decision~my.round1decision+my.decision1+other.decision1+period, data = pw_all_data[pw_all_data[pw_all_data$Adversary=="Human",]$period >=2,], method = 'glm', na.action = na.pass) #p_exp is as good as the bigger model below
 #this line below uses all_data to train static model
 lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
@@ -414,29 +417,49 @@ lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:d
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_4_10 <- predict(lmFit3, pw_all_data)
 levels(outcomes_4_10) <- c("Peace","War")
-# # test nnet  (meh, doesn't converge)
-# all_data_subset <- all_data[,c("my.decision","my.round1decision","my.decision1","other.decision1","period")]
-# all_data_subset$my.decision <- as.numeric(all_data_subset$my.decision)
-# all_data_subset$my.decision[all_data_subset$my.decision==2] <- 0
-# f <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+period")
-# all_data_subset <- na.omit(all_data_subset)
-# nn <- neuralnet(f,data=all_data_subset,hidden=3,linear.output=FALSE)
 
-
-#need to fix levels and stack outcome and outcomes
 r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
 o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
 t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
 u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
+r_exp <- data.frame(matrix(outcomes_exp_2_10, ncol=(nrow(pw_cols)/10)))
 q <- rbind(o,r,t,u)
 
+# # test nnet on pw_all_data
+pw_all_data_subset <- pw_all_data
+pw_all_data_subset$my.decision <- as.factor(pw_all_data_subset$my.decision)
+pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.decision))
+pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
+f <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+period")
+pw_all_data_sub_subset <- pw_all_data_subset[,c("my.round1decision","my.decision1","other.decision1","period")]
+nn_exp <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(2,2,2),act.fct = "logistic",linear.output=FALSE)
+pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset)$net.result
+pw_nn_output[is.na(pw_nn_output)] <- 1
+pw_nn_output_rounded <- round(pw_nn_output) #(is this the right function for classification?)
+pw_nn_outcome <- pw_nn_output_rounded
+
+#compute using history-2
+# f_2_10 <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+my.decision2+other.decision2+period")
+# pw_all_data_sub_subset_2_10 <- pw_all_data_subset[,c("my.round1decision","my.decision1","my.decision2","other.decision2","other.decision1","period")]
+# nn_exp_2_10 <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >2,],hidden=10,linear.output=FALSE)
+# pw_nn_output_2_10<- compute(nn_exp, pw_all_data_sub_subset)$net.result
+# pw_nn_output_2_10_rounded <- round(pw_nn_output_2_10) #(is this the right function for classification?)
+# pw_nn_output_2_10_rounded[is.na(pw_nn_output_2_10_rounded)] <- 1
+# pw_nn_outcome <- pw_nn_output_2_10_rounded
 
 p<-pw_all_data
 p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
 colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
 p$outcome <- as.factor(p$outcome)
-perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
 
+p <- add_column(p, pw_nn_outcome, .before = "risk") #insert nnet values into p
+colnames(p)[colnames(p) =="pw_nn_outcome"] <- "nnet"
+p$nnet <- as.factor(p$nnet)
+levels(p$nnet) <- c("War","Peace")
+
+perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
+perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
+perc_nnet_eq_actual
 
 row.names <- c("AI","Human","Human+AI")
 col.names <- c("Peace", "War")
