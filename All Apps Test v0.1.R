@@ -391,39 +391,39 @@ for (i in 2:10) {
 pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
 pw_all_data$X <- c(1:nrow(pw_all_data))
 #begin machine learning section
-predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
+# predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
 
-lmFit_exp_2_10 <- train(my.decision~my.round1decision+my.decision1+other.decision1+period, data = pw_all_data[pw_all_data[pw_all_data$Adversary=="Human",]$period >=2,], method = 'glm', na.action = na.pass) #p_exp is as good as the bigger model below
+# lmFit_exp_2_10 <- train(my.decision~my.round1decision+my.decision1+other.decision1+period, data = pw_all_data[pw_all_data[pw_all_data$Adversary=="Human",]$period >=2,], method = 'glm', na.action = na.pass) #p_exp is as good as the bigger model below
 #this line below uses all_data to train static model
-lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
+# lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
-outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
-levels(outcomes_1) <- c("Peace","War")
+# outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
+# levels(outcomes_1) <- c("Peace","War")
 #this line below uses all_data to train line 2 in the dynamic model (the first dynamic row) - could use something else
-lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
+# lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-outcomes_2 <- predict(lmFit1, pw_all_data)
-levels(outcomes_2) <- c("Peace","War")
+# outcomes_2 <- predict(lmFit1, pw_all_data)
+# levels(outcomes_2) <- c("Peace","War")
 
 #this line below uses all_data to train lines 3-10 in the dynamic model (the first dynamic row) - could use something else (can remove this since it only gains additional .5% in predictive power)
-lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
+# lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
 # lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-outcomes_3 <- predict(lmFit2, pw_all_data)
-levels(outcomes_3) <- c("Peace","War")
+# outcomes_3 <- predict(lmFit2, pw_all_data)
+# levels(outcomes_3) <- c("Peace","War")
 
-lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
+# lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
 # lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-outcomes_4_10 <- predict(lmFit3, pw_all_data)
-levels(outcomes_4_10) <- c("Peace","War")
+# outcomes_4_10 <- predict(lmFit3, pw_all_data)
+# levels(outcomes_4_10) <- c("Peace","War")
 
-r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
-o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
-t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
-u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
-r_exp <- data.frame(matrix(outcomes_exp_2_10, ncol=(nrow(pw_cols)/10)))
-q <- rbind(o,r,t,u)
+# r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
+# o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
+# t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
+# u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
+# r_exp <- data.frame(matrix(outcomes_exp_2_10, ncol=(nrow(pw_cols)/10)))
+# q <- rbind(o,r,t,u)
 
 # # test nnet on pw_all_data
 pw_all_data_subset <- pw_all_data
@@ -431,12 +431,16 @@ pw_all_data_subset$my.decision <- as.factor(pw_all_data_subset$my.decision)
 pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.decision))
 pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
 f <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+period")
+
+all_data_sub_sub
+nn_exp <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 pw_all_data_sub_subset <- pw_all_data_subset[,c("my.round1decision","my.decision1","other.decision1","period")]
-nn_exp <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(2,2,2),act.fct = "logistic",linear.output=FALSE)
-pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset)$net.result
+pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset[pw_all_data_subset$period >1,])$net.result
+# pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset[pw_all_data_subset$period >1,])$net.result
 pw_nn_output[is.na(pw_nn_output)] <- 1
 pw_nn_output_rounded <- round(pw_nn_output) #(is this the right function for classification?)
 pw_nn_outcome <- pw_nn_output_rounded
+# pw_nn_outcome <- c(round(rbind(matrix(rep(1, 84), nrow=1),matrix(pw_nn_output, nrow=9))))#test needed if training on only rounds 2-10
 
 #compute using history-2
 # f_2_10 <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+my.decision2+other.decision2+period")
@@ -448,22 +452,22 @@ pw_nn_outcome <- pw_nn_output_rounded
 # pw_nn_outcome <- pw_nn_output_2_10_rounded
 
 p<-pw_all_data
-p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
-colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
-p$outcome <- as.factor(p$outcome)
-
+# p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
+# colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
+# p$outcome <- as.factor(p$outcome)
+#
 p <- add_column(p, pw_nn_outcome, .before = "risk") #insert nnet values into p
 colnames(p)[colnames(p) =="pw_nn_outcome"] <- "nnet"
 p$nnet <- as.factor(p$nnet)
 levels(p$nnet) <- c("War","Peace")
-
-perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
+# 
+# perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
 perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
 perc_nnet_eq_actual
 
 row.names <- c("AI","Human","Human+AI")
 col.names <- c("Peace", "War")
-v<-p$outcome
+v<-p$nnet
 w<- arrange(pw_cols, id)
 x<- cbind(w, v)
 colnames(x)[colnames(x) =="v"] <- "Predicted"
@@ -736,7 +740,7 @@ pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.
 pw_summary
 pw_sum
 pw_pred_sum
-perc_pred_eq_actual
+perc_nnet_eq_actual
 
 print("PW Round 1 Friedman test")
 friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))
