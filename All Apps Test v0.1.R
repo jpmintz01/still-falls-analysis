@@ -190,8 +190,9 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 
 #-------------------runtime-------------------
 #choose and read the experiment data file
-filepath <- file.choose()
-datafile <- read.csv(filepath, header = TRUE, stringsAsFactors = FALSE)
+#filepath <- file.choose()
+exp_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_apps_wide_2019-01-21.csv"
+datafile <- read.csv(exp_data_file_path, header = TRUE, stringsAsFactors = FALSE)
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
 good_data <- stripFails(datafile) #strip the fails off the man datafile
 # good_data <- stripBadCols(datafile)
@@ -201,12 +202,32 @@ num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 num_rps_rounds <- new_data$session.config.num_RPS_rounds[[1]]
 
 #choose and readthe all_data data file
-filepath <- file.choose()
+#filepath <- file.choose()
+train_data_file_path <-"/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_data_train.csv"
 # #read the file with headers
-all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
+all_data <- read.csv(train_data_file_path, header = TRUE, stringsAsFactors = TRUE)
 
+time_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/TimeSpent (accessed 2019-01-21).csv"
+time_data <- read.csv(time_data_file_path, header = TRUE, stringsAsFactors = TRUE)
 
+#participant.label <-> participant.code decoder
+label_code <- as.data.frame(cbind(new_data$participant.label, new_data$participant.code))
+names(label_code) <- c("id", "code")
+#remove participants not in new_data
+time_data <- time_data[time_data$participant__code %in% label_code$code,]
+colnames(time_data)[colnames(time_data) == "participant__code"] <- "id"
+time_data$id <- factor(time_data$id)
 
+time_data$session_id <- NULL
+time_data$participant__id_in_session <- NULL
+time_data$subsession_pk <- NULL
+time_data$auto_submitted <- NULL
+time_data$time_stamp <- NULL
+time_data$id <- as.character(time_data$id)
+for (i in time_data$id) {
+  time_data$id[time_data$id == i] <- as.character(label_code[label_code$code == i,]$id)
+}
+time_data$id <- as.factor(time_data$id)
 #--------PEACE-WAR---------
 pw_ids <- subset(new_data, select=participant.label)
 pw_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_.*$', names(new_data))])
@@ -376,18 +397,23 @@ lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, 
 outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
 levels(outcomes_1) <- c("Peace","War")
 #this line below uses all_data to train line 2 in the dynamic model (the first dynamic row) - could use something else
-lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data, method = 'glm', na.action = na.pass)
+lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_2 <- predict(lmFit1, pw_all_data)
 levels(outcomes_2) <- c("Peace","War")
 
 #this line below uses all_data to train lines 3-10 in the dynamic model (the first dynamic row) - could use something else (can remove this since it only gains additional .5% in predictive power)
-lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data, method = 'glm', na.action = na.pass)
+lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
 # lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-outcomes_3_10 <- predict(lmFit2, pw_all_data)
-levels(outcomes_3_10) <- c("Peace","War")
+outcomes_3 <- predict(lmFit2, pw_all_data)
+levels(outcomes_3) <- c("Peace","War")
 
+lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
+# lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
+#this line below uses the dynamic model to predict all the rounds 2-10
+outcomes_4_10 <- predict(lmFit3, pw_all_data)
+levels(outcomes_4_10) <- c("Peace","War")
 # # test nnet  (meh, doesn't converge)
 # all_data_subset <- all_data[,c("my.decision","my.round1decision","my.decision1","other.decision1","period")]
 # all_data_subset$my.decision <- as.numeric(all_data_subset$my.decision)
@@ -400,8 +426,9 @@ levels(outcomes_3_10) <- c("Peace","War")
 #need to fix levels and stack outcome and outcomes
 r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
 o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
-t <- data.frame(matrix(outcomes_3_10, ncol=(nrow(pw_cols)/10)))
-q <- rbind(o,r,t)
+t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
+u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
+q <- rbind(o,r,t,u)
 
 
 p<-pw_all_data
@@ -846,3 +873,5 @@ summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChis
 # Anova(hoops, type="III")
 
 
+print("----------------time analysis-------------")
+boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
