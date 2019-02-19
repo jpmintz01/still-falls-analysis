@@ -13,6 +13,7 @@ library(MASS)
 library(zoo)
 library(vcd)
 library(neuralnet)
+
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
@@ -229,6 +230,8 @@ for (i in time_data$id) {
   time_data$id[time_data$id == i] <- as.character(label_code[label_code$code == i,]$id)
 }
 time_data$id <- as.factor(time_data$id)
+time_data[time_data$app_name == "prisoner_multiplayer_2",]$app_name <- "prisoner_multiplayer"
+
 #--------PEACE-WAR---------
 pw_ids <- subset(new_data, select=participant.label)
 pw_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_.*$', names(new_data))])
@@ -680,7 +683,20 @@ pw_all$Pred_perc_Peace <- pw_all$Pred/10
 #add a column for difference between obs&pred_perc
 #_------pw_all_data plus damo
 pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
-# write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+#-----------pw_all_data_with_demo adding time_data
+time_data_pw <- time_data[time_data$app_name =="prisoner_multiplayer",]
+time_data_pw_decision <- time_data_pw[time_data_pw$page_name == "Decision",c("id","seconds_on_page")]
+time_data_pw_decision$period <- rep(1:10, nrow(time_data_pw_decision)/10)
+pw_all_data_with_demo <- merge(pw_all_data_with_demo, time_data_pw_decision, c("id","period"))
+pw_all_data_with_demo <- pw_all_data_with_demo[,!names(pw_all_data_with_demo) %in% c("my.payoff1","my.payoff2","my.payoff3","my.payoff4","my.payoff5","my.payoff6","my.payoff7","my.payoff8","my.payoff9","other.payoff1","other.payoff2","other.payoff3","other.payoff4","other.payoff5","other.payoff6","other.payoff7","other.payoff8","other.payoff9","r","s","t","p","infin","contin","group","decision_time","data","error","r1","r2","risk","delta","X")] #remove unnecessary columns
+
+pw_all_data_with_demo$avg_time <- NA
+for (i in pw_ids) { #add average time by round by ID
+pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$seconds_on_page),10)
+}
+
+#write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+
 #--------------Data Visualization------------------
 #demo data visualization
 #ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
@@ -723,14 +739,14 @@ pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
 print("-----------PW analysis------------")
 print("tests for parametric assumptions")
 #tests on all Peace choices across all players
-shapiro.test(rowSums(pw_cols_peace_by_id)) #test for normality (#normal)
+print(shapiro.test(rowSums(pw_cols_peace_by_id))) #test for normality (#normal)
 #normality tests "by adversary"
-shapiro.test(pw_cols_peace_by_id$AI) #not normal
-shapiro.test(pw_cols_peace_by_id$Human) #normal
-shapiro.test(pw_cols_peace_by_id$`Human+AI`) #normal
+print(shapiro.test(pw_cols_peace_by_id$AI)) #not normal
+print(shapiro.test(pw_cols_peace_by_id$Human)) #normal
+print(shapiro.test(pw_cols_peace_by_id$`Human+AI`)) #normal
 
 m <- aov(Freq ~ Adversary, data = pw_cols_by_id[pw_cols_by_id$Choice=="Peace",])
-shapiro.test(residuals(m)) #not normal
+print(shapiro.test(residuals(m))) #not normal
 
 
 
@@ -763,13 +779,16 @@ shapiro.test(residuals(m)) #not normal
 # n <- rowSums(pw_array, dims = 2)
 # cramerV(n)
 pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
-pw_summary
-pw_sum
-pw_pred_sum
-perc_nnet_eq_actual
+print("P-W summary")
+print(pw_summary)
+print("P-W Aggregate Observed Choices")
+print(pw_sum)
+print("P-W Aggregate Predicted Choices")
+print(pw_pred_sum)
+print(paste("Percent Predicted choices == Observed: ", perc_nnet_eq_actual))
 
 print("PW Round 1 Friedman test")
-friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))
+print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
 
 print("PW Round 1 - id's of participants who varied their round 1 choice by adversary (at all): ")
 pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
@@ -777,6 +796,80 @@ for (i in pw_ids) {
   pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
 }
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
+
+print("Chi-sq (aggregate) on whether GENDER affected decision-making, by adversary")
+print(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1]))
+
+print("Chi-sq (aggregate) on whether SERVICE affected decision-making, by adversary")
+print(xtabs(~ Adversary + service + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + service + my.decision, data = pw_all_data_with_demo)[,,1]))
+
+print("Chi-sq (aggregate) on whether RANK affected decision-making, by adversary")
+print(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1]))
+
+print("Chi-sq (aggregate) on whether P-W PLAY ORDER (counterbalancing) affected decision-making:")
+print("in general")
+print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1])
+print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1]))
+print("by adversary")
+print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
+
+
+print("Chi-sq (aggregate) on whether AGE affected decision-making")
+number_parts_by_age <- prop.table(xtabs(~ age,data = pw_all_data_with_demo))*28
+print("in general - # of peace decisions by age")
+print(xtabs(~ age + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_age) #first xtabs is number of Peace decisions by age. prop.table is proportion of participants by age
+print(chisq.test(xtabs(~ age + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_age)) #note: trending significant that age made a difference in Warlike-ness
+print("by adversary")
+temp_matrix <- matrix(NA, nrow = 3, ncol = 12) #matrix of 
+temp_matrix[1,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[1,,1])/number_parts_by_age 
+temp_matrix[2,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[2,,1])/number_parts_by_age
+temp_matrix[3,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[3,,1])/number_parts_by_age
+print(chisq.test(temp_matrix)) #not significant that Age was related to differences in decision-making by adversary
+
+print("Chi-sq (aggregate) on whether YEARS MILITARY EXPERIENCE affected decision-making")
+number_parts_by_years <- prop.table(xtabs(~ years_military_experience,data = pw_all_data_with_demo))*28
+print("in general")
+print(xtabs(~ years_military_experience + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_years)#first xtabs is number of Peace decisions by age. prop.table is proportion of participants by age
+print(chisq.test(xtabs(~ years_military_experience + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_years)) #note: highly significant that years of military experience made a difference in Warlike-ness
+print("by adversary")
+temp_matrix <- matrix(NA, nrow = 3, ncol = length(number_parts_by_years)) #matrix of 
+temp_matrix[1,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[1,,1])/number_parts_by_years
+temp_matrix[2,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[2,,1])/number_parts_by_years
+temp_matrix[3,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[3,,1])/number_parts_by_years
+temp_matrix
+print(chisq.test(temp_matrix)) #not significant that years of military experience was related to differences in decision-making by adversary
+
+print("Chi-sq (aggregate) on whether SCHOOL affected decision-making, by adversary")
+print(xtabs(~ Adversary + school + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + school + my.decision, data = pw_all_data_with_demo)[,,1]))
+
+print("Chi-sq (aggregate) on whether ROUND1 decision was correlated to strategic decision-making, by adversary")
+print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])) #significant
+
+print("Chi-sq (aggregate) on whether GAME THEORY EXPERIENCE  affected decision-making, by adversary")
+print(xtabs(~ Adversary + game_theory_experience + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + game_theory_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
+
+print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary")
+print(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
+
+# print("anova on whether AVERAGE DECISION TIME was correlated to decision-making")
+# a <- pw_all_data_with_demo %>%
+#   group_by(id)%>%
+#   summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
+# a <- as.data.frame(a)
+# a
+# plot(x=a$Peace, y=a$avg)
+# m <- aov(Peace ~ avg, data =a)
+# summary(m)
+# boxplot(a$disp)
+
 
 #compares observed and predicted across all rounds, where groups are 
 # pw_cmh_array <- array(NA, dim = c(2,2,3), dimnames=list(c("Obs","Pred"), c("Peace","War"), c("AI","Human","Human+AI")))
@@ -826,18 +919,17 @@ shapiro.test(rowSums(rps_long_human_by_id)) #not normal
 # m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 # shapiro.test(residuals(m))#not normal
 
-# print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
+print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
+print("and what does Woolf p-value tell us?")
 print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
 print("and what does CMT p-value tell us?")
 
-# print(paste("CMT p-value (last5): ", as.character(mantelhaen.test(rps_last5_array)["p.value"])))
-# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
+
+#print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
 print("Chi-Squared for group")
 chisq.test(rps_sum)
-# print("Chi-Squared for group (last5)")
-# chisq.test(rps_last5_sum)
-print("Chi Squared test not valid for individual participants because some expected values are < 5")
+print("Chi Squared for individual participants -- not valid because some expected values are < 5")
 
 # for (i in rps_ids){
 #   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
@@ -853,37 +945,34 @@ for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 
-# print("fisher test p-values (last5): ")
-# for (i in rps_ids){
-#   rps_fisher_test[rps_fisher_test$id==i,"Last5"] <- fisher.test(rps_last5_array[,,i])["p.value"]<0.05
-# }
 print ("RPS ID's which showed difference in choices by Adversary: ")
 rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
 rps_sum_showed_difference <- xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,])
 
 
 friedman.test(rps_sum) # need to check if this needs to be transposed (t(rps_sum))
-wilcox.test(rps_sum[-1,]) 
-wilcox.test(rps_sum[-2,])
-wilcox.test(rps_sum[-3,])
+wilcox.test(rps_sum[-1,]) #wilcox test for HUman v HAI
+wilcox.test(rps_sum[-2,]) #wilcox test for AI v HAI
+wilcox.test(rps_sum[-3,]) #wilcox test for HUman v AI
 
 
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 
-# print("wilcox p-values not relevant for 3-level independent variable: " - is that true?
-# for (i in rps_ids){
-#   print(paste(i, as.character(wilcox.test(rps_array[,,i])["p.value"])))
-# }
+
 # print("CramerV phi: ")
 # m <- rowSums(rps_array, dims = 2)
 # cramerV(m)
 
-# print("mcnemar test p-values: ")
-# for (i in rps_ids){
-#   print(paste(i, as.character(mcnemar.test(rps_array[,,i])["p.value"])))
-# }
+print("mcnemar test: participants who showed a significant difference in RPS decision-making ")
+for (i in rps_ids){
+  temp_n <- mcnemar.test(rps_array[,,i])["p.value"]
+  if (!is.na(temp_n) && temp_n < 0.05) {
+    print(i)
+  } 
+}
+
 
 #display summary
 rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
@@ -900,31 +989,8 @@ rps_long_test$Round <- as.integer(rps_long_test$Round)
 plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
 #create "by id" count tables
 
-#non-binomial test?  for what?
+#non-binomial test? 
 summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq") )
-
-# rps_long_test[order(rps_long_test$Round),]
-
-# contrasts(rps_long$Adversary) = contr.sum(3)
-# contrasts(rps_long$Choice_of_Advisor) = contr.sum(3)
-# naiveglm = glm(rps_long$Choice_of_Advisor ~ rps_long$Adversary, family=binomial)
-# summary(naiveglm)
-# anova(naiveglm, test="Chisq")
-# Anova(naiveglm, type="III")
-# hoops =  glmer(rps_long$Choice_of_Advisor ~ rps_long$Adversary + (1 | rps_long$id), family=binomial)
-# summary(hoops)
-# Anova(hoops, type="III")
-# 
-# contrasts(rps_long_last5$Adversary) = contr.sum(3)
-# contrasts(rps_long_last5$Choice_of_Advisor) = contr.sum(3)
-# naiveglm = glm(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary, family=binomial)
-# summary(naiveglm)
-# anova(naiveglm, test="Chisq")
-# Anova(naiveglm, type="III")
-# hoops =  glmer(rps_long_last5$Choice_of_Advisor ~ rps_long_last5$Adversary + (1 | rps_long_last5$id), family=binomial)
-# summary(hoops)
-# Anova(hoops, type="III")
-
 
 print("----------------time analysis-------------")
 boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
