@@ -435,7 +435,7 @@ pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.dec
 pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
 predictors <- c("my.round1decision","my.decision1","other.decision1","period")
 formula_my <- "my.decision~"
-formula_predictors <- paste(predictor[1:length(predictors)], collapse="+")
+formula_predictors <- paste(predictors[1:length(predictors)], collapse="+")
 f <- as.formula(paste(formula_my, formula_predictors))
 
 #train/tst
@@ -737,9 +737,16 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 
 
 print("-----------PW analysis------------")
+
+print("P-W Aggregate Observed Choices")
+print(pw_sum)
+pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
+print("P-W summary")
+print(pw_summary)
+
 print("tests for parametric assumptions")
 #tests on all Peace choices across all players
-print(shapiro.test(rowSums(pw_cols_peace_by_id))) #test for normality (#normal)
+print(shapiro.test(rowSums(pw_cols_peace_by_id)))#test for normality (#normal)
 #normality tests "by adversary"
 print(shapiro.test(pw_cols_peace_by_id$AI)) #not normal
 print(shapiro.test(pw_cols_peace_by_id$Human)) #normal
@@ -748,10 +755,7 @@ print(shapiro.test(pw_cols_peace_by_id$`Human+AI`)) #normal
 m <- aov(Freq ~ Adversary, data = pw_cols_by_id[pw_cols_by_id$Choice=="Peace",])
 print(shapiro.test(residuals(m))) #not normal
 
-
-
-
-
+plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
 
 #print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_array)["p.value"])))
@@ -778,19 +782,16 @@ print(shapiro.test(residuals(m))) #not normal
 # print("CramerV phi: ")
 # n <- rowSums(pw_array, dims = 2)
 # cramerV(n)
-pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
-print("P-W summary")
-print(pw_summary)
-print("P-W Aggregate Observed Choices")
-print(pw_sum)
-print("P-W Aggregate Predicted Choices")
-print(pw_pred_sum)
-print(paste("Percent Predicted choices == Observed: ", perc_nnet_eq_actual))
 
-print("PW Round 1 Friedman test")
+print("PW Round 1 Tests")
+print("PW Round 1: Chi-Sq test")
+print(pw_round_1s_sum)
+print(chisq.test(pw_round_1s_sum))
+
+print("PW Round 1: Friedman test")
 print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
 
-print("PW Round 1 - id's of participants who varied their round 1 choice by adversary (at all): ")
+print("PW Round 1: Simple Count - id's of participants who varied their round 1 choice by adversary (at all): ")
 pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
 for (i in pw_ids) {
   pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
@@ -859,36 +860,28 @@ print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by
 print(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
 
-# print("anova on whether AVERAGE DECISION TIME was correlated to decision-making")
-# a <- pw_all_data_with_demo %>%
-#   group_by(id)%>%
-#   summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
-# a <- as.data.frame(a)
-# a
-# plot(x=a$Peace, y=a$avg)
-# m <- aov(Peace ~ avg, data =a)
-# summary(m)
-# boxplot(a$disp)
+print("anova on whether AVERAGE DECISION TIME was correlated to decision-making")
+a <- pw_all_data_with_demo %>%
+  group_by(id)%>%
+  summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
+a <- as.data.frame(a)
+a
+plot(x=a$Peace, y=a$avg)
+m <- aov(Peace ~ avg, data =a)
+summary(m)
+boxplot(a$disp)
 
 
-#compares observed and predicted across all rounds, where groups are 
-# pw_cmh_array <- array(NA, dim = c(2,2,3), dimnames=list(c("Obs","Pred"), c("Peace","War"), c("AI","Human","Human+AI")))
-# pw_cmh_array[1,,1] <- rowSums(pw_array, dims=2)[1,]
-# pw_cmh_array[1,,2] <- rowSums(pw_array, dims=2)[2,]
-# pw_cmh_array[1,,3] <- rowSums(pw_array, dims=2)[3,]
-# pw_cmh_array[2,,1] <- rowSums(pw_pred_array, dims=2)[1,]
-# pw_cmh_array[2,,2] <- rowSums(pw_pred_array, dims=2)[2,]
-# pw_cmh_array[2,,3] <- rowSums(pw_pred_array, dims=2)[3,]
-# mantelhaen.test(pw_cmh_array) 
-# print("which array dim does this CMH test for a difference across?")
 
 # these are the players who played "strategically" (not a fixed strategy, and did not indicate non-belief)
 # pw_played <- c("yyj35","yda14", "w9c21", "v6i85", "txk36", "n1i23", "i5b85", "h0s22", "b8g12", "b1462", "9mp31", "8mh76", "3z144")
 # pw_array_played <- pw_array[,,pw_played]
 # pw_pred_array_played <- pw_pred_array[,,pw_played]
 
-plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
 
+print("P-W Aggregate Predicted Choices")
+print(pw_pred_sum)
+print(paste("Percent Predicted choices == Observed: ", perc_nnet_eq_actual))
 
 print("-----------RPS analysis------------")
 print("tests for normality")
