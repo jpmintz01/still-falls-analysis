@@ -430,13 +430,39 @@ pw_all_data_subset <- pw_all_data
 pw_all_data_subset$my.decision <- as.factor(pw_all_data_subset$my.decision)
 pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.decision))
 pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
-f <- as.formula("my.decision~my.round1decision+my.decision1+other.decision1+period")
+predictors <- c("my.round1decision","my.decision1","other.decision1","period")
+formula_my <- "my.decision~"
+formula_predictors <- paste(predictor[1:length(predictors)], collapse="+")
+f <- as.formula(paste(formula_my, formula_predictors))
 
-all_data_sub_sub
-nn_exp <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
-pw_all_data_sub_subset <- pw_all_data_subset[,c("my.round1decision","my.decision1","other.decision1","period")]
-pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset[pw_all_data_subset$period >1,])$net.result
-# pw_nn_output<- compute(nn_exp, pw_all_data_sub_subset[pw_all_data_subset$period >1,])$net.result
+#train/tst
+# all_data_subset <- all_data
+# all_data_subset$my.decision <- as.factor(all_data_subset$my.decision)
+# all_data_subset$my.decision <- as.numeric(as.factor(all_data_subset$my.decision))
+# all_data_subset$my.decision[all_data_subset$my.decision==2] <- 0
+# all_data_train <- all_data_subset[1:(nrow(all_data_subset)*.7),]
+# all_data_test <- all_data_subset[(nrow(all_data_subset)*.7+1):nrow(all_data_subset)+1,]
+# all_data_test <- all_data_test[,predictors]
+
+
+# pw_all_data$my.decision <- as.numeric(as.factor(pw_all_data$my.decision))
+# pw_all_data$my.decision <- pw_all_data$my.decision+1
+# pw_all_data$my.round1decision <- pw_all_data$my.round1decision+1
+# pw_all_data$my.decision1 <- pw_all_data$my.decision1+1
+# pw_all_data[is.na(pw_all_data$my.decision1),]$my.decision1 <- 0
+# pw_all_data$other.decision1 <- pw_all_data$other.decision1+1 
+# pw_all_data[is.na(pw_all_data$other.decision1),]$other.decision1 <- 0
+# pw_all_data_subset <-pw_all_data
+
+nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+# nn_test <- neuralnet(f,data=pw_all_data_subset,hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+
+# nn_exp_all_data_test <- neuralnet(f,data=all_data_train[all_data_train$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+pw_all_data_sub_subset <- pw_all_data_subset[,predictors]
+pw_nn_output<- compute(nn, pw_all_data_sub_subset)$net.result
+#this is just a test round here
+# all_data_nn_output_test<- compute(nn_exp, all_data_test[all_data_test$period >1,])$net.result
+# all_data_nn_output_test<- compute(nn_exp_all_data_test, all_data_test[all_data_test$period >1,])$net.result
 pw_nn_output[is.na(pw_nn_output)] <- 1
 pw_nn_output_rounded <- round(pw_nn_output) #(is this the right function for classification?)
 pw_nn_outcome <- pw_nn_output_rounded
