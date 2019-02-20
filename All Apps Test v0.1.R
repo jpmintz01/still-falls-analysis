@@ -393,40 +393,41 @@ for (i in 2:10) {
 }
 pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
 pw_all_data$X <- c(1:nrow(pw_all_data))
-#begin machine learning section
-# predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
+#begin machine learning (generalized linear model) section
+predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
 
 # lmFit_exp_2_10 <- train(my.decision~my.round1decision+my.decision1+other.decision1+period, data = pw_all_data[pw_all_data[pw_all_data$Adversary=="Human",]$period >=2,], method = 'glm', na.action = na.pass) #p_exp is as good as the bigger model below
 #this line below uses all_data to train static model
-# lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
+lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
-# outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
-# levels(outcomes_1) <- c("Peace","War")
+outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
+levels(outcomes_1) <- c("Peace","War")
 #this line below uses all_data to train line 2 in the dynamic model (the first dynamic row) - could use something else
-# lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
+lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-# outcomes_2 <- predict(lmFit1, pw_all_data)
-# levels(outcomes_2) <- c("Peace","War")
+outcomes_2 <- predict(lmFit1, pw_all_data)
+levels(outcomes_2) <- c("Peace","War")
 
 #this line below uses all_data to train lines 3-10 in the dynamic model (the first dynamic row) - could use something else (can remove this since it only gains additional .5% in predictive power)
-# lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
+lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
+lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
+#this line below uses the dynamic model to predict all the rounds 2-10
+outcomes_3 <- predict(lmFit2, pw_all_data)
+levels(outcomes_3) <- c("Peace","War")
+
+lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
 # lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
-# outcomes_3 <- predict(lmFit2, pw_all_data)
-# levels(outcomes_3) <- c("Peace","War")
+outcomes_4_10 <- predict(lmFit3, pw_all_data)
+levels(outcomes_4_10) <- c("Peace","War")
 
-# lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
-# lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
-#this line below uses the dynamic model to predict all the rounds 2-10
-# outcomes_4_10 <- predict(lmFit3, pw_all_data)
-# levels(outcomes_4_10) <- c("Peace","War")
-
-# r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
-# o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
-# t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
-# u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
+r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
+o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
+t <- data.frame(matrix(outcomes_3, ncol=(nrow(pw_cols)/10)))[1,]
+u <- data.frame(matrix(outcomes_4_10, ncol=(nrow(pw_cols)/10)))
 # r_exp <- data.frame(matrix(outcomes_exp_2_10, ncol=(nrow(pw_cols)/10)))
-# q <- rbind(o,r,t,u)
+q <- rbind(o,r,t,u)
+q<-gather(q)
 
 # # test nnet on pw_all_data
 pw_all_data_subset <- pw_all_data
@@ -458,17 +459,22 @@ f <- as.formula(paste(formula_my, formula_predictors))
 # pw_all_data_subset <-pw_all_data
 
 nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+# pw_all_data_subset_human <- pw_all_data_subset[pw_all_data$Adversary=="Human",]
+# nn_test_only_human <- neuralnet(f,data=pw_all_data_subset_human[pw_all_data_subset_human$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 # nn_test <- neuralnet(f,data=pw_all_data_subset,hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 
 # nn_exp_all_data_test <- neuralnet(f,data=all_data_train[all_data_train$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 pw_all_data_sub_subset <- pw_all_data_subset[,predictors]
 pw_nn_output<- compute(nn, pw_all_data_sub_subset)$net.result
+# pw_nn_output<- compute(nn_test_only_human, pw_all_data_sub_subset)$net.result
 #this is just a test round here
 # all_data_nn_output_test<- compute(nn_exp, all_data_test[all_data_test$period >1,])$net.result
 # all_data_nn_output_test<- compute(nn_exp_all_data_test, all_data_test[all_data_test$period >1,])$net.result
 pw_nn_output[is.na(pw_nn_output)] <- 1
 pw_nn_output_rounded <- round(pw_nn_output) #(is this the right function for classification?)
 pw_nn_outcome <- pw_nn_output_rounded
+pw_nn_outcome[pw_nn_outcome ==1]<-"Peace"
+pw_nn_outcome[pw_nn_outcome ==0]<-"War"
 # pw_nn_outcome <- c(round(rbind(matrix(rep(1, 84), nrow=1),matrix(pw_nn_output, nrow=9))))#test needed if training on only rounds 2-10
 
 #compute using history-2
@@ -485,40 +491,56 @@ p<-pw_all_data
 # colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
 # p$outcome <- as.factor(p$outcome)
 #
+
 p <- add_column(p, pw_nn_outcome, .before = "risk") #insert nnet values into p
 colnames(p)[colnames(p) =="pw_nn_outcome"] <- "nnet"
 p$nnet <- as.factor(p$nnet)
-levels(p$nnet) <- c("War","Peace")
-# 
-# perc_pred_eq_actual <- length(which(p$outcome == p$my.decision))/nrow(p)
-perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
-perc_nnet_eq_actual
+levels(p$nnet) <- c("Peace","War")
 
-row.names <- c("AI","Human","Human+AI")
-col.names <- c("Peace", "War")
-v<-p$nnet
-w<- arrange(pw_cols, id)
-x<- cbind(w, v)
-colnames(x)[colnames(x) =="v"] <- "Predicted"
+p <- add_column(p, q$value, .after = "nnet") #insert nnet values into p
+colnames(p)[colnames(p) =="q$value"] <- "GLM"
+p$GLM <- as.factor(p$GLM)
+levels(p$GLM) <- c("Peace","War")
+
+p$my.decision <- as.factor(p$my.decision)
+# 
+
+# row.names <- c("AI","Human","Human+AI")
+# col.names <- c("Peace", "War")
+# v<-p$nnet
+# w<- arrange(pw_cols, id)
+# x<- cbind(w, v)
+# colnames(x)[colnames(x) =="v"] <- "Predicted"
 #can i use xtabs here better than this for-loop nonsense?
-pw_pred_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
-for (i in pw_ids) {
-  a <- subset(x, id==i)
-  for (j in Adversary_list) {
-    b <- subset (a, Adversary==j)
-    for (k in Choice_list){
-      pw_pred_array[j,k,i] <- sum(b$Predicted==k)
-    }
-  }
-}
-v<- pw_array-pw_pred_array
-w<- rowSums(v, dims = 2)
-x<- pw_array/pw_pred_array
-pw_pred_sum <- rowSums(pw_pred_array, dims =2)
+pw_nnet_array <- xtabs(~Adversary + nnet + id, data=p)
+pw_GLM_array <- xtabs(~Adversary + GLM + id, data=p)
+
+# pw_pred_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
+# for (i in pw_ids) {
+#   a <- subset(x, id==i)
+#   for (j in Adversary_list) {
+#     b <- subset (a, Adversary==j)
+#     for (k in Choice_list){
+#       pw_pred_array[j,k,i] <- sum(b$Predicted==k)
+#     }
+#   }
+# }
+# v<- pw_array-pw_pred_array
+# w<- rowSums(v, dims = 2)
+
+# x<- pw_array/pw_pred_array
+pw_nnet_sum <- rowSums(pw_nnet_array, dims =2)
+pw_GLM_sum <- rowSums(pw_GLM_array, dims =2)
 pw_sum <- rowSums(pw_array, dims=2)
-pw_sum_pred_peace <- pw_sum
-pw_sum_pred_peace[,2] <- pw_pred_sum[,1]
-colnames(pw_sum_pred_peace) <- c("Obs","Pred")
+
+#creates a matrix of Observed vs predicted
+pw_pred_actual_sum <- matrix(NA, nrow=3, ncol = 3)
+colnames(pw_pred_actual_sum) <- c("Obs","nnet", "GLM")
+rownames(pw_pred_actual_sum) <- rownames(pw_sum)
+pw_pred_actual_sum[,1] <- pw_sum[,1]
+pw_pred_actual_sum[,2] <- pw_nnet_sum[,1]
+pw_pred_actual_sum[,3] <- pw_GLM_sum[,1]
+
 pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",]))
 pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols))
 
@@ -553,13 +575,8 @@ game_order_rps <-2-(3-new_data$session.config.pw_counterbalance%%2)%%2  #will be
 #4 - HAI, H, AU (213)
 #5 - AI, H, HAI (312)
 #6 - AI, HAI, H (321)
-get_adv_order_rps <- function (data, colname) {#unused now -  add if needed to 
-  H_order #1 2 or 3
-  HAI_order #1,2, or 3
-  AI_order #1, 2, or 3
-}
 game_treatment_order_rps <- 2-(3-new_data$session.config.pw_counterbalance%%2)%%2
-adv_treatment_order_rps <- 0
+# adv_treatment_order_rps <- 0
   
 names(a)[1] <- "id"
 df_types = melt(a, id="id", measure=list_of_type_cols)
@@ -574,62 +591,30 @@ names(rps_long)[4] <- "Choice_of_Advisor"
 rps_long$Round <- gsub(pattern=".adv_1_type", replacement="",x=rps_long$Round)
 rps_long$Round <- as.integer(rps_long$Round)
 rps_long$Adversary <- as.factor(rps_long$Adversary)
-rps_sum <- table(rps_long$Adversary,rps_long$Choice_of_Advisor)
-rps_prop <- prop.table(rps_sum)*100
+# rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_long)
+# rps_prop <- prop.table(rps_sum)*100
 rps_ids <- levels(rps_long$id)
-rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long) #more R-like way of creating rps_array than the next ten or so lines
-rps_long_last5 <- rps_long[rps_long$Round %in% c(1:5,11:15,21:25),]
-rps_last5_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long_last5)
-rps_last5_sum <- rowSums(rps_last5_array, dims=2)
-#last five rounds only
+rps_array <- xtabs(~Adversary+Choice_of_Advisor+id, data=rps_long)
+
 row.names <- c("AI","Human","Human+AI")
 col.names <- c("AI", "human", "none")
-# rps_array <- array(NA, dim = c(3,3,length(rps_ids)), dimnames=list(row.names, col.names, rps_ids))
-#creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
+
 Adversary_list <- c("AI","Human","Human+AI")
 Advisor_list <- c("AI", "human", "none")
-# for (i in rps_ids) {
-#   a <- subset(rps_long, id==i)
-#   for (j in Adversary_list) {
-#     b <- subset (a, Adversary==j)
-#     for (k in Advisor_list){
-#       rps_array[j,k,i] <- sum(b$Choice_of_Advisor==k)
-#     }
-#   }
-# }
-# rps_HvAI_array <- rps_array[-3,,] 
-# rownames(rps_HvAI_array)[1:2] <- rownames(rps_HvAI_array)[2:1] #swap rownames
-# rps_HvAI_array[1:2,,] <- rps_HvAI_array[2:1,,] #swap row values (to make Human first)
-# rps_HvHAI_array <- rps_array[-1,,]
-#   print(i)
-#   a <- count(subset(rps_long, id==i),id, Adversary, Choice_of_Advisor)
-#   print(a)
-#   b <- spread(a, Choice_of_Advisor, n)
-#   print(b)
-#   c <- b[,3:5]
-#   print(c)
-#   print(data.matrix(c))
-#   rps_array[,,i] <- data.matrix(c)
-# }
-# rps_array[is.na(rps_array)] <- 0
-# ftable(rps_array) #from stats
 
-#note: subset(subset(rps_long, id=="2r212l3b"), Adversary=="Human")
-#note: subset(subset(rps_long, id=="2r212l3b"), Adversary=="Human")$Choice_of_Advisor
-#note: sum(subset(subset(rps_long, id=="2r212l3b"), Adversary=="Human")=="human")/num_rps_rounds
-
-#df[,"pw_Peace_human"] <- rowsums(pw_vs_human=="Peace")
-# df[,"pw_human"] <- rowSums(pw_vs_human=="Peace")/num_pw_rounds
-# df[,"pw_hai"] <- rowSums(pw_vs_hai=="Peace")/num_pw_rounds
-# df[,"pw_ai"] <- rowSums(pw_vs_ai=="Peace")/num_pw_rounds
-# df[,"rps_none_total"] <- rowSums(rps_cols=="none")/(3*num_rps_rounds)
-# df[,"rps_human_total"] <- rowSums(rps_cols=="human")/(3*num_rps_rounds)
-# df[,"rps_ai_total"] <- rowSums(rps_cols=="AI")/(3*num_rps_rounds)
-# df[,"rps_hexp_v_hadv"] <- rowSums(rps_cols=="Peace")/num_pw_rounds
 rps_long_none_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="none",]))
 rps_long_AI_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="AI",]))
 rps_long_human_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = rps_long[rps_long$Choice_of_Advisor=="human",]))
 rps_long_by_id <- as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_long))
+
+#rps_long_ten_rounds converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
+rps_long_ten_rounds <- rps_long
+substrRight <- function(x, n){ #keep this function for later uses even if your delete rps_long_ten_rounds
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+rps_long_ten_rounds$Round <- substrRight(rps_long_ten_rounds$Round, 1)
+rps_long_ten_rounds[rps_long_ten_rounds$Round == "0",]$Round <- 10
+rps_long_ten_rounds$Round <- as.integer(rps_long_ten_rounds$Round)
 
 #---------------Demographic Info Pull----------------------
 demo_ids <- subset(new_data, select=participant.label) #
@@ -662,28 +647,40 @@ demo_relevant_data <- demo_data[,c("id","pw_order","rps_order","age","gender","s
 
 
 ##--------------combined data---------------------
-##-----RPS w/demographic------
-melted_rps <- melt(rps_array)
-colnames(melted_rps) <- c("Adversary","Choice_of_Advisor","id","value")
-rps_all <- merge(melted_rps, demo_relevant_data, by="id")
-# rps_all <- separate(rps_all, rps_order, c("RPS1st","RPS2nd","RPS3rd"), sep=c(1,2), remove=FALSE)
+##-----RPS w/demographic & time------
+
+rps_all_data_with_demo <- merge(rps_long, demo_relevant_data, by="id")
+
+time_data_rps <- time_data[time_data$app_name =="rps",]
+time_data_rps_decision <- time_data_rps[time_data_rps$page_name == "Decision",c("id","seconds_on_page")]
+time_data_rps_decision$Round <- rep(1:30, nrow(time_data_rps_decision)/30)
+rps_all_data_with_demo <- merge(rps_all_data_with_demo, time_data_rps_decision, c("id","Round"))
+
+rps_all_data_with_demo$avg_time <- NA
+for (i in rps_ids) { #add average time by round by ID
+  rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$avg_time <- rep(mean(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$seconds_on_page),10)
+}
+
+#rps_long_ten_rounds converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
+rps_all_data_with_demo$Round <- substrRight(rps_all_data_with_demo$Round, 1)
+rps_all_data_with_demo[rps_all_data_with_demo$Round == "0",]$Round <- 10
+rps_all_data_with_demo$Round <- as.integer(rps_all_data_with_demo$Round)
 
 
 ##-----PW w/demographic-------
-melted_pw <- melt(pw_array)
-melted_pw_pred <- melt(pw_pred_array)
-colnames(melted_pw) <- c("Adversary","Choice","id","value")
-colnames(melted_pw_pred) <- c("Adversary","Choice","id","pred_value")
-merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
-pw_all <- merge(merged_pw, demo_relevant_data, by="id")
-colnames(pw_all)[colnames(pw_all)=="value"] <- "Obs"
-colnames(pw_all)[colnames(pw_all)=="pred_value"] <- "Pred"
-pw_all$Obs_perc_Peace <- pw_all$Obs/10
-pw_all$Pred_perc_Peace <- pw_all$Pred/10
+# melted_pw <- melt(pw_array)
+# melted_pw_pred <- melt(pw_pred_array)
+# colnames(melted_pw) <- c("Adversary","Choice","id","value")
+# colnames(melted_pw_pred) <- c("Adversary","Choice","id","pred_value")
+# merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
+# pw_all <- merge(merged_pw, demo_relevant_data, by="id")
+# colnames(pw_all)[colnames(pw_all)=="value"] <- "Obs"
+# colnames(pw_all)[colnames(pw_all)=="pred_value"] <- "Pred"
+# pw_all$Obs_perc_Peace <- pw_all$Obs/10
+# pw_all$Pred_perc_Peace <- pw_all$Pred/10
 #add a column for difference between obs&pred_perc
-#_------pw_all_data plus damo
+#_------pw_all_data plus demo & time data
 pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
-#-----------pw_all_data_with_demo adding time_data
 time_data_pw <- time_data[time_data$app_name =="prisoner_multiplayer",]
 time_data_pw_decision <- time_data_pw[time_data_pw$page_name == "Decision",c("id","seconds_on_page")]
 time_data_pw_decision$period <- rep(1:10, nrow(time_data_pw_decision)/10)
@@ -740,9 +737,9 @@ print("-----------PW analysis------------")
 
 print("P-W Aggregate Observed Choices")
 print(pw_sum)
-pw_summary <- ddply(pw_all, ~Adversary+Choice, summarise, Obs.sum=sum(Obs), Obs.mean=mean(Obs), Obs.sd=sd(Obs), Pred.sum=sum(Pred), Pred.mean=mean(Pred), Pred.sd=sd(Pred))
-print("P-W summary")
-print(pw_summary)
+# pw_summary <- ddply(pw_all_data_with_demo, ~Adversary+my.decision, summarise, Obs.sum=sum('my.decision'), Obs.mean=mean('my.decision'), Obs.sd=sd('my.decision'), nnet.sum=sum(nnet), nnet.mean=mean(nnet), nnet.sd=sd(nnet))
+# print("P-W summary")
+# print(pw_summary)
 
 print("tests for parametric assumptions")
 #tests on all Peace choices across all players
@@ -869,7 +866,7 @@ a
 plot(x=a$Peace, y=a$avg)
 m <- aov(Peace ~ avg, data =a)
 summary(m)
-boxplot(a$disp)
+boxplot(a$Peace)
 
 
 
@@ -879,11 +876,22 @@ boxplot(a$disp)
 # pw_pred_array_played <- pw_pred_array[,,pw_played]
 
 
-print("P-W Aggregate Predicted Choices")
-print(pw_pred_sum)
+print("P-W Aggregate Predictions Choices")
+print(pw_pred_actual_sum)
+
 print(paste("Percent Predicted choices == Observed: ", perc_nnet_eq_actual))
+perc_GLM_eq_actual <- length(which(p$GLM == p$my.decision))/nrow(p)
+print(perc_GLM_eq_actual)
+perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
+perc_nnet_eq_actual
+
 
 print("-----------RPS analysis------------")
+
+rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo)
+rps_prop <- round(prop.table(rps_sum)*100, 1)
+
+
 print("tests for normality")
 #tests on all "none" choices across all players
 shapiro.test(rowSums(rps_long_none_by_id))#not normal
@@ -912,47 +920,42 @@ shapiro.test(rowSums(rps_long_human_by_id)) #not normal
 # m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 # shapiro.test(residuals(m))#not normal
 
-print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
-print("and what does Woolf p-value tell us?")
-print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_array)["p.value"])))
-print("and what does CMT p-value tell us?")
+#video #9 (tests of proportions)
+print("RPS: Tests of proportions on AGGREGATE choices")
+print(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
+# xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)
+chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
+GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq
+fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#exact test gives exact p-value
+print("do I need to do post-hoc binomial tests w/holm correction?")
 
+# "Chi Squared for individual participants -- not valid because some expected values are < 5"
+#using fisher test instead)
 
-#print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvAI_array)["p.value"])))
-# print(paste("CMT p-value: ", as.character(mantelhaen.test(rps_HvHAI_array)["p.value"])))
-print("Chi-Squared for group")
-chisq.test(rps_sum)
-print("Chi Squared for individual participants -- not valid because some expected values are < 5")
-
-# for (i in rps_ids){
-#   print(paste(i, as.character(chisq.test(rps_HvAI_array[,,i])["p.value"])))
-# }
-# for (i in rps_ids){
-#   print(paste(i, as.character(chisq.test(rps_HvHAI_array[,,i])["p.value"])))
-# }
-print("use fisher test instead")
+print("RPS: Individual Fisher test (since Chisq invalid with expected values<0")
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
-
-print("fisher test p-values: ")
+#"fisher test p-values
 for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 
 print ("RPS ID's which showed difference in choices by Adversary: ")
-rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-rps_sum_showed_difference <- xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,])
+print(rps_fisher_test[rps_fisher_test$All=="TRUE",]$id)
+print("summary choices of those who showed significant fisher test")
+print(xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]))
 
 
 friedman.test(rps_sum) # need to check if this needs to be transposed (t(rps_sum))
-wilcox.test(rps_sum[-1,]) #wilcox test for HUman v HAI
-wilcox.test(rps_sum[-2,]) #wilcox test for AI v HAI
-wilcox.test(rps_sum[-3,]) #wilcox test for HUman v AI
-
-
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
+# am I doing this right? or should it be like this:
+#friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 
+#Use Wilcox tests as 2-level post-hoc
+wilcox.test(rps_sum[-1,]) #wilcox test for HUman v HAI
+wilcox.test(rps_sum[-2,]) #wilcox test for AI v HAI
+wilcox.test(rps_sum[-3,]) #wilcox test for HUman v AI
 
 # print("CramerV phi: ")
 # m <- rowSums(rps_array, dims = 2)
@@ -971,15 +974,8 @@ for (i in rps_ids){
 rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
 rps_summary
 
-#rps_long_test converts rounds from 1-30 to 1-10 for all players, regardless of counterbalncing order
-rps_long_test <- rps_long
-substrRight <- function(x, n){
-substr(x, nchar(x)-n+1, nchar(x))
-}
-rps_long_test$Round <- substrRight(rps_long_test$Round, 1)
-rps_long_test[rps_long_test$Round == "0",]$Round <- 10
-rps_long_test$Round <- as.integer(rps_long_test$Round)
-plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_test), main="RPS Choices by Round")
+
+plot(xtabs(~ Round + Choice_of_Advisor, data = rps_long_ten_rounds), main="RPS Choices by Round")
 #create "by id" count tables
 
 #non-binomial test? 
