@@ -881,16 +881,28 @@ boxplot(a$Peace)
 print("P-W Aggregate Predictions Choices")
 print(pw_pred_actual_sum)
 
-print(paste("Percent Predicted choices == Observed: ", perc_nnet_eq_actual))
-perc_GLM_eq_actual <- length(which(p$GLM == p$my.decision))/nrow(p)
-print(perc_GLM_eq_actual)
 perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
-perc_nnet_eq_actual
+print(paste("Percent NNET Predicted choices == Observed: ", perc_nnet_eq_actual))
+perc_GLM_eq_actual <- length(which(p$GLM == p$my.decision))/nrow(p)
+
+print(paste("Percent GLM Predicted choices == Observed: ", perc_GLM_eq_actual))
+
+
+
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
 ggplot(data=pw_df, aes(x=period, y=Freq, group="Adversary"))+  geom_line(aes(color=Adversary))+  geom_point(aes(color=Adversary)) + labs(title="Peace Choices by Round",x="Round", y = "# of Choices", color = "Adversary")+geom_smooth(method='lm',formula=y~x, aes(group=Adversary, color=Adversary))#or use method="lm"
 #the amount of cooperation (Peace Choices) went down similarly (at almost exactly the same rate) against ALL ADVERSARY TYPES
+pw_df_1<- as.data.frame(xtabs(~my.decision + Adversary+id, data=pw_all_data_with_demo))
+pw_df_1 <- pw_df_1[pw_df_1$my.decision=="Peace",]
+ggplot(pw_df_1, aes(x=Freq))+
+  geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
+  geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
+  geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3)+
+  stat_function(fun = dnorm,color="blue",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="AI",]$Freq)),linetype = "dashed")+
+  stat_function(fun = dnorm,color="red",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
+  stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed")
 
 print("-----------RPS analysis------------")
 
@@ -964,16 +976,13 @@ print(xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps
 
 
 df_1 <- as.data.frame(xtabs(~Round + Choice_of_Advisor+Adversary, data=rps_all_data_with_demo))
-ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point()+ labs(title="Versus Human",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x)
-ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point()+ labs(title="Versus AI",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='lm',formula=y~x)
-ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point() + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x)
+ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus Human",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus AI",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 
-ggplot(df_1[df_1$Choice_of_Advisor=="human",], aes(x=Round, y=Freq)) + 
-  geom_boxplot()+ labs(title="Choice: Human Advisor",x="Round", y = "# of Choices")
-ggplot(df_1[df_1$Choice_of_Advisor=="AI",], aes(x=Round, y=Freq)) + 
-  geom_boxplot()+ labs(title="Choice: AI Advisor",x="Round", y = "# of Choices")
-ggplot(df_1[df_1$Choice_of_Advisor=="none",], aes(x=Round, y=Freq)) + 
-  geom_boxplot()+ labs(title="Choice: No Advisor",x="Round", y = "# of Choices")
+ggplot(df_1[df_1$Choice_of_Advisor=="human",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: Human Advisor",x="Round", y = "# of Choices")
+ggplot(df_1[df_1$Choice_of_Advisor=="AI",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: AI Advisor",x="Round", y = "# of Choices")
+ggplot(df_1[df_1$Choice_of_Advisor=="none",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: No Advisor",x="Round", y = "# of Choices")
 #note: looks like people chose AI or human advisors more as rounds went on (and relied less on their own decisions)
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo))
 
@@ -1009,9 +1018,9 @@ print(rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id)
 rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$pw_order # all of these participants played PW first
 rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$rps_order #all of these participants played "Human+AI","Human","AI" for RPS
 
-#display summary
-rps_summary <- ddply(rps_all, ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.sum=sum(value), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
-rps_summary
+#display summary -- need to fix this code
+# rps_summary <- ddply(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo), ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.AI=sum(Choice_of_Advisor=="AI"), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
+# rps_summary
 
 
 #non-binomial test? 
