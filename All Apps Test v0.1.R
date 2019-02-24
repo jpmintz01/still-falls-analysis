@@ -1026,5 +1026,8 @@ rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test
 #non-binomial test? 
 summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq") )
 
+#rps time Analysis
+ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)",x="Seconds per Decision", y = "Density", color = "Adversary type")
+
 print("----------------time analysis-------------")
 boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
