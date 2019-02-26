@@ -14,6 +14,7 @@ library(zoo)
 library(vcd)
 library(neuralnet)
 library(RVAideMemoire)
+library(ARTool)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -466,7 +467,7 @@ nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=
 
 # nn_exp_all_data_test <- neuralnet(f,data=all_data_train[all_data_train$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 pw_all_data_sub_subset <- pw_all_data_subset[,predictors]
-pw_nn_output<- compute(nn, pw_all_data_sub_subset)$net.result
+pw_nn_output<- compute(nn_test_only_human, pw_all_data_sub_subset)$net.result
 # pw_nn_output<- compute(nn_test_only_human, pw_all_data_sub_subset)$net.result
 #this is just a test round here
 # all_data_nn_output_test<- compute(nn_exp, all_data_test[all_data_test$period >1,])$net.result
@@ -487,23 +488,25 @@ pw_nn_outcome[pw_nn_outcome ==0]<-"War"
 # pw_nn_output_2_10_rounded[is.na(pw_nn_output_2_10_rounded)] <- 1
 # pw_nn_outcome <- pw_nn_output_2_10_rounded
 
-p<-pw_all_data
+# p<-pw_all_data
+
 # p <- add_column(p, c(as.matrix(q)), .before = "risk") #insert predicted values into p
 # colnames(p)[colnames(p) =="c(as.matrix(q))"] <- "outcome"
 # p$outcome <- as.factor(p$outcome)
 #
 
-p <- add_column(p, pw_nn_outcome, .before = "risk") #insert nnet values into p
-colnames(p)[colnames(p) =="pw_nn_outcome"] <- "nnet"
-p$nnet <- as.factor(p$nnet)
-levels(p$nnet) <- c("Peace","War")
+pw_all_data <- add_column(pw_all_data, pw_nn_outcome, .before = "risk") #insert nnet values into p
+colnames(pw_all_data)[colnames(pw_all_data) =="pw_nn_outcome"] <- "nnet"
+pw_all_data$nnet <- as.factor(pw_all_data$nnet)
+levels(pw_all_data$nnet) <- c("Peace","War")
 
-p <- add_column(p, q$value, .after = "nnet") #insert nnet values into p
-colnames(p)[colnames(p) =="q$value"] <- "GLM"
-p$GLM <- as.factor(p$GLM)
-levels(p$GLM) <- c("Peace","War")
+pw_all_data <- add_column(pw_all_data, q$value, .after = "nnet") #insert nnet values into p
+colnames(pw_all_data)[colnames(pw_all_data) =="q$value"] <- "GLM"
+pw_all_data$GLM <- as.factor(pw_all_data$GLM)
+levels(pw_all_data$GLM) <- c("Peace","War")
 
-p$my.decision <- as.factor(p$my.decision)
+pw_all_data$my.decision <- as.factor(pw_all_data$my.decision)
+
 # 
 
 # row.names <- c("AI","Human","Human+AI")
@@ -513,23 +516,9 @@ p$my.decision <- as.factor(p$my.decision)
 # x<- cbind(w, v)
 # colnames(x)[colnames(x) =="v"] <- "Predicted"
 #can i use xtabs here better than this for-loop nonsense?
-pw_nnet_array <- xtabs(~Adversary + nnet + id, data=p)
-pw_GLM_array <- xtabs(~Adversary + GLM + id, data=p)
+pw_nnet_array <- xtabs(~Adversary + nnet + id, data=pw_all_data)
+pw_GLM_array <- xtabs(~Adversary + GLM + id, data=pw_all_data)
 
-# pw_pred_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
-# for (i in pw_ids) {
-#   a <- subset(x, id==i)
-#   for (j in Adversary_list) {
-#     b <- subset (a, Adversary==j)
-#     for (k in Choice_list){
-#       pw_pred_array[j,k,i] <- sum(b$Predicted==k)
-#     }
-#   }
-# }
-# v<- pw_array-pw_pred_array
-# w<- rowSums(v, dims = 2)
-
-# x<- pw_array/pw_pred_array
 pw_nnet_sum <- rowSums(pw_nnet_array, dims =2)
 pw_GLM_sum <- rowSums(pw_GLM_array, dims =2)
 pw_sum <- rowSums(pw_array, dims=2)
@@ -693,7 +682,7 @@ for (i in pw_ids) { #add average time by round by ID
 pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$seconds_on_page),10)
 }
 
-#write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+
 
 #--------------Data Visualization------------------
 #demo data visualization
@@ -733,7 +722,8 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 #            conf.level=0.95, 
 #            method="sisonglaz")
 
-
+write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
 print("-----------PW analysis------------")
 
 print("P-W Aggregate Observed Choices")
@@ -872,6 +862,8 @@ boxplot(a$Peace)
 #cochran's Q for PW data?
 
 
+
+
 # these are the players who played "strategically" (not a fixed strategy, and did not indicate non-belief)
 # pw_played <- c("yyj35","yda14", "w9c21", "v6i85", "txk36", "n1i23", "i5b85", "h0s22", "b8g12", "b1462", "9mp31", "8mh76", "3z144")
 # pw_array_played <- pw_array[,,pw_played]
@@ -881,9 +873,9 @@ boxplot(a$Peace)
 print("P-W Aggregate Predictions Choices")
 print(pw_pred_actual_sum)
 
-perc_nnet_eq_actual <- length(which(p$nnet == p$my.decision))/nrow(p)
+perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
 print(paste("Percent NNET Predicted choices == Observed: ", perc_nnet_eq_actual))
-perc_GLM_eq_actual <- length(which(p$GLM == p$my.decision))/nrow(p)
+perc_GLM_eq_actual <- length(which(pw_all_data_with_demo$GLM == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
 
 print(paste("Percent GLM Predicted choices == Observed: ", perc_GLM_eq_actual))
 
@@ -904,6 +896,11 @@ ggplot(pw_df_1, aes(x=Freq))+
   stat_function(fun = dnorm,color="red",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
   stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed")
 
+wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human+AI",]) #Human-AI comparison
+wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human",]) #AI-HAI comparison
+wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="AI",]) #human-HAI comparison
+
+
 print("-----------RPS analysis------------")
 
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
@@ -911,11 +908,11 @@ print(rps_prop <- round(prop.table(rps_sum)*100, 1))
 
 print("RPS: Tests for normality")
 #tests on all "none" choices across all players
-shapiro.test(rowSums(rps_long_none_by_id))#not normal
+print(shapiro.test(rowSums(rps_long_none_by_id)))#not normal
 #tests on all "AI" choices across all players
-shapiro.test(rowSums(rps_long_AI_by_id)) #not normal
+print(shapiro.test(rowSums(rps_long_AI_by_id))) #not normal
 #tests on all "human" choices across all players
-shapiro.test(rowSums(rps_long_human_by_id)) #not normal
+print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
 
 #normality tests "by adversary" - not needed because all data (above) isn't normal
 # shapiro.test(rps_long_none_by_id$AI) #not normal
@@ -936,98 +933,118 @@ shapiro.test(rowSums(rps_long_human_by_id)) #not normal
 # 
 # m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 # shapiro.test(residuals(m))#not normal
-print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the last)? 
-xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo)
+print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
+print(xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo))
+ggplot(as.data.frame(xtabs(~id + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Choice_of_Advisor, y=Freq, color=Choice_of_Advisor)) +
+  geom_boxplot()
 friedman.test(xtabs(~ id + Choice_of_Advisor, data = rps_all_data_with_demo)) #is this the right test to answer that question?
+
 
 print("RPS: Choice of Advisor (by Round)") #to see if there is a direction to choices (i.e. is there a trend by round)---
 df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
+print("RPS: plotted choice of advisor, by round")
 ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Choice of Advisor by Round",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
-friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo)) #same as df
-
-
-
-#video #9 (tests of proportions)
-print("RPS: Tests of proportions on AGGREGATE choices (by Adversary")
-print(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
-# xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)
-chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) 
-GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq
-fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#exact test gives exact p-value
-friedman.test(xtabs(~ Adversary + Choice_of_Advisor, data = rps_all_data_with_demo)) #is this the right test?
-
-print("do I need to do post-hoc binomial tests w/holm correction?")
-
-
-# "Chi Squared for individual participants -- not valid because some expected values are < 5"
-#using fisher test instead)
-print("RPS: Individual Fisher test (since Chisq invalid with expected values<0")
-rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
-#"fisher test p-values
-for (i in rps_ids){
-  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
-}
-
-print ("RPS ID's which showed difference in choices by Adversary: ")
-print(rps_fisher_test[rps_fisher_test$All=="TRUE",]$id)
-
-print("summary choices of those who showed significant fisher test")
-print(xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]))
-
 
 df_1 <- as.data.frame(xtabs(~Round + Choice_of_Advisor+Adversary, data=rps_all_data_with_demo))
 ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus Human",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus AI",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 
-ggplot(df_1[df_1$Choice_of_Advisor=="human",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: Human Advisor",x="Round", y = "# of Choices")
-ggplot(df_1[df_1$Choice_of_Advisor=="AI",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: AI Advisor",x="Round", y = "# of Choices")
-ggplot(df_1[df_1$Choice_of_Advisor=="none",], aes(x=Round, y=Freq)) + geom_boxplot()+ labs(title="Choice: No Advisor",x="Round", y = "# of Choices")
-#note: looks like people chose AI or human advisors more as rounds went on (and relied less on their own decisions)
+
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo))
+friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",]))
+friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",]))
+friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",]))
 
 
+
+
+
+
+
+
+#video #9 (tests of proportions)
+print("RPS: Tests of proportions on AGGREGATE choices (by Adversary")
+print(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
+ggplot(as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Adversary, y=Freq, color=Choice_of_Advisor)) +
+  geom_boxplot()
+chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) 
+GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq
+fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#exact test gives exact p-value
+#?Cochran's Q test?
+
+rps_long_by_id <- as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
 friedman.test(rps_sum) # need to check if this needs to be transposed (t(rps_sum))
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
-# am I doing this right? or should it be like this:
-#friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
+# am I doing this right? or should it be like this: friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
+# print("do I need to do post-hoc binomial tests w/holm correction?")
 
 
-#Use Wilcox tests as 2-level post-hoc
-wilcox.test(rps_sum[-1,]) #wilcox test for HUman v HAI
-wilcox.test(rps_sum[-2,]) #wilcox test for AI v HAI
-wilcox.test(rps_sum[-3,]) #wilcox test for HUman v AI
+# "Chi Squared for individual participants -- not valid because some expected values are < 5"
+#using fisher test instead)
+
+print ("RPS ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with expected values=0")
+rps_ids <- unique(rps_all_data_with_demo$id)
+rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
+#"fisher test p-values
+rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+for (i in rps_ids){
+  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
+}
+print(rps_fisher_test[rps_fisher_test$All=="TRUE",]$id)
+#check for correlation with counterbalancing
+rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
+rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
+
+
+print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
+rps_ids <- unique(rps_all_data_with_demo$id)
+rps_friedman_test <- data.frame("id"=rps_ids,"All"=NA)
+#"fisher test p-values
+rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+for (i in rps_ids){
+  rps_friedman_test[rps_friedman_test$id==i,"All"] <- friedman.test(rps_array[,,i])["p.value"]<0.05
+}
+print(rps_friedman_test[rps_friedman_test$All=="TRUE",]$id)
+#check for correlation with counterbalancing
+rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
+rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
+
+
+#mcnemar test is wrong test
+# print("RPS individual mcnemar test: IDs who showed a significant difference in RPS decision-making by adversary (p <.05) using McNemar test ")
+# rps_ids <- unique(rps_all_data_with_demo$id)
+# rps_mcnemar_test <- data.frame("id"=rps_ids,"All"=NA)
+# #mcnemar test p-values
+# for (i in rps_ids){
+#     temp_n <- mcnemar.test(rps_array[,,i])["p.value"]
+#     if (!is.na(temp_n) && ( temp_n < 0.05)) {
+#       rps_mcnemar_test[rps_mcnemar_test$id==i,"All"] <- TRUE
+#     }
+# }
+# print(rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id)
+# #check for correlation with counterbalancing is this code correct?
+# rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$pw_order # all of these participants played PW first
+# rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$rps_order #all of these participants played "Human+AI","Human","AI" for RPS
+
+# print("summary choices of those who showed significant fisher test")
+# print(xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]))
+
+
 
 # print("CramerV phi: ")
 # m <- rowSums(rps_array, dims = 2)
 # cramerV(m)
-
-print("mcnemar test: participants who showed a significant difference in RPS decision-making ")
-rps_mcnemar_test <- data.frame("id"=rps_ids,"All"=NA)
-#mcnemar test p-values
-for (i in rps_ids){
-    temp_n <- mcnemar.test(rps_array[,,i])["p.value"]
-    if (!is.na(temp_n) && ( temp_n < 0.05)) {
-      rps_mcnemar_test[rps_mcnemar_test$id==i,"All"] <- TRUE
-    }
-}
-print ("RPS ID's which showed significant (p<.05)difference in choices by Adversary: ")
-print(rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id)
-rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$pw_order # all of these participants played PW first
-rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$rps_order #all of these participants played "Human+AI","Human","AI" for RPS
-
-#display summary -- need to fix this code
-# rps_summary <- ddply(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo), ~Adversary+Choice_of_Advisor, summarise, Choice_of_Advisor.AI=sum(Choice_of_Advisor=="AI"), Choice_of_Advisor.mean=mean(value), Choice_of_Advisor.sd=sd(value))
-# rps_summary
+#non-binomial test - why?
+summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq"))#is a non-significant result mean it's probably a non-binomial distribtion?
 
 
-#non-binomial test? 
-summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq") )
 
 #rps time Analysis
-ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)",x="Seconds per Decision", y = "Density", color = "Adversary type")
+ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
 
-print("----------------time analysis-------------")
-boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
+# print("----------------time analysis-------------")
+# boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
+
