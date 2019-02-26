@@ -15,6 +15,7 @@ library(vcd)
 library(neuralnet)
 library(RVAideMemoire)
 library(ARTool)
+library(nlme)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -103,93 +104,6 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
   return (data)
 }
 
-# session  info
-## get participant label
-#data <- data.frame(datafile$participant.label
-## get IP address
-## get time start & end experiment (not including post-game survey)
-## get counterbalance code & translate it
-## num_RPS_rounds
-## num_PW_rounds
-##
-
-# informed consent app
-## informed consent
-## attention check
-## contamination check
-
-# prisoner_multiplayer (or prisoner_multiplayer_2 first)
-## admin data
-### human player ID, HAI player ID
-## measured data 
-### total player payoff
-### total H payoff
-### total HAI payoff
-### total AI payoff
-### ---data by round---
-#### PW vs human by round
-#### human adv PW by round
-#### player payoff vs human
-#### PW vs HAI by round
-#### player payoff vs HAI
-#### human adv PW by round
-#### PW vs AI by round
-#### player payoff vs AI
-####  Round   PWvsH HvsPart P_payoff H_payoff  PWvsHAI HAIvsPart P_payoff HAI_payoff PWvsAI AIvsPart P_payoff AI_payoff
-####    1
-####    2 
-
-
-## -------calculated PW data-----------
-### number of P-W choices by adversary (how to store this data type?)
-#### 3x3 matrix & contingency table
-#####                      Peace-War choice
-#####                         Peace   War
-#####                     -----------------
-#####                H    |   3       5     
-#####   Adversary    HAI  |   5       5     
-#####                AI   |   8       1     
-
-### previous table & add dimension of players (so 3x3xnum_participants)
-#### 
-
-
-
-# rps
-## admin data
-### vs human game
-#### human adversary ID
-#### human advisor ID
-### vs HAI game
-#### human adversary ID
-#### human advisor ID
-### vs AI game
-#### human advisor ID
-
-## measured data
-### for each adversary  (x3 Human, HAI, AI)
-#### advisor choice by round
-#### player's RPS choice regardless of advisor type
-#### adversary's RPS choice
-#### player: Win, Lose, Draw
-
-## -------calculated RPS data-----------
-### number of advisor choices by adversary (how to store this data type?)
-#### 3x3 matrix & contingency table
-#####                            Advisor Choice
-#####                         none    H     AI
-#####                     -----------------------
-#####                H    |   3       5     7
-#####   Adversary    HAI  |   5       5     5
-#####                AI   |   8       1     6
-
-### previous table & add dimension of players (so 3x3xnum_participants)
-#### 
-
-
-# post-game questionnaire
-## all models variables
-## debrief acknowledgement
 
 
 #-------------------runtime-------------------
@@ -234,7 +148,7 @@ for (i in time_data$id) {
 time_data$id <- as.factor(time_data$id)
 time_data[time_data$app_name == "prisoner_multiplayer_2",]$app_name <- "prisoner_multiplayer"
 
-#--------PEACE-WAR---------
+#--------PW Transformation---------
 pw_ids <- subset(new_data, select=participant.label)
 pw_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_.*$', names(new_data))])
 pw_vs_human_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_1$', names(new_data))]) #get pw_vs_human choices as a df row:player, col:colnames
@@ -534,7 +448,7 @@ pw_pred_actual_sum[,3] <- pw_GLM_sum[,1]
 pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",]))
 pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols))
 
-#--------------Rock-Paper-Scissors data pull & transformation-----------------
+#--------------RPS Transformation-----------------
 #bind the columns advisor_choice and adversary type
 rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
 #rps_vs_human_totals <- rowSums()#pwChangeColNames(rps_vs_human_cols, num_pw_rounds) #get a matrix of rps choices (row:player)x(column:round) with only the rps vs human
@@ -606,7 +520,7 @@ rps_long_ten_rounds$Round <- substrRight(rps_long_ten_rounds$Round, 1)
 rps_long_ten_rounds[rps_long_ten_rounds$Round == "0",]$Round <- 10
 rps_long_ten_rounds$Round <- as.integer(rps_long_ten_rounds$Round)
 
-#---------------Demographic Info Pull----------------------
+#---------------Demo Transformation----------------------
 demo_ids <- subset(new_data, select=participant.label) #
 demo_data <- bind_cols(demo_ids, new_data[grepl('^post_game_survey.1.player.*$', names(new_data))]) #bind ids with data
 # need to check pervious line to make sure it doesn't mix them up!
@@ -636,9 +550,6 @@ demo_data$consent <- as.factor(sub('.*consent\\\'\\:\\ (....).*', '\\1', demo_da
 demo_relevant_data <- demo_data[,c("id","pw_order","rps_order","age","gender","service","school","rank","years_military_experience","game_theory_experience","machine_learning_experience")] #add major and post_grad as coded factors
 
 
-##--------------combined data---------------------
-##-----RPS w/demographic & time------
-
 rps_all_data_with_demo <- merge(rps_long, demo_relevant_data, by="id")
 
 time_data_rps <- time_data[time_data$app_name =="rps",]
@@ -657,19 +568,6 @@ rps_all_data_with_demo[rps_all_data_with_demo$Round == "0",]$Round <- 10
 rps_all_data_with_demo$Round <- as.integer(rps_all_data_with_demo$Round)
 
 
-##-----PW w/demographic-------
-# melted_pw <- melt(pw_array)
-# melted_pw_pred <- melt(pw_pred_array)
-# colnames(melted_pw) <- c("Adversary","Choice","id","value")
-# colnames(melted_pw_pred) <- c("Adversary","Choice","id","pred_value")
-# merged_pw <- merge(melted_pw, melted_pw_pred, by=c("id","Adversary","Choice"))
-# pw_all <- merge(merged_pw, demo_relevant_data, by="id")
-# colnames(pw_all)[colnames(pw_all)=="value"] <- "Obs"
-# colnames(pw_all)[colnames(pw_all)=="pred_value"] <- "Pred"
-# pw_all$Obs_perc_Peace <- pw_all$Obs/10
-# pw_all$Pred_perc_Peace <- pw_all$Pred/10
-#add a column for difference between obs&pred_perc
-#_------pw_all_data plus demo & time data
 pw_all_data_with_demo <- merge(pw_all_data, demo_relevant_data, by="id")
 time_data_pw <- time_data[time_data$app_name =="prisoner_multiplayer",]
 time_data_pw_decision <- time_data_pw[time_data_pw$page_name == "Decision",c("id","seconds_on_page")]
@@ -684,15 +582,15 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 
 
 
-#--------------Data Visualization------------------
+#--------------Demo Visualization------------------
 #demo data visualization
 #ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
 #ggplot(demo_data) + geom_histogram( aes(years_military_experience) )
 #ggplot(demo_data) + geom_histogram(stat="count", aes(school) )
 #ggplot(demo_data) + geom_histogram(stat="count", aes(rank) )
 #ggplot(demo_data) + geom_histogram(stat="count", aes(service) )
-# genders <- c(length(which(demo_data$gender=="Male")), length(which(demo_data$gender=="Female")))
-# pie(genders) #need a better chart here
+#genders <- c(length(which(demo_data$gender=="Male")), length(which(demo_data$gender=="Female")))
+#pie(genders) #need a better chart here
 #ggplot(demo_data) + geom_histogram(stat="count", aes(game_theory_experience) )
 # ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience) )
 
@@ -714,25 +612,20 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 #            color=TRUE, 
 #            cex.axis=0.8)
 # 
-# ##------------------Data Analysis-----------------
-# if(!require(DescTools)){install.packages("DescTools")}
-# if(!require(PropCIs)){install.packages("PropCIs")}
-# 
-# MultinomCI(XT, 
-#            conf.level=0.95, 
-#            method="sisonglaz")
+
 
 write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
 write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
+#-----------PW analysis------------
 print("-----------PW analysis------------")
 
-print("P-W Aggregate Observed Choices")
+print("PW: Aggregate Observed Choices")
 print(pw_sum)
 # pw_summary <- ddply(pw_all_data_with_demo, ~Adversary+my.decision, summarise, Obs.sum=sum('my.decision'), Obs.mean=mean('my.decision'), Obs.sd=sd('my.decision'), nnet.sum=sum(nnet), nnet.mean=mean(nnet), nnet.sd=sd(nnet))
 # print("P-W summary")
 # print(pw_summary)
 
-print("tests for parametric assumptions")
+print("PW: tests for parametric assumptions")
 #tests on all Peace choices across all players
 print(shapiro.test(rowSums(pw_cols_peace_by_id)))#test for normality (#normal)
 #normality tests "by adversary"
@@ -741,10 +634,9 @@ print(shapiro.test(pw_cols_peace_by_id$Human)) #normal
 print(shapiro.test(pw_cols_peace_by_id$`Human+AI`)) #normal
 
 m <- aov(Freq ~ Adversary, data = pw_cols_by_id[pw_cols_by_id$Choice=="Peace",])
-print(shapiro.test(residuals(m))) #not normal
+print(shapiro.test(residuals(m))) #overall, data not normal
 
-plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
-
+# plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
 #print(paste("Woolf Test p-value: ", as.character(WoolfTest(rps_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_array)["p.value"])))
 # print(paste("CMT p-value: ", as.character(mantelhaen.test(pw_HvHAI_array)["p.value"])))
@@ -772,12 +664,12 @@ plot(xtabs(~ Round + Choice, data = pw_cols), main="Peace-War Choices by Round")
 # cramerV(n)
 
 print("PW Round 1 Tests")
-print("PW Round 1: Chi-Sq test")
+#which one of these is most appropriate to use?
 print(pw_round_1s_sum)
 print(chisq.test(pw_round_1s_sum))
-
-print("PW Round 1: Friedman test")
 print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
+print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
+print(wilcox.test(pw_round_1s_sum))
 
 print("PW Round 1: Simple Count - id's of participants who varied their round 1 choice by adversary (at all): ")
 pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
@@ -785,6 +677,22 @@ for (i in pw_ids) {
   pw_varied_round1[pw_varied_round1$id==i,"Varied"] <- !((subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "AI")$Choice) & (subset(pw_round_1s, id==i & Adversary == "Human")$Choice == subset(pw_round_1s, id==i & Adversary == "Human+AI")$Choice))
 }
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
+
+
+print("Chi-sq (aggregate) on whether P-W PLAY ORDER (counterbalancing) affected decision-making:")
+print("in general") #aggregates all play order
+print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1])
+print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1]))
+#or should it be: chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
+print("by adversary")
+print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
+chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,])) #interesting that those that played pw first showed a significant difference in warlike-ness, but
+chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,])) #those that played Peace-War second, did nto show a statistically significant difference, even through the advrersaries were varied and even through the gameplay was different
+
+#--------------- PW-Demo Analysis--------------- 
+
+
 
 print("Chi-sq (aggregate) on whether GENDER affected decision-making, by adversary")
 print(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1])
@@ -798,13 +706,7 @@ print("Chi-sq (aggregate) on whether RANK affected decision-making, by adversary
 print(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1]))
 
-print("Chi-sq (aggregate) on whether P-W PLAY ORDER (counterbalancing) affected decision-making:")
-print("in general")
-print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1])
-print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1]))
-print("by adversary")
-print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
-print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
+
 
 
 print("Chi-sq (aggregate) on whether AGE affected decision-making")
@@ -900,7 +802,7 @@ wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human+AI",]) #Hum
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human",]) #AI-HAI comparison
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="AI",]) #human-HAI comparison
 
-
+#-----------RPS analysis------------
 print("-----------RPS analysis------------")
 
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
@@ -933,6 +835,7 @@ print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
 # 
 # m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 # shapiro.test(residuals(m))#not normal
+
 print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 print(xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo))
 ggplot(as.data.frame(xtabs(~id + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Choice_of_Advisor, y=Freq, color=Choice_of_Advisor)) +
@@ -1012,25 +915,11 @@ print(rps_friedman_test[rps_friedman_test$All=="TRUE",]$id)
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
 
+print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary")
+print(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])
+print(fisher.test(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])) #not significant
 
-#mcnemar test is wrong test
-# print("RPS individual mcnemar test: IDs who showed a significant difference in RPS decision-making by adversary (p <.05) using McNemar test ")
-# rps_ids <- unique(rps_all_data_with_demo$id)
-# rps_mcnemar_test <- data.frame("id"=rps_ids,"All"=NA)
-# #mcnemar test p-values
-# for (i in rps_ids){
-#     temp_n <- mcnemar.test(rps_array[,,i])["p.value"]
-#     if (!is.na(temp_n) && ( temp_n < 0.05)) {
-#       rps_mcnemar_test[rps_mcnemar_test$id==i,"All"] <- TRUE
-#     }
-# }
-# print(rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id)
-# #check for correlation with counterbalancing is this code correct?
-# rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$pw_order # all of these participants played PW first
-# rps_all_data_with_demo[rps_mcnemar_test[!is.na(rps_mcnemar_test[rps_mcnemar_test$All,]$id),]$id,]$rps_order #all of these participants played "Human+AI","Human","AI" for RPS
 
-# print("summary choices of those who showed significant fisher test")
-# print(xtabs(~Adversary + Choice_of_Advisor, data = rps_long[rps_long$id %in% rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]))
 
 
 
@@ -1045,6 +934,30 @@ summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChis
 #rps time Analysis
 ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
 
+#-----------Time analysis------------
 # print("----------------time analysis-------------")
 # boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
+#-----------Multi-Game analysis------------
+print("Cross-Game Tests")
 
+#played "non-strategically"
+a<-as.data.frame(t(colSums(pw_array)))
+a <- rownames(a[a$Peace %in% c(0,30),])
+print(paste0(length(a), " participants (",paste(a, collapse=", "),") played the exact same choice for all rounds in Peace-War."))
+b<- as.data.frame(t(colSums(rps_array)))
+b <- rownames(b[b$AI %in% c(0,30),])
+print(paste0(length(b), " participants (",paste(b, collapse=", "),") played the exact same choice for all rounds in Rock-Paper-Scissors."))
+c <- intersect(b,a)
+print(paste0(length(c), " participants (",paste(c, collapse=", "),") played the exact same choice for all rounds in both Peace-War and Rock-Paper-Scissors."))
+
+#find the round1 participants who chose differently across adversaries in round 1
+d<- xtabs(~id + Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+d<- d[,,"Peace"]
+d<- rowSums(d)
+d<-names(d[d %in% c(1,2)])
+print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
+
+e <- rps_fisher_test[rps_fisher_test$All,]$id
+print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
+f<- intersect(d,e)
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
