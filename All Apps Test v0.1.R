@@ -669,11 +669,8 @@ print(shapiro.test(residuals(m))) #overall, data not normal
 
 print("PW Round 1 Tests")
 #which one of these is most appropriate to use?
+print("PW Round 1 Choices (aggregate)")
 print(pw_round_1s_sum)
-print(chisq.test(pw_round_1s_sum))
-print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
-print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
-print(wilcox.test(pw_round_1s_sum))
 
 print("PW Round 1: Simple Count - id's of participants who varied their round 1 choice by adversary (at all): ")
 pw_varied_round1 = data.frame("id"=pw_ids,"Varied"=NA)
@@ -682,18 +679,35 @@ for (i in pw_ids) {
 }
 print(pw_varied_round1[pw_varied_round1$Varied,]$id)
 
+print(chisq.test(pw_round_1s_sum))
+print(paste("p > .05 shows IV (Adversary) and DV (Choice) are statistically independent. Meaning Adversary type did not have a statistically significant impact on variation of choice of Peace or War."))
+print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
+print(paste("p > .05 shows IV and DV are statistically independent."))
+print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
+print(paste("p > .05 shows IV (Adversary) and DV (Choice) are statistically independent."))
 
-print("Chi-sq (aggregate) on whether P-W PLAY ORDER (counterbalancing) affected decision-making:")
-print("in general") #aggregates all play order
-print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1])
-print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)[,1]))
-#or should it be: chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
-print("by adversary")
+
+print("PW: Counterbalancing: Chi-sq (aggregate) on whether P-W PLAY ORDER (counterbalancing) affected number of peace choices across all adversaries:")
+
+print("Number of Peace Choices by PW play order (First or Second)") #aggregates all play order
+print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
+print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)))
+print("p > .05 shows IV (pw_order) and DV (Choice) are statistically independent")
+
+print("This code is bad right now")
+n<- xtabs(~my.decision+pw_order, data=pw_all_data_with_demo)
+m<- n[n$my.decision=="Peace",]
+print(wilcox.test(Freq~pw_order, data=m))
+
+
+print("by adversary - it would be expected since the adversaries played differently")
 print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
-chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,])) #interesting that those that played pw first showed a significant difference in warlike-ness, but
-chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,])) #those that played Peace-War second, did nto show a statistically significant difference, even through the advrersaries were varied and even through the gameplay was different
+print(chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))) #interesting that those that played pw first showed a significant difference in warlike-ness by adversary, but
+print(chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))) #those that played Peace-War second, did not show a statistically significant difference, even through the adversaries' gameplay varied significantly and even through the gameplay was different
 
+
+      
 #--------------- PW-Demo Analysis--------------- 
 
 
@@ -709,8 +723,6 @@ print(chisq.test(xtabs(~ Adversary + service + my.decision, data = pw_all_data_w
 print("Chi-sq (aggregate) on whether RANK affected decision-making, by adversary")
 print(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1]))
-
-
 
 
 print("Chi-sq (aggregate) on whether AGE affected decision-making")
@@ -759,10 +771,9 @@ a <- pw_all_data_with_demo %>%
   group_by(id)%>%
   summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
 a <- as.data.frame(a)
-a
 plot(x=a$Peace, y=a$avg)
 m <- aov(Peace ~ avg, data =a)
-summary(m)
+print(summary(m))
 boxplot(a$Peace)
 
 #cochran's Q for PW data?
@@ -782,16 +793,13 @@ print(pw_pred_actual_sum)
 perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
 print(paste("Percent NNET Predicted choices == Observed: ", perc_nnet_eq_actual))
 perc_GLM_eq_actual <- length(which(pw_all_data_with_demo$GLM == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-
 print(paste("Percent GLM Predicted choices == Observed: ", perc_GLM_eq_actual))
-
-
-
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
 ggplot(data=pw_df, aes(x=period, y=Freq, group="Adversary"))+  geom_line(aes(color=Adversary))+  geom_point(aes(color=Adversary)) + labs(title="Peace Choices by Round",x="Round", y = "# of Choices", color = "Adversary")+geom_smooth(method='lm',formula=y~x, aes(group=Adversary, color=Adversary))#or use method="lm"
 #the amount of cooperation (Peace Choices) went down similarly (at almost exactly the same rate) against ALL ADVERSARY TYPES
+
 pw_df_1<- as.data.frame(xtabs(~my.decision + Adversary+id, data=pw_all_data_with_demo))
 pw_df_1 <- pw_df_1[pw_df_1$my.decision=="Peace",]
 ggplot(pw_df_1, aes(x=Freq))+
@@ -802,6 +810,7 @@ ggplot(pw_df_1, aes(x=Freq))+
   stat_function(fun = dnorm,color="red",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
   stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed")
 
+print("Should I do a wilcox test comparing H-HAI, H-AI?")
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human+AI",]) #Human-AI comparison
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human",]) #AI-HAI comparison
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="AI",]) #human-HAI comparison
@@ -844,7 +853,7 @@ print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a
 print(xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo))
 ggplot(as.data.frame(xtabs(~id + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Choice_of_Advisor, y=Freq, color=Choice_of_Advisor)) +
   geom_boxplot()
-friedman.test(xtabs(~ id + Choice_of_Advisor, data = rps_all_data_with_demo)) #is this the right test to answer that question?
+print(friedman.test(xtabs(~ id + Choice_of_Advisor, data = rps_all_data_with_demo))) #is this the right test to answer that question?
 
 
 print("RPS: Choice of Advisor (by Round)") #to see if there is a direction to choices (i.e. is there a trend by round)---
@@ -858,7 +867,7 @@ ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Ad
 ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 
 
-friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo))
+print(friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo)))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",]))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",]))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",]))
@@ -871,7 +880,7 @@ friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[r
 
 
 #video #9 (tests of proportions)
-print("RPS: Tests of proportions on AGGREGATE choices (by Adversary")
+print("RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
 print(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 ggplot(as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Adversary, y=Freq, color=Choice_of_Advisor)) +
   geom_boxplot()
@@ -880,8 +889,9 @@ GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more
 fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#exact test gives exact p-value
 #?Cochran's Q test?
 
+print("RPS: All: Friedman test of variance in choice of advisor by adversary")
 rps_long_by_id <- as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
-friedman.test(rps_sum) # need to check if this needs to be transposed (t(rps_sum))
+print(friedman.test(rps_sum)) # need to check if this needs to be transposed (t(rps_sum))
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
 # am I doing this right? or should it be like this: friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
@@ -892,7 +902,7 @@ friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_
 # "Chi Squared for individual participants -- not valid because some expected values are < 5"
 #using fisher test instead)
 
-print ("RPS ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with expected values=0")
+print ("RPS: Indidividual:  ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with expected values=0")
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
 #"fisher test p-values
@@ -923,7 +933,7 @@ print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by
 print(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])
 print(fisher.test(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])) #not significant
 
-
+print("shouldn't these demographic tests be 'by id' like an anova or something?")
 
 
 

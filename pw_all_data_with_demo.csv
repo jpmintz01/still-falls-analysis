@@ -6,7 +6,7 @@
 "5","2b574",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,14,24
 "6","2b574",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,14,24
 "7","2b574",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,20,24
-"8","2b574",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,20,24
+"8","2b574",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,20,24
 "9","2b574",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,20,24
 "10","2b574",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,19,24
 "11","2b574",3,"Human","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,19,24
@@ -17,7 +17,7 @@
 "16","2b574",5,"Human+AI","War","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,17,24
 "17","2b574",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,17,24
 "18","2b574",5,"AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,17,24
-"19","2b574",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,29,24
+"19","2b574",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,29,24
 "20","2b574",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,29,24
 "21","2b574",6,"Human+AI","Peace","War","War",1,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,29,24
 "22","2b574",7,"Human","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","213",35,"Male","Air Force","ACSC","4",16,3,2,15,24
@@ -36,7 +36,7 @@
 "35","3z144",10,"Human+AI","Peace","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","213",33,"Male","Army","ACSC","4",14,3,3,10,13.7
 "36","3z144",10,"AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","213",33,"Male","Army","ACSC","4",14,3,3,10,13.7
 "37","3z144",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,18,13.7
-"38","3z144",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,18,13.7
+"38","3z144",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,18,13.7
 "39","3z144",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,18,13.7
 "40","3z144",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,19,13.7
 "41","3z144",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","213",33,"Male","Army","ACSC","4",14,3,3,19,13.7
@@ -66,7 +66,7 @@
 "65","6lk32",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,9,36.6
 "66","6lk32",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,9,36.6
 "67","6lk32",2,"Human","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,78,36.6
-"68","6lk32",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,78,36.6
+"68","6lk32",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,78,36.6
 "69","6lk32",2,"Human+AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,78,36.6
 "70","6lk32",3,"AI","Peace","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,54,36.6
 "71","6lk32",3,"Human","Peace","Peace","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,54,36.6
@@ -77,9 +77,9 @@
 "76","6lk32",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,24,36.6
 "77","6lk32",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,24,36.6
 "78","6lk32",5,"AI","War","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,24,36.6
-"79","6lk32",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,33,36.6
+"79","6lk32",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,33,36.6
 "80","6lk32",6,"AI","War","War","War",1,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,33,36.6
-"81","6lk32",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,33,36.6
+"81","6lk32",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,33,36.6
 "82","6lk32",7,"Human","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,41,36.6
 "83","6lk32",7,"AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,41,36.6
 "84","6lk32",7,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"1","132",36,"Female","Air Force","ACSC","4",16,2,2,41,36.6
@@ -104,9 +104,9 @@
 "103","7ic14",4,"Human+AI","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,1,1,1,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,8,11.6
 "104","7ic14",4,"Human","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,8,11.6
 "105","7ic14",4,"AI","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,8,11.6
-"106","7ic14",5,"Human+AI","War","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
-"107","7ic14",5,"Human","War","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
-"108","7ic14",5,"AI","War","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
+"106","7ic14",5,"Human+AI","War","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
+"107","7ic14",5,"Human","War","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
+"108","7ic14",5,"AI","War","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,5,11.6
 "109","7ic14",6,"Human","War","War","War",0,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,17,11.6
 "110","7ic14",6,"AI","War","War","War",0,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,17,11.6
 "111","7ic14",6,"Human+AI","War","War","War",0,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",37,"Female","Air Force","SAASS","5",16,3,2,17,11.6
@@ -126,7 +126,7 @@
 "125","8mh76",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"1","321",39,"Female","Army","ACSC","4",14,3,2,11,17.7
 "126","8mh76",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","321",39,"Female","Army","ACSC","4",14,3,2,11,17.7
 "127","8mh76",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,25,17.7
-"128","8mh76",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,25,17.7
+"128","8mh76",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,25,17.7
 "129","8mh76",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,25,17.7
 "130","8mh76",3,"AI","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,34,17.7
 "131","8mh76",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,34,17.7
@@ -139,7 +139,7 @@
 "138","8mh76",5,"AI","War","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,15,17.7
 "139","8mh76",6,"Human","Peace","War","War",1,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,17,17.7
 "140","8mh76",6,"AI","Peace","War","War",1,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,17,17.7
-"141","8mh76",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,17,17.7
+"141","8mh76",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,17,17.7
 "142","8mh76",7,"Human","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,8,17.7
 "143","8mh76",7,"AI","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,8,17.7
 "144","8mh76",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"1","321",39,"Female","Army","ACSC","4",14,3,2,8,17.7
@@ -156,7 +156,7 @@
 "155","9mp31",10,"Human+AI","Peace","Peace","Peace",0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,13,18.5
 "156","9mp31",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,13,18.5
 "157","9mp31",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,23,18.5
-"158","9mp31",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,23,18.5
+"158","9mp31",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,23,18.5
 "159","9mp31",2,"Human+AI","Peace","War","War",0,0,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,23,18.5
 "160","9mp31",3,"AI","Peace","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,14,18.5
 "161","9mp31",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,14,18.5
@@ -164,7 +164,7 @@
 "163","9mp31",4,"Human+AI","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,1,1,1,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,17,18.5
 "164","9mp31",4,"Human","Peace","Peace","Peace",1,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,17,18.5
 "165","9mp31",4,"AI","Peace","Peace","Peace",1,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,17,18.5
-"166","9mp31",5,"Human+AI","Peace","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,16,18.5
+"166","9mp31",5,"Human+AI","Peace","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,16,18.5
 "167","9mp31",5,"Human","War","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,16,18.5
 "168","9mp31",5,"AI","War","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,16,18.5
 "169","9mp31",6,"Human","Peace","War","War",1,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","123",41,"Male","Air Force","ACSC","4",19,3,3,18,18.5
@@ -216,7 +216,7 @@
 "215","b1462",10,"Human+AI","War","War","War",0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","132",45,"Male","Air Force","AWC","5",26,3,2,11,14.7
 "216","b1462",10,"AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","132",45,"Male","Air Force","AWC","5",26,3,2,11,14.7
 "217","b1462",2,"Human","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,18,14.7
-"218","b1462",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,18,14.7
+"218","b1462",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,18,14.7
 "219","b1462",2,"Human+AI","War","War","War",0,0,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,18,14.7
 "220","b1462",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,15,14.7
 "221","b1462",3,"Human","Peace","Peace","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,15,14.7
@@ -224,7 +224,7 @@
 "223","b1462",4,"Human+AI","Peace","War","War",0,0,0,0,NA,NA,NA,NA,NA,NA,1,1,1,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,16,14.7
 "224","b1462",4,"Human","War","Peace","Peace",1,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,16,14.7
 "225","b1462",4,"AI","War","War","War",1,0,0,0,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,16,14.7
-"226","b1462",5,"Human+AI","Peace","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,13,14.7
+"226","b1462",5,"Human+AI","Peace","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,13,14.7
 "227","b1462",5,"Human","War","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,13,14.7
 "228","b1462",5,"AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,13,14.7
 "229","b1462",6,"Human","War","War","War",1,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","132",45,"Male","Air Force","AWC","5",26,3,2,10,14.7
@@ -246,7 +246,7 @@
 "245","b8g12",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,10,19.3
 "246","b8g12",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,10,19.3
 "247","b8g12",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,21,19.3
-"248","b8g12",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,21,19.3
+"248","b8g12",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,21,19.3
 "249","b8g12",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,21,19.3
 "250","b8g12",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,41,19.3
 "251","b8g12",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","132",43,"Male","Air Force","SAASS","4",24,3,3,41,19.3
@@ -276,7 +276,7 @@
 "275","epb14",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,5,20.7
 "276","epb14",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,5,20.7
 "277","epb14",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,17,20.7
-"278","epb14",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,17,20.7
+"278","epb14",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,17,20.7
 "279","epb14",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,17,20.7
 "280","epb14",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,22,20.7
 "281","epb14",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","213",37,"Female","Air Force","ACSC","4",14,2,1,22,20.7
@@ -306,7 +306,7 @@
 "305","gdg26",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,10,15.5
 "306","gdg26",10,"AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,10,15.5
 "307","gdg26",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,19,15.5
-"308","gdg26",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,19,15.5
+"308","gdg26",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,19,15.5
 "309","gdg26",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,19,15.5
 "310","gdg26",3,"AI","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
 "311","gdg26",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
@@ -317,9 +317,9 @@
 "316","gdg26",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,12,15.5
 "317","gdg26",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,12,15.5
 "318","gdg26",5,"AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,12,15.5
-"319","gdg26",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
+"319","gdg26",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
 "320","gdg26",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
-"321","gdg26",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
+"321","gdg26",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,9,15.5
 "322","gdg26",7,"Human","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,13,15.5
 "323","gdg26",7,"AI","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,13,15.5
 "324","gdg26",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","321",35,"Male","Air Force","ACSC","4",16,3,1,13,15.5
@@ -336,7 +336,7 @@
 "335","h0s22",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","132",47,"Male","Army","AWC","6",25,2,2,32,26.1
 "336","h0s22",10,"AI","Peace","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","132",47,"Male","Army","AWC","6",25,2,2,32,26.1
 "337","h0s22",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,33,26.1
-"338","h0s22",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,33,26.1
+"338","h0s22",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,33,26.1
 "339","h0s22",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,33,26.1
 "340","h0s22",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
 "341","h0s22",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
@@ -347,9 +347,9 @@
 "346","h0s22",5,"Human+AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
 "347","h0s22",5,"Human","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
 "348","h0s22",5,"AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
-"349","h0s22",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,7,26.1
+"349","h0s22",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,7,26.1
 "350","h0s22",6,"AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,7,26.1
-"351","h0s22",6,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,7,26.1
+"351","h0s22",6,"Human+AI","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,7,26.1
 "352","h0s22",7,"Human","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
 "353","h0s22",7,"AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
 "354","h0s22",7,"Human+AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","132",47,"Male","Army","AWC","6",25,2,2,24,26.1
@@ -377,9 +377,9 @@
 "376","i5b85",5,"Human+AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,19,17.9
 "377","i5b85",5,"Human","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,19,17.9
 "378","i5b85",5,"AI","War","War","War",0,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,19,17.9
-"379","i5b85",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,15,17.9
+"379","i5b85",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,15,17.9
 "380","i5b85",6,"AI","War","War","War",0,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,15,17.9
-"381","i5b85",6,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,15,17.9
+"381","i5b85",6,"Human+AI","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,15,17.9
 "382","i5b85",7,"Human","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,11,17.9
 "383","i5b85",7,"AI","War","War","War",0,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,11,17.9
 "384","i5b85",7,"Human+AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","312",35,"Female","Air Force","ACSC","4",16,2,1,11,17.9
@@ -396,7 +396,7 @@
 "395","k1o66",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "396","k1o66",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "397","k1o66",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,10,12.5
-"398","k1o66",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,10,12.5
+"398","k1o66",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,10,12.5
 "399","k1o66",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,10,12.5
 "400","k1o66",3,"AI","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,8,12.5
 "401","k1o66",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,8,12.5
@@ -407,9 +407,9 @@
 "406","k1o66",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,12,12.5
 "407","k1o66",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,12,12.5
 "408","k1o66",5,"AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,12,12.5
-"409","k1o66",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
+"409","k1o66",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "410","k1o66",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
-"411","k1o66",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
+"411","k1o66",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "412","k1o66",7,"Human","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "413","k1o66",7,"AI","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
 "414","k1o66",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","321",36,"Male","Air Force","ACSC","4",16,2,2,14,12.5
@@ -426,7 +426,7 @@
 "425","n1i23",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","231",44,"Male","Air Force","AWC","5",24,4,2,10,12
 "426","n1i23",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","231",44,"Male","Air Force","AWC","5",24,4,2,10,12
 "427","n1i23",2,"Human","Peace","War","War",0,0,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,17,12
-"428","n1i23",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,17,12
+"428","n1i23",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,17,12
 "429","n1i23",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,17,12
 "430","n1i23",3,"AI","Peace","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,12,12
 "431","n1i23",3,"Human","Peace","Peace","War",0,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,12,12
@@ -439,7 +439,7 @@
 "438","n1i23",5,"AI","War","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,10,12
 "439","n1i23",6,"Human","War","War","War",0,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,9,12
 "440","n1i23",6,"AI","War","War","War",1,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,9,12
-"441","n1i23",6,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,9,12
+"441","n1i23",6,"Human+AI","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,9,12
 "442","n1i23",7,"Human","War","War","War",0,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,18,12
 "443","n1i23",7,"AI","Peace","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,18,12
 "444","n1i23",7,"Human+AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","231",44,"Male","Air Force","AWC","5",24,4,2,18,12
@@ -546,7 +546,7 @@
 "545","qs924",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","213",42,"Male","Air Force","AWC","5",23,2,2,31,29.7
 "546","qs924",10,"AI","Peace","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","213",42,"Male","Air Force","AWC","5",23,2,2,31,29.7
 "547","qs924",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
-"548","qs924",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
+"548","qs924",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
 "549","qs924",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
 "550","qs924",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
 "551","qs924",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,14,29.7
@@ -557,9 +557,9 @@
 "556","qs924",5,"Human+AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,64,29.7
 "557","qs924",5,"Human","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,64,29.7
 "558","qs924",5,"AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,64,29.7
-"559","qs924",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,30,29.7
+"559","qs924",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,30,29.7
 "560","qs924",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,30,29.7
-"561","qs924",6,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,30,29.7
+"561","qs924",6,"Human+AI","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,30,29.7
 "562","qs924",7,"Human","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,32,29.7
 "563","qs924",7,"AI","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,32,29.7
 "564","qs924",7,"Human+AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","213",42,"Male","Air Force","AWC","5",23,2,2,32,29.7
@@ -576,7 +576,7 @@
 "575","rbq81",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","123",47,"Male","Air Force","AWC","5",18,3,2,7,9.4
 "576","rbq81",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","123",47,"Male","Air Force","AWC","5",18,3,2,7,9.4
 "577","rbq81",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,12,9.4
-"578","rbq81",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,12,9.4
+"578","rbq81",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,12,9.4
 "579","rbq81",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,12,9.4
 "580","rbq81",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,9,9.4
 "581","rbq81",3,"Human","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","123",47,"Male","Air Force","AWC","5",18,3,2,9,9.4
@@ -606,7 +606,7 @@
 "605","s4441",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,17,24.9
 "606","s4441",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,17,24.9
 "607","s4441",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,25,24.9
-"608","s4441",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,25,24.9
+"608","s4441",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,25,24.9
 "609","s4441",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,25,24.9
 "610","s4441",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,12,24.9
 "611","s4441",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,12,24.9
@@ -617,9 +617,9 @@
 "616","s4441",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,19,24.9
 "617","s4441",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,19,24.9
 "618","s4441",5,"AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,19,24.9
-"619","s4441",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,32,24.9
+"619","s4441",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,32,24.9
 "620","s4441",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,32,24.9
-"621","s4441",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,32,24.9
+"621","s4441",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,32,24.9
 "622","s4441",7,"Human","Peace","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,48,24.9
 "623","s4441",7,"AI","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,48,24.9
 "624","s4441",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","123",36,"Male","Air Force","ACSC","4",18,3,1,48,24.9
@@ -666,7 +666,7 @@
 "665","txk36",10,"Human+AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,14,40.1
 "666","txk36",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,14,40.1
 "667","txk36",2,"Human","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,40,40.1
-"668","txk36",2,"AI","War","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,40,40.1
+"668","txk36",2,"AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,40,40.1
 "669","txk36",2,"Human+AI","War","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,40,40.1
 "670","txk36",3,"AI","War","War","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,27,40.1
 "671","txk36",3,"Human","War","Peace","Peace",1,0,0,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","321",36,"Male","Air Force","ACSC","4",9,3,2,27,40.1
@@ -696,7 +696,7 @@
 "695","v6i85",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,19,24.5
 "696","v6i85",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,19,24.5
 "697","v6i85",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,75,24.5
-"698","v6i85",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,75,24.5
+"698","v6i85",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,75,24.5
 "699","v6i85",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,75,24.5
 "700","v6i85",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,41,24.5
 "701","v6i85",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,41,24.5
@@ -707,9 +707,9 @@
 "706","v6i85",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,21,24.5
 "707","v6i85",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,21,24.5
 "708","v6i85",5,"AI","Peace","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,21,24.5
-"709","v6i85",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,12,24.5
+"709","v6i85",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,12,24.5
 "710","v6i85",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,12,24.5
-"711","v6i85",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,12,24.5
+"711","v6i85",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,12,24.5
 "712","v6i85",7,"Human","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,11,24.5
 "713","v6i85",7,"AI","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,11,24.5
 "714","v6i85",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"2","312",37,"Male","Air Force","SAASS","4",18,3,2,11,24.5
@@ -735,8 +735,8 @@
 "734","w9c21",4,"Human","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,13,16.5
 "735","w9c21",4,"AI","Peace","War","War",0,0,0,0,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,13,16.5
 "736","w9c21",5,"Human+AI","War","War","War",0,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,28,16.5
-"737","w9c21",5,"Human","War","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,28,16.5
-"738","w9c21",5,"AI","War","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,28,16.5
+"737","w9c21",5,"Human","War","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,28,16.5
+"738","w9c21",5,"AI","War","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,28,16.5
 "739","w9c21",6,"Human","Peace","War","War",0,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,13,16.5
 "740","w9c21",6,"AI","Peace","War","War",0,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,13,16.5
 "741","w9c21",6,"Human+AI","Peace","War","War",0,0,0,0,0,0,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"2","123",49,"Male","Air Force","AWC","5",19,2,3,13,16.5
@@ -764,10 +764,10 @@
 "763","yda14",4,"Human+AI","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,1,1,1,NA,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,10,15
 "764","yda14",4,"Human","Peace","Peace","Peace",1,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,10,15
 "765","yda14",4,"AI","Peace","Peace","Peace",0,1,1,1,NA,NA,NA,NA,NA,NA,0,0,0,NA,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,10,15
-"766","yda14",5,"Human+AI","Peace","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,14,15
+"766","yda14",5,"Human+AI","Peace","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,14,15
 "767","yda14",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,14,15
-"768","yda14",5,"AI","Peace","War","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,14,15
-"769","yda14",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,9,15
+"768","yda14",5,"AI","Peace","Peace","Peace",0,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,14,15
+"769","yda14",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,9,15
 "770","yda14",6,"AI","Peace","Peace","Peace",0,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,9,15
 "771","yda14",6,"Human+AI","Peace","Peace","Peace",0,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,9,15
 "772","yda14",7,"Human","War","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","213",43,"Male","Air Force","AWC","5",24,2,2,13,15
@@ -786,7 +786,7 @@
 "785","yyj35",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,7,13
 "786","yyj35",10,"AI","War","War","War",1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,7,13
 "787","yyj35",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
-"788","yyj35",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
+"788","yyj35",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
 "789","yyj35",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
 "790","yyj35",3,"AI","War","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
 "791","yyj35",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,14,13
@@ -797,9 +797,9 @@
 "796","yyj35",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,10,13
 "797","yyj35",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,10,13
 "798","yyj35",5,"AI","War","War","War",1,0,0,0,0,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,10,13
-"799","yyj35",6,"Human","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
+"799","yyj35",6,"Human","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
 "800","yyj35",6,"AI","War","War","War",1,0,0,0,0,0,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
-"801","yyj35",6,"Human+AI","War","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
+"801","yyj35",6,"Human+AI","War","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
 "802","yyj35",7,"Human","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
 "803","yyj35",7,"AI","War","War","War",1,0,0,0,0,0,0,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
 "804","yyj35",7,"Human+AI","Peace","War","War",1,0,0,0,0,0,0,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"1","312",35,"Male","Air Force","ACSC","4",14,3,1,11,13
@@ -816,7 +816,7 @@
 "815","zxq33",10,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,4,10.1
 "816","zxq33",10,"AI","Peace","Peace","Peace",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,4,10.1
 "817","zxq33",2,"Human","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
-"818","zxq33",2,"AI","Peace","War","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
+"818","zxq33",2,"AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,0,NA,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
 "819","zxq33",2,"Human+AI","Peace","Peace","Peace",1,1,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
 "820","zxq33",3,"AI","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,0,0,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
 "821","zxq33",3,"Human","Peace","Peace","Peace",1,1,1,NA,NA,NA,NA,NA,NA,NA,1,1,NA,NA,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,17,10.1
@@ -827,9 +827,9 @@
 "826","zxq33",5,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,12,10.1
 "827","zxq33",5,"Human","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,12,10.1
 "828","zxq33",5,"AI","Peace","Peace","Peace",1,1,1,1,1,NA,NA,NA,NA,NA,1,1,1,1,NA,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,12,10.1
-"829","zxq33",6,"Human","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
+"829","zxq33",6,"Human","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
 "830","zxq33",6,"AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,1,1,1,1,1,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
-"831","zxq33",6,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
+"831","zxq33",6,"Human+AI","Peace","War","Peace",1,1,1,1,1,1,NA,NA,NA,NA,0,0,0,0,0,NA,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
 "832","zxq33",7,"Human","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
 "833","zxq33",7,"AI","Peace","War","Peace",1,1,1,1,1,1,1,NA,NA,NA,0,0,0,0,0,0,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
 "834","zxq33",7,"Human+AI","Peace","Peace","Peace",1,1,1,1,1,1,1,NA,NA,NA,1,1,1,1,1,1,NA,NA,NA,"1","231",42,"Male","Air Force","ACSC","4",22,2,2,7,10.1
