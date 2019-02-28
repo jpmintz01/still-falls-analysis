@@ -764,23 +764,24 @@ p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  geom_point(aes(
 
 print(p)
 print("NOTE: Interesting that changes across rounds for Human+AI and AI are very similar, despite very different gameplay from the adversary.  This is in contrast to the human advesrary.")
-print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding.")
+print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding. You could explore this using a GLM with my.decision1 and other.decision1 as the main factors to see what the coefficients are (my.round1decision as an interaction with all variables?).  It's interesting that the initial amount of cooperation ")
+
 
 print("anova on whether AVERAGE DECISION TIME was correlated to decision-making")
 a <- pw_all_data_with_demo %>%
   group_by(id)%>%
   summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
 a <- as.data.frame(a)
-plot(x=a$Peace, y=a$avg)
-m <- aov(Peace ~ avg, data =a)
+m <- aov(Peace ~ avg + sd, data =a)
 print(summary(m))
+print("NOTE: Am I doing this anova right?  I dont' think so")
 
 
 
 
 
 print("---PW: COUNTERBALANCING Checks---")
-print("--PW: Test whether P-W PLAY ORDER (counterbalancing) affected number of peace choices across all adversaries--")
+print("--PW: Test whether P-W PLAY ORDER (counterbalancing) affected number of peace propensity (across all adversaries)--")
 print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
 print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)))
 n_1<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))
@@ -791,7 +792,7 @@ n<-wilcox.test(n_1,n_2)
 n["data.name"] <- "Played PW First and Played PW Second"
 print(n)
 print("p > .05 shows Order of Play (first or second) and total 'peacefulness' (number of Peace choices) are statistically independent")
-print("NOTE: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate?")
+print("NOTE: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate? Probably the latter")
 
 
 print ("--PW: Indidividual COUNTERBALANCING EFFECTS:  ID's which showed difference in choices by Adversary based on pw_order")
@@ -805,7 +806,7 @@ p<- ggplot(n_1, aes(x=Freq))+
   geom_density(data=n_2[n_2$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
   geom_density(data=n_2[n_2$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3) + labs(title="Peace Choices Distribution (by Play order & Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=8))
 print(p)
-print("NOTE: Interesting that the AI means are similar,the human means are similar, but the AI-assisted human means are very different")
+print("NOTE: Interesting that the AI means are similar,the human means are similar, but the AI-assisted human means are very different between those who played PW first and those who played RPS first")
 
 # pw_ids <- unique(pw_all_data_with_demo$id)
 # pw_fisher_test <- data.frame("id"=pw_ids,"All"=NA)
