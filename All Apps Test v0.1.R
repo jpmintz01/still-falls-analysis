@@ -319,6 +319,22 @@ pw_all_data$X <- c(1:nrow(pw_all_data))
 predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
 
 # lmFit_exp_2_10 <- train(my.decision~my.round1decision+my.decision1+other.decision1+period, data = pw_all_data[pw_all_data[pw_all_data$Adversary=="Human",]$period >=2,], method = 'glm', na.action = na.pass) #p_exp is as good as the bigger model below
+# all_data$my.decision <- as.factor(all_data$my.decision)
+# all_data$my.decision1 <- as.factor(all_data$my.decision1)
+# all_data$my.decision2 <- as.factor(all_data$my.decision2)
+# all_data$my.decision3 <- as.factor(all_data$my.decision3)
+# all_data$other.decision1 <- as.factor(all_data$other.decision1)
+# all_data$other.decision2 <- as.factor(all_data$other.decision2)
+# all_data$other.decision3 <- as.factor(all_data$other.decision3)
+# all_data$my.round1decision <- as.factor(all_data$my.round1decision)
+# pw_all_data$my.decision <- as.factor(pw_all_data$my.decision)
+# pw_all_data$my.decision1 <- as.factor(pw_all_data$my.decision1)
+# pw_all_data$my.decision2 <- as.factor(pw_all_data$my.decision2)
+# pw_all_data$my.decision3 <- as.factor(pw_all_data$my.decision3)
+# pw_all_data$other.decision1 <- as.factor(pw_all_data$other.decision1)
+# pw_all_data$other.decision2 <- as.factor(pw_all_data$other.decision2)
+# pw_all_data$other.decision3 <- as.factor(pw_all_data$other.decision3)
+# pw_all_data$my.round1decision <- as.factor(pw_all_data$my.round1decision)
 #this line below uses all_data to train static model
 lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
@@ -342,6 +358,10 @@ lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:d
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_4_10 <- predict(lmFit3, pw_all_data)
 levels(outcomes_4_10) <- c("Peace","War")
+
+# other GLMM
+# m <- glmer(my.decision ~ my.round1decision + my.decision1 + my.decision2 + other.decision1 + other.decision2 + Adversary + (1|id), data=df, family = binomial(link = "logit"))
+
 
 r <- data.frame(matrix(outcomes_2, ncol=(nrow(pw_cols)/10)))[1,]
 o <- data.frame(matrix(outcomes_1, ncol=(nrow(pw_cols)/10)))
@@ -722,7 +742,15 @@ print("NOTE: why count and chisq and fisher and friedman tests? Do I need all of
 # pw_pred_array_played <- pw_pred_array[,,pw_played]
 
 
-print("--PW: Strategic Decision-making (all rounds)--")
+print("---PW: Strategic Decision-making (all rounds)---")
+print("--PW: Basic Statistial Analyses--")
+print(pw_sum)
+print(chisq.test(pw_sum))
+print("p < .05 shows IV (Adversary) and DV (Choice) are statistically dependent")
+print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice=="Peace",]))
+print("p < .01 (.05) shows relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant. But, note that the adversary gameplay is a factor here.")
+
+
 print(pw_pred_actual_sum)
 
 perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
@@ -748,19 +776,46 @@ wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="AI",]) #human-HAI
 
 
 print("Chi-sq (aggregate) on whether ROUND1 decision was correlated to strategic decision-making")
-print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])
-print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])) #significant
+
+print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
+print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
+print("p < .0001 (.05) shows that Round 1 decision and 'Cooperativeness'/'Peacefulness' (across all adversaries) are statistically dependent.")
+print("NOTE: Should this be a Chisq or a Fisher test?")
+
 pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
 pw_df$period <- as.numeric(pw_df$period)
 p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
 print(p)
-print("NOTE: Interesting that the group of participants who chose War (0 in this plot) had little variance across rounds, but that the initial cooperator-group (Peace, 1 in this graph) declined markedly.")
+print("NOTE: Interesting that the group of participants who chose War (0 in this plot) had little variance across rounds, but that the initial cooperator-group (Peace, 1 in this graph) varied markedly.")
+
+
+
+print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1]))
+print("NOTE: Is this relevant?")
+print("p < .05 shows that variation in Peacefulness (by adversary) and Round 1 decision are statstistically dependent")
+
+print("Aggregate choices of Round 1 Defectors")
+print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
+pw_r1_defectors <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
+print(friedman.test(Freq~Adversary|id,data=pw_r1_defectors[pw_r1_defectors$my.decision=="Peace",]))
+print("NOTE: INTERESTING:")
+print("p > .05 shows that those that chose WAR on the first round DID NOT SHOW a statistically significant difference in gameplay by adversary")
+
+
+print("Aggregate choices of Round 1 cooperators")
+print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
+pw_r1_cooperators <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
+print(friedman.test(Freq~Adversary|id,data=pw_r1_cooperators[pw_r1_cooperators$my.decision=="Peace",]))
+print("p < .01 (.05) shows that those that chose PEACE on the first round DID SHOW a statistically significant difference in gameplay by adversary")
+
+
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
 pw_df$period <- as.numeric(pw_df$period)
-p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  geom_point(aes(color=Adversary))+geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ labs(title="Round 1 Cooperators:\nPeace Choices by Round",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
+p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  geom_point(aes(color=Adversary))+geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ labs(title="Round 1 Cooperators:\nPeace Choices by Round\nand Adversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
 
 print(p)
 print("NOTE: Interesting that changes across rounds for Human+AI and AI are very similar, despite very different gameplay from the adversary.  This is in contrast to the human advesrary.")
