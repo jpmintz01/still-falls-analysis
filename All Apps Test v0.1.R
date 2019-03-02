@@ -955,15 +955,20 @@ print(chisq.test(xtabs(~ Adversary + machine_learning_experience + my.decision, 
 print("-----------RPS analysis------------")
 
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
-print(rps_prop <- round(prop.table(rps_sum)*100, 1))
+# print(rps_prop <- round(prop.table(rps_sum)*100, 1))
 
-print("RPS: Tests for normality")
-#tests on all "none" choices across all players
-print(shapiro.test(rowSums(rps_long_none_by_id)))#not normal
-#tests on all "AI" choices across all players
-print(shapiro.test(rowSums(rps_long_AI_by_id))) #not normal
-#tests on all "human" choices across all players
-print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
+# NOTE - dont' use this, it's not really relevant print("RPS: Tests for normality (by choice)")
+# #tests on all "none" choices across all players
+# print(shapiro.test(rowSums(rps_long_none_by_id)))#not normal
+# #tests on all "AI" choices across all players
+# print(shapiro.test(rowSums(rps_long_AI_by_id))) #not normal
+# #tests on all "human" choices across all players
+# print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
+
+print("--RPS: Normality tests (by adversary)--")
+print(shapiro.test(rps_long_by_id[rps_long_by_id$Adversary=="Human",]$Freq)) #not normal
+print(shapiro.test(rps_long_by_id[rps_long_by_id$Adversary=="AI",]$Freq))  #not normal
+print(shapiro.test(rps_long_by_id[rps_long_by_id$Adversary=="Human+AI",]$Freq)) #not normal
 
 #normality tests "by adversary" - not needed because all data (above) isn't normal
 # shapiro.test(rps_long_none_by_id$AI) #not normal
@@ -985,28 +990,59 @@ print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
 # m <- aov(Freq ~ Adversary, data = rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
 # shapiro.test(residuals(m))#not normal
 
+
+
+print("Distribution Plot (by adversary)")
+rps_df_1<- as.data.frame(xtabs(~Choice_of_Advisor + Adversary+id, data=rps_all_data_with_demo))
+p<- ggplot(rps_df_1, aes(x=Freq))+
+  geom_density(data=rps_df_1[rps_df_1$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
+  geom_density(data=rps_df_1[rps_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
+  geom_density(data=rps_df_1[rps_df_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3)+
+ #stat_function(fun = dnorm,color="blue",args = list(mean = mean(rps_df_1[rps_df_1$Adversary=="AI",]$Freq), sd = sd(rps_df_1[rps_df_1$Adversary=="AI",]$Freq)),linetype = "dashed")+
+  stat_function(fun = dchisq,color="blue",args = list(df=3),linetype = "dashed")+
+  stat_function(fun = dgamma,color="red",args = list(shape=2, rate=1),linetype = "dashed")+
+ # stat_function(fun = dnorm,color="red",args = list(mean = mean(rps_df_1[rps_df_1$Adversary=="Human",]$Freq), sd = sd(rps_df_1[rps_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
+ # stat_function(fun = dnorm,color="green",args = list(mean = mean(rps_df_1[rps_df_1$Adversary=="Human+AI",]$Freq), sd = sd(rps_df_1[rps_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed") + 
+  labs(title=" Frequency Distribution (by Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=9))
+print(p)
+
+
 print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 print(xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo))
-ggplot(as.data.frame(xtabs(~id + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Choice_of_Advisor, y=Freq, color=Choice_of_Advisor)) +
-  geom_boxplot()
-print(friedman.test(xtabs(~ id + Choice_of_Advisor, data = rps_all_data_with_demo))) #is this the right test to answer that question?
+
+print("RPS: Choice of Advisor by round (all Adversaries)")
+df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
+p<- ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Choice of Advisor by Round",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='glm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+print(p)
+
+print(friedman.test(xtabs(~ id + Choice_of_Advisor, data = rps_all_data_with_demo))) #is this the right test to answer that question? or should it be like this:
+print(friedman.test(Freq~Choice_of_Advisor|Round, data=df))
+print("Is this right?")
+
 
 
 print("RPS: Choice of Advisor (by Round)") #to see if there is a direction to choices (i.e. is there a trend by round)---
 df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
+
 print("RPS: plotted choice of advisor, by round")
-ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Choice of Advisor by Round",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+p<- ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Choice of Advisor by Round",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='glm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+print(p)
 
 df_1 <- as.data.frame(xtabs(~Round + Choice_of_Advisor+Adversary, data=rps_all_data_with_demo))
-ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus Human",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
-ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus AI",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
-ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='lm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+p<- ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus Human",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+
+print(p)
+p<- ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ labs(title="Versus AI",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+print(p)
+p<- ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  geom_line(aes(color=Choice_of_Advisor))+  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + labs(title="Versus Human+AI",x="Round", y = "# of Choices", color = "Advisor")+geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+print(p)
 
 
 print(friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo)))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",]))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",]))
 friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",]))
+print("what are these tests?")
 
 
 
