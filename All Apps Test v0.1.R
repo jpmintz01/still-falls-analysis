@@ -732,7 +732,11 @@ print("NOTE: why count and chisq and fisher and friedman tests? Do I need all of
 
 
 #cochran's Q for PW data?
-
+#Anova by Adversary
+m <- glmer(my.decision ~ Adversary+(1|id), data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,], family=binomial)
+print(summary(m))
+print(Anova(m, type="3"))
+cat("p > .05 indicates no statistically significant variation on the DV (Choice) by the IV (Adversary)")
 
 
 
@@ -750,6 +754,12 @@ print("p < .05 shows IV (Adversary) and DV (Choice) are statistically dependent"
 print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice=="Peace",]))
 print("p < .01 (.05) shows relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant. But, note that the adversary gameplay is a factor here.")
 
+m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=pw_all_data_with_demo, family=binomial (link="logit"))
+# print(summary(m))
+print(Anova(m, type="3"))
+print("p < .001 (.05) shows relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant. But, note that the adversary gameplay is a factor here.")
+
+
 
 print(pw_pred_actual_sum)
 
@@ -765,7 +775,9 @@ p<- ggplot(data=pw_df, aes(x=period, y=Freq, group="Adversary"))+  geom_point(ae
 print(p)
 print("NOTE: why does round start at 2?")
 print("NOTE: depending on whether the graphing method is 'lm' or 'auto'/'loess' the amount of cooperation (Peace Choices) went down similarly (at almost exactly the same rate) against all adversary types, but very similarly to HAI+AI, but worse vs human.  This is unexpected and INTERESTING because the HAI had more cooperation than the human, the AI had much less, so there was clearly something else going on here.  It looks like people have a memory-1 or memory-2 (or a lag-1 or lag-2) decision schema.")
-
+m <- glmer(my.decision ~ period + Adversary + period:Adversary+ (1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(summary(m))
+print(Anova(m, type="3"))
 
 print("Should I do a wilcox test comparing H-HAI, H-AI?")
 wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human+AI",]) #Human-AI comparison
@@ -780,7 +792,15 @@ print("Chi-sq (aggregate) on whether ROUND1 decision was correlated to strategic
 print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
 print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
 print("p < .0001 (.05) shows that Round 1 decision and 'Cooperativeness'/'Peacefulness' (across all adversaries) are statistically dependent.")
-print("NOTE: Should this be a Chisq or a Fisher test?")
+cat("NOTE: Should this be a Chisq or a Fisher test?\n")
+
+cat("Repeated measures logistic regression on whether round1 decision affected decision-making")
+m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
+print(summary(m))
+print(Anova(m, type="3"))
+cat("Does this show that my.round1decision affects my.decision more than Adversary?")
+
+
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
@@ -794,7 +814,7 @@ print("NOTE: Interesting that the group of participants who chose War (0 in this
 print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("NOTE: Is this relevant?")
-print("p < .05 shows that variation in Peacefulness (by adversary) and Round 1 decision are statstistically dependent")
+print("p < .05 shows that variation in Peacefulness (by adversary) and Round 1 decision are statistically dependent")
 
 print("Aggregate choices of Round 1 Defectors")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
@@ -810,6 +830,21 @@ pw_r1_cooperators <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_
 print(friedman.test(Freq~Adversary|id,data=pw_r1_cooperators[pw_r1_cooperators$my.decision=="Peace",]))
 print("p < .01 (.05) shows that those that chose PEACE on the first round DID SHOW a statistically significant difference in gameplay by adversary")
 
+m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
+print(Anova(m, type="3"))
+print("---PW: Anova on ROUND ONE DEFECTORS---")
+m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,], family=binomial)
+print(summary(m))
+print(Anova(m, type="3"))
+cat("NOTE: For ROUND ONE DEFECTORS, initial propensity and the participant's previous choice show statistical significance (p <.05).\nINTERESTING: Adversary seems to have the least effect despite the difference in adversary gameplay.")
+
+print("---PW: Anova on ROUND ONE COOPERATORS---")
+m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,], family=binomial)
+print(summary(m))
+print(Anova(m, type="3"))
+cat("NOTE: looks like the participant's previous choice, followed by the adversary's decision, followed by initial propensity, show statsitical significance.\nINTERESTING:Adversary shows finding of statistical interest (p< .10) but isn't significant at p < .05, despite the difference in adversary gameplay.\nALSO: looks like the two greatest factors in the model are initial propensity mediated by participant's previous decision.")
+cat("Would like to know if other.decision2/3/4 (history) matters, but how do I code this? \n  I keep getting 'rank deficient' error if I include my.decision2 or other.decision2\n")
+
 
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
@@ -822,18 +857,19 @@ print("NOTE: Interesting that changes across rounds for Human+AI and AI are very
 print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding. You could explore this using a GLM with my.decision1 and other.decision1 as the main factors to see what the coefficients are (my.round1decision as an interaction with all variables?).  It's interesting that the initial amount of cooperation ")
 
 
-print("anova on whether AVERAGE DECISION TIME was correlated to decision-making")
-a <- pw_all_data_with_demo %>%
-  group_by(id)%>%
-  summarize(avg = mean(seconds_on_page), sd = sd(seconds_on_page), Peace = sum(my.decision=="Peace"))
-a <- as.data.frame(a)
-m <- aov(Peace ~ avg + sd, data =a)
+
+
+print("Repeated Measures(RM) Logistic Regression on whether BY-PAGE DECISION TIME was correlated to decision-making")
+m <- glmer(my.decision ~ my.decision1+other.decision1+seconds_on_page+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(summary(m))
-print("NOTE: Am I doing this anova right?  I dont' think so")
+print(Anova(m))
+cat("NOTE: BY-PAGE DECISION TIME did not show a statistically significant (p < .05) correlation to decision.\n")
 
-
-
-
+print("1-way RM Anova on whether BY-PAGE DECISION TIME was correlated to Adversary")
+m <- lm(seconds_on_page ~ Adversary, data=pw_all_data_with_demo)
+summary(m)
+Anova(m)
+cat("This shows relationship between decision time and Adversary is not statistically significant (p < .05).\nWHY DOESN'T 'AI' Adversary SHOW UP ON ANY OF THESE? \nNOTE: Is this the correct way to do this?\n")
 
 print("---PW: COUNTERBALANCING Checks---")
 print("--PW: Test whether P-W PLAY ORDER (counterbalancing) affected number of peace propensity (across all adversaries)--")
@@ -863,6 +899,7 @@ p<- ggplot(n_1, aes(x=Freq))+
 print(p)
 print("NOTE: Interesting that the AI means are similar,the human means are similar, but the AI-assisted human means are very different between those who played PW first and those who played RPS first")
 
+
 # pw_ids <- unique(pw_all_data_with_demo$id)
 # pw_fisher_test <- data.frame("id"=pw_ids,"All"=NA)
 # #"fisher test p-values
@@ -889,14 +926,33 @@ n_3 <- rbind(n_1, n_2)
 n_3$pw_order <- factor(n_3$pw_order)
 contrasts(n_3$pw_order) <- "contr.sum"
 m <- multinom(Freq~pw_order+Adversary+pw_order:Adversary, data=n_3)
+print(summary(m))
 print(Anova(m, type=3))
-print("NOTE: Am I doing this right?  Checking for variance on Freq based on Adversary & pw order")
+print("NOTE: Am I doing this anova right?  Checking for variance on Freq based on Adversary & pw order")
+print("or, should it be like this:")
+m <- glmer(my.decision ~ Adversary+ pw_order +pw_order:Adversary+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(summary(m))
+print(Anova(m))
+print("or like this:")
+print("The relationship between Counterbalancing order and decision is NOT statistically significant at p < .05")
+m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,], family=binomial(link="logit"))
+print(Anova(m))
 
 
   
 print("--------------- PW<->Demo Analysis--------------- ")
 print("")
 print("NOTE: Are tests of proportions the correct tests here? Shouldn't I use some kind of analysis of variance?")
+print("OR, should I use the repeated measures logistic regression with all the demographic variables included, like this:")
+
+m <- glmer(my.decision ~ gender + age + years_military_experience + service + school + machine_learning_experience+game_theory_experience + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print("What does the failed to converge warning mean?")
+print(Anova(m))
+
+print("OR, should I have all the demographic variables included as random effects - if so, how do I do this to see if the random effects are actually random?")
+cat("\n")
+
+
 print("Chi-sq (aggregate) on whether GENDER affected decision-making, by adversary")
 print(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1])
 print(chisq.test(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1]))
@@ -1038,11 +1094,7 @@ p<- ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Ch
 print(p)
 
 
-print(friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo)))
-friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",]))
-friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",]))
-friedman.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",]))
-print("what are these tests?")
+
 
 
 
@@ -1057,9 +1109,9 @@ print(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 ggplot(as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Adversary, y=Freq, color=Choice_of_Advisor)) +
   geom_boxplot()
 chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) 
-GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq
-fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#exact test gives exact p-value
-#?Cochran's Q test?
+GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq?
+fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#is exact test more appropriate than chisq.test here
+print("?Cochran Q test relevant here?")
 
 print("RPS: All: Friedman test of variance in choice of advisor by adversary")
 rps_long_by_id <- as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
@@ -1073,7 +1125,6 @@ friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_
 
 # "Chi Squared for individual participants -- not valid because some expected values are < 5"
 #using fisher test instead)
-
 print ("RPS: Indidividual:  ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with expected values=0")
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
@@ -1088,7 +1139,7 @@ rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_tes
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
 
 
-print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
+print ("RPS ID's which showed difference in choices by Adversary using Friedman 'anova' Test")
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_friedman_test <- data.frame("id"=rps_ids,"All"=NA)
 #"fisher test p-values
@@ -1101,28 +1152,19 @@ print(rps_friedman_test[rps_friedman_test$All=="TRUE",]$id)
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
 
+
+print("--NOTE: how to analyze demo variables?  Probably similar answer to PW")
 print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary")
 print(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])
 print(fisher.test(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])) #not significant
 
 print("shouldn't these demographic tests be 'by id' like an anova or something?")
 
+#--rps time Analysis
+p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+print(p)
 
 
-# print("CramerV phi: ")
-# m <- rowSums(rps_array, dims = 2)
-# cramerV(m)
-#non-binomial test - why?
-summary(goodfit(rps_long_none_by_id$`Human+AI`, type="nbinomial",method="MinChisq"))#is a non-significant result mean it's probably a non-binomial distribtion?
-
-
-
-#rps time Analysis
-ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
-
-#-----------Time analysis------------
-# print("----------------time analysis-------------")
-# boxplot(seconds_on_page ~ id, data = time_data[time_data$seconds_on_page <=60,])
 #-----------Multi-Game analysis------------
 print("Cross-Game Tests")
 
@@ -1147,3 +1189,5 @@ e <- rps_fisher_test[rps_fisher_test$All,]$id
 print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
 f<- intersect(d,e)
 print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
+
+
