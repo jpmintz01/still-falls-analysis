@@ -612,6 +612,33 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 
 
 
+
+#--------------------Data Write to .csv--------------------
+#write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+# write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
+# write.csv(demo_data, "demo_data.csv")
+
+pw_all_data_with_demo<-read.csv("pw_all_data_with_demo.csv")
+pw_all_data_with_demo$X <- NULL
+rps_all_data_with_demo<-read.csv("rps_all_data_with_demo.csv")
+rps_all_data_with_demo$X <- NULL
+demo_data<-read.csv("demo_data.csv")
+demo_data$X <- NULL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #--------------------Demographics - Data Visualization------------------
 
 #ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
@@ -623,29 +650,6 @@ pw_all_data_with_demo[pw_all_data_with_demo$id==i,]$avg_time <- rep(mean(pw_all_
 #pie(genders) #need a better chart here
 #ggplot(demo_data) + geom_histogram(stat="count", aes(game_theory_experience) )
 # ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience) )
-
-
-
-
-#--------------------Data Write to .csv--------------------
-# write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
-# write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1036,13 +1040,6 @@ print("---------------------------------RPS analysis----------------------------
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
 # print(rps_prop <- round(prop.table(rps_sum)*100, 1))
 
-# NOTE - dont' use this, it's not really relevant print("RPS: Tests for normality (by choice)")
-# #tests on all "none" choices across all players
-# print(shapiro.test(rowSums(rps_long_none_by_id)))#not normal
-# #tests on all "AI" choices across all players
-# print(shapiro.test(rowSums(rps_long_AI_by_id))) #not normal
-# #tests on all "human" choices across all players
-# print(shapiro.test(rowSums(rps_long_human_by_id))) #not normal
 
 print("--RPS: Normality tests (by advisor type)--")
 print(shapiro.test(rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",]$Freq)) #not normal
@@ -1051,34 +1048,37 @@ print(shapiro.test(rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",]$Fre
 
 
 rps_df_1<- as.data.frame(xtabs(~Choice_of_Advisor + Adversary+id, data=rps_all_data_with_demo))
-rps_df_1$pois <- rpois(nrow(rps_df_1), lambda=mean(rps_df_1$Freq))
+# rps_df_1$pois <- rpois(nrow(rps_df_1), lambda=mean(rps_df_1$Freq))
 p<-ggplot(data=rps_df_1,aes(x=Freq, group=Choice_of_Advisor, color=Choice_of_Advisor,fill=Choice_of_Advisor)) + 
-  geom_bar(aes(y = ..count../sum(..count..)), alpha = 0.5) +
+  #geom_bar(aes(y = ..count../sum(..count..)), alpha = 0.5) +
   geom_density(alpha=0.5)+#, stat="count")+#how to stop the exponential at zero?
-
+  #+ geom_line(aes(y=rps_df_1$pois))
   labs(title="RPS - Choice Frequency Distribution", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
+print(p)
 cat(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
-print(p)
 print("RESULT: See PLOT: What kind of distributions are these?")
 
-#+ geom_line(aes(y=rps_df_1$pois))
 
 p<- ggplot(rps_df_1[rps_df_1$Adversary=="Human",], aes(Freq, fill=Choice_of_Advisor))+
-  geom_density(alpha=0.4, stat="count")
+  geom_density(alpha=0.4)+
+  labs(title="RPS- vs Human - Choice Frequency Distribution by Round", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=10))
 print(p)
 q <- ggplot(rps_df_1[rps_df_1$Adversary=="Human+AI",], aes(Freq, fill=Choice_of_Advisor))+
-  geom_density(alpha=0.4, stat="count")
+  geom_density(alpha=0.4)+
+  labs(title="RPS- vs AI-Assisted Human - Choice Frequency Distribution by Round", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=10))
 print(q)
 r<- ggplot(rps_df_1[rps_df_1$Adversary=="AI",], aes(Freq, fill=Choice_of_Advisor))+
-  geom_density(alpha=0.4, stat="count")
+  geom_density(alpha=0.4)+
+  labs(title="RPS- vs AI - Choice Frequency Distribution by Round", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=10))
 print(r)
 # cat(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
-print("RESULT: See PLOT: What kind of distribution is this?")
+print("RESULT: See PLOTs: What kind of distribution are these?")
 
 print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 print(xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo))
+print("This x-tabs show that participants, in aggregate, chose AI advice over human advice, but chose 'no advice' over any advice.")
 #--------------------RPS - Aggregation of Choice of Advisor by Adversary - Data Analysis-------------
 #video #9 (tests of proportions)
 print("RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
@@ -1089,10 +1089,12 @@ chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq?
 fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#is exact test more appropriate than chisq.test here
 print("RESULT: A Chi-sq, G-test, and fisher test all show Adversary type is statistically independent at p < .05.")
-print("?Cochran Q test relevant here?")
+cat("?Cochran Q test relevant here?\n\n")
+
 
 print("RPS: All: Friedman test of variance in choice of advisor by adversary")
 rps_long_by_id <- as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
+print(rps_sum)
 print(friedman.test(rps_sum)) # need to check if this needs to be transposed (t(rps_sum))
 friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
 # am I doing this right? or should it be like this: friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
