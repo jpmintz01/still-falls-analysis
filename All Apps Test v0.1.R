@@ -916,7 +916,7 @@ pw_df$period <- as.numeric(pw_df$period)
 p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="PW - Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # print(p)
 print("RESULT: From the plot, it appeares the group of participants who chose War in round 1 (0 in this plot) had little variance across rounds, but that the initial cooperator-group (Peace, 1 in this graph) varied markedly.")
 
@@ -992,7 +992,7 @@ p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+
   labs(title="PW-Round 1 Cooperators:\nPeace Choices by Round\nand Adversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # print(p)
 print("NOTE: Interesting that changes across rounds for Human+AI and AI are very similar, despite VERY different gameplay from the adversary.  This is in contrast to the human adversary.")
 print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding. You could explore this using a GLM with my.decision1 and other.decision1 as the main factors to see what the coefficients are (my.round1decision as an interaction with all variables?).  It's interesting that the initial amount of cooperation has an effect here.")
@@ -1047,7 +1047,7 @@ p<- ggplot(n_1, aes(x=Freq))+
   geom_density(data=n_2[n_2$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
   geom_density(data=n_2[n_2$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3) + labs(title="PW-Peace Choices Distribution (by PW Play order & Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=8))
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # print(p)
 print("RESULT: See PLOT: A visual inspection of the plot shows the AI means are similar,the human means are similar, but the AI-assisted human means are very different between those who played PW first and those who played RPS first, so,,,,")
 
@@ -1196,7 +1196,7 @@ p<-ggplot(data=rps_df_1,aes(x=Freq, group=Choice_of_Advisor, color=Choice_of_Adv
   labs(title="RPS - Choice Frequency Distribution", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: What kind of distributions are these?")
 
 
@@ -1213,7 +1213,7 @@ r<- ggplot(rps_df_1[rps_df_1$Adversary=="AI",], aes(Freq, fill=Choice_of_Advisor
   labs(title="RPS- vs AI - Choice Frequency Distribution by Round", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=10))
 print(r)
 # print(paste0("Insert ", p$labels$title," Plot"))
-# ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOTs: What kind of distribution are these?")
 
 print("RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
@@ -1294,7 +1294,7 @@ p<- ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+
   geom_smooth(method='glm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: Visual inspection shows advice-taking seems to increase over time (both human and AI), and self-reliance ('none' choice) declined over time.")
 
 print(friedman.test(Freq~Choice_of_Advisor|Round, data=df))
@@ -1319,7 +1319,7 @@ p<- ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choic
   geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: Against the Human, human Advice-taking stayed approximately stable, but self-reliance('none') advice declined and was replaced by AI advisor.")
 
 
@@ -1331,7 +1331,7 @@ p<- ggplot(data=df_1[df_1$Adversary=="AI",], aes(x=Round, y=Freq, group=Choice_o
   labs(title="RPS- vs AI - Choices by Round",x="Round", y = "# of Choices", color = "Advisor") +geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: Against the AI, AI Advice-taking stayed approximately stable, but self-reliance('none') advice declined and was replaced by human advisor")
 
 p<- ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  
@@ -1341,7 +1341,7 @@ p<- ggplot(data=df_1[df_1$Adversary=="Human+AI",], aes(x=Round, y=Freq, group=Ch
   geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: Against the AI-assisted Human, Advice-taking from AI and human advisors increased across rounds at roughly the same rate, and self-reliance('none') declined markedly ")
 
 print("\nRESULT: A Visual analysis of AGGREGATE choice data by adversary across rounds showed: \n1) Against the adversaries with AI (AI and AI-assisted human), the aggregate use of the human advisor went up across rounds, but against the human adversary, use of a human advisor was low and stayed low.\n2) more here...  ")
@@ -1365,7 +1365,7 @@ print("shouldn't these demographic tests be 'by id' like an anova or something?"
 #--rps time Analysis
 p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print(p)
 print("RESULT: See PLOT: ")
 
