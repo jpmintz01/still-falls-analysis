@@ -402,11 +402,11 @@ f <- as.formula(paste(formula_my, formula_predictors))
 # pw_all_data[is.na(pw_all_data$my.decision1),]$my.decision1 <- 0
 # pw_all_data$other.decision1 <- pw_all_data$other.decision1+1 
 # pw_all_data[is.na(pw_all_data$other.decision1),]$other.decision1 <- 0
-# pw_all_data_subset <-pw_all_data
+#  pw_all_data_subset<-pw_all_data
 
-nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(4,3,2),act.fct = "logistic",linear.output=FALSE)
-# pw_all_data_subset_human <- pw_all_data_subset[pw_all_data$Adversary=="Human",]
-# nn_test_only_human <- neuralnet(f,data=pw_all_data_subset_human[pw_all_data_subset_human$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+# nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(4,3,2),act.fct = "logistic",linear.output=FALSE)
+pw_all_data_subset_human <- pw_all_data_subset[pw_all_data$Adversary=="Human",]
+nn <- neuralnet(f,data=pw_all_data_subset_human[pw_all_data_subset_human$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 # nn_test <- neuralnet(f,data=pw_all_data_subset,hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
 
 # nn_exp_all_data_test <- neuralnet(f,data=all_data_train[all_data_train$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
@@ -619,18 +619,18 @@ for (i in 1:10) {
 
 
 #--------------------Data Write to .csv--------------------
-#write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
-# write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
-# write.csv(demo_data, "demo_data.csv")
+write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
+write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
+write.csv(demo_data, "demo_data.csv")
 
-pw_all_data_with_demo<-read.csv("pw_all_data_with_demo.csv")
-pw_all_data_with_demo$X <- NULL
-rps_all_data_with_demo<-read.csv("rps_all_data_with_demo.csv")
-rps_all_data_with_demo$X <- NULL
-demo_data<-read.csv("demo_data.csv")
-demo_data$X <- NULL
-
-
+# pw_all_data_with_demo<-read.csv("pw_all_data_with_demo.csv")
+# pw_all_data_with_demo$X <- NULL
+# rps_all_data_with_demo<-read.csv("rps_all_data_with_demo.csv")
+# rps_all_data_with_demo$X <- NULL
+# demo_data<-read.csv("demo_data.csv")
+# demo_data$X <- NULL
+# print("--------MAJOR NOTE---------")
+# print("--------DATA IS CURRENTLY READ FROM CSV NOT CALCUATIONS---------")
 
 
 
@@ -660,13 +660,19 @@ demo_data$X <- NULL
 
 
 #--------------------PW - Initial Data Analysis-----------------
-print("---------------------------------PW analysis----------------------------------")
+print("----------------------------PW analysis-----------------------------")
 print("")
 print("         --PW: Aggregate Observed Choices--")
 print(pw_sum <- xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
 # pw_summary <- ddply(pw_all_data_with_demo, ~Adversary+my.decision, summarise, Obs.sum=sum('my.decision'), Obs.mean=mean('my.decision'), Obs.sd=sd('my.decision'), nnet.sum=sum(nnet), nnet.mean=mean(nnet), nnet.sd=sd(nnet))
 # print("P-W summary")
 # print(pw_summary)
+print("")
+print("         --PW: Adversary Choices--")
+print(paste0("AI: ",paste0(ai_adv_choices, collapse="")))
+print(paste0("Human: ",paste0(human_adv_choices, collapse="")))
+print(paste0("Human+AI: ",paste0(hai_adv_choices, collapse="")))
+
 print("")
 print("         --PW: Data Normality Tests--")
 
@@ -677,7 +683,7 @@ p<- ggplot(pw_df_1, aes(x=Freq))+
   stat_function(fun = dnorm,color="blue",args = list(mean = mean(pw_df_1$Freq), sd = sd(pw_df_1$Freq)),linetype = "dashed")+ labs(title="PW-Peace Density Distribution", x="Frequency", y = "Density of Choices") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: A visual inspection of the density distribution plot of peace choices indicates the data may be normally distributed. So we conduct a Shapiro-Wilk test...")
 
 #tests on all Peace choices across all players
@@ -685,7 +691,7 @@ print(shapiro.test(xtabs(~my.decision+id, data=pw_all_data_with_demo)[1,]))#test
 print("RESULT: A Shapiro test on the aggregation of peace choices indicates the data is likely normally distributed. So, we conduct a test of the residuals...")
 
 
-m <- aov(Freq/10 ~ Adversary, data = as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,1]))
+m <- aov(Freq ~ Adversary, data = as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,1]))
 print(shapiro.test(residuals(m))) #overall, data not normal
 print("RESULT: A Shapiro test on the residuals of the peace choices shows the data is NOT NORMALLY DISTRIBUTED.")
 print("IMPLICATION: Will use non-parametric tests.")
@@ -709,20 +715,23 @@ print(paste0("RESULT: A simple count of participants showed ",length(pw_varied_r
 print("IMPLICATION: The majority of participants, when having no history with the adversaries, did not make different initial moves with the adversaries (in round 1).")
 
 
-print(chisq.test(pw_round_1s_sum))
-print(paste("RESULT: A Chi-Sq test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
+# print(chisq.test(pw_round_1s_sum))
+# print(paste("RESULT: A Chi-Sq test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
 print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
 print(paste("RESULT: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
+print("HELP: Is chisq or fisher test more appropriate? ")
+
 print(friedman.test(Choice ~ Adversary | id, data = as.matrix(pw_round_1s))) #not significant
 print(paste("RESULT: A Friedman test of round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
-print("\nNOTE: why count and chisq and fisher and friedman tests? Do I need all of these?\n")
 
-#cochran's Q for PW data?
+
+
 #Anova by Adversary
 m <- glmer(my.decision ~ Adversary+(1|id), data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,], family=binomial)
 # print(summary(m))
 print(Anova(m, type="3"))
 print("RESULT: A repeated measures logistic regression shows variation on the DV (Round 1 Choice) by the IV (Adversary) is NOT STATISTICALLY SIGNIFICANT at p <.05.")
+print("HELP: Is this even needed? Does it add anything to the analysis?")
 
 print("IMPLICATION: Statistical and non-statisticaly analyses show participants did not vary their initial propensity by adversary.")
 
@@ -732,7 +741,7 @@ print("IMPLICATION: Statistical and non-statisticaly analyses show participants 
 # pw_pred_array_played <- pw_pred_array[,,pw_played]
 
 #--------------------PW - Strategic Decisions Data Analysis-----------------
-print("------------------------PW: Strategic Decision-making Analyses------------------------")
+print("-------------------PW: Strategic Decision-making Analyses------------------")
 print("       ----PW: Strategic (All round) Choices (aggregate)----")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
 
@@ -746,7 +755,7 @@ p<- ggplot(pw_df_1, aes(x=Freq))+
   stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed") + labs(title="PW - Peace Choices Distribution (by Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=9))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: A visual inspection of the density plot (by adversary) indicates possible differences in the distributions.")
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="AI",]$Freq))#not normal
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="Human",]$Freq))#normal
@@ -787,27 +796,79 @@ pw_df <- pw_df[pw_df$my.decision=="Peace",]
 pw_df$period <- as.numeric(pw_df$period)
 p<- ggplot(data=pw_df, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  labs(title="PW - Peace Choices by Round",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
+  labs(title="PW - Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("NOTE: depending on whether the graphing method is 'lm' or 'auto'/'loess' the amount of cooperation (Peace Choices) went down similarly (at almost exactly the same rate) against all adversary types, but very similarly to HAI+AI, but worse vs human.  This is unexpected and INTERESTING because the HAI had more cooperation than the human, the AI had much less, so there was clearly something else going on here.  Maybe participants have a memory-1 or memory-2 (or a lag-1 or lag-2) decision schema.")
 
 print("")
+
 print("NOTE-opportunity for much more here...")
+print("")
+print("")
 
 
-print("       ---PW: Strategic Gameplay Compared to Predictive Models---")
-print(pw_pred_actual_sum)
-perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-print(paste0("       Percent NNET Predicted choices == Observed: ", round(perc_nnet_eq_actual*100, 2),"%."))
-perc_GLM_eq_actual <- length(which(pw_all_data_with_demo$GLM == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-print(paste0("       Percent GLM Predicted choices == Observed: ", round(perc_GLM_eq_actual*100, 2),"%."))
+
 print("")
 print("       ---PW: Strategic Gameplay Compared to TFT---")
 perc_TFT_eq_actual <- length(which(pw_all_data_with_demo$TFT == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
 print(paste0("       Percent TFT Predicted choices == Observed: ", round(perc_TFT_eq_actual*100, 2),"%."))
+AI_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="AI",]
+Human_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human",]
+HAI_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human+AI",]
+print(paste0("       Percent TFT Predicted choices vs AI == Observed: ", round(length(which(AI_df$TFT == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
+print(paste0("       Percent TFT Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$TFT == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
+print(paste0("       Percent TFT Predicted choices vs Human == Observed: ", round(length(which(Human_df$TFT == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
 
+print("")
+print("     ---PW-TFT Test of Proportions---")
+print(TFT_obs_actual <- pw_sum)
+print(TFT_sum <- xtabs(~Adversary + TFT, data=pw_all_data_with_demo))
+TFT_obs_actual[,2] <- TFT_sum[,1]
+TFT_obs_actual<- cbind(TFT_obs_actual, TFT_obs_actual[,2]-TFT_obs_actual[,1])
+TFT_obs_actual<- cbind(TFT_obs_actual, round((100*TFT_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
+colnames(TFT_obs_actual) <- c("Obs","TFT","TFTvObs","Perc Diff")
+print(TFT_obs_actual)
+
+print(chisq.test(TFT_obs_actual[,-c(3:4)]))
+print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs Actual) on the IV (Adversary) was statistically significant at p < .05.")
+print("IMPLICATION: This indicates participants LIKELY used different strategies for each of the adversaries.")
+# pw_df_tft <- as.data.frame(xtabs(~period + TFT +Adversary, data=pw_all_data_with_demo))
+# pw_df_tft <- pw_df_tft[pw_df_tft$TFT=="Peace",]
+# pw_df_tft$period <- as.numeric(pw_df_tft$period)
+# p<- ggplot(data=pw_df_tft, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
+#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   labs(title="PW- tft Predicted Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+print("       ---PW: Strategic Gameplay Compared to Nay and Vorobeychik's GLM Model---")
+print(pw_pred_actual_sum[,-2])
+perc_GLM_eq_actual <- length(which(pw_all_data_with_demo$GLM == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
+print(paste0("       Percent GLM Predicted choices == Observed: ", round(perc_GLM_eq_actual*100, 2),"%."))
+print(paste0("       Percent GLM Predicted choices vs AI == Observed: ", round(length(which(AI_df$GLM == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
+print(paste0("       Percent GLM Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$GLM == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
+print(paste0("       Percent GLM Predicted choices vs Human == Observed: ", round(length(which(Human_df$GLM == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
+GLM_obs_actual <- pw_pred_actual_sum[,-2]
+GLM_obs_actual<- cbind(GLM_obs_actual, GLM_obs_actual[,2]-GLM_obs_actual[,1])
+GLM_obs_actual<- cbind(GLM_obs_actual, round((100*GLM_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
+colnames(GLM_obs_actual) <- c("Obs","GLM","GLMvObs","Perc Diff")
+print(GLM_obs_actual)
+print("RESULT: It appears the neural net has ~1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This indicates some difference in strategy.")
+print(chisq.test(GLM_obs_actual[,-c(3:4)]))
+print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs GLM) on the IV (Adversary) was NOT statistically significant at p < .05.")
+print("IMPLICATION:")
+# pw_df_glm <- as.data.frame(xtabs(~period + GLM +Adversary, data=pw_all_data_with_demo))
+# pw_df_glm <- pw_df_glm[pw_df_glm$GLM=="Peace",]
+# pw_df_glm$period <- as.numeric(pw_df_glm$period)
+# p<- ggplot(data=pw_df_glm, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
+#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   labs(title="PW- GLM Predicted Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 #--notes
 # m <- glmer(my.decision ~ period + Adversary + period:Adversary+ (1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial(link="logit"))
@@ -818,6 +879,32 @@ print(paste0("       Percent TFT Predicted choices == Observed: ", round(perc_TF
 # wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human+AI",]) #Human-AI comparison
 # wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="Human",]) #AI-HAI comparison
 # wilcox.test(Freq ~ Adversary, data=pw_df_1[pw_df_1$Adversary!="AI",]) #human-HAI comparison
+
+print("       ---PW: Strategic Gameplay Compared to NNET Model---")
+
+perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
+print(paste0("       Percent NNET Predicted choices == Observed: ", round(perc_nnet_eq_actual*100, 2),"%."))
+print(paste0("       Percent nnet Predicted choices vs AI == Observed: ", round(length(which(AI_df$nnet == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
+print(paste0("       Percent nnet Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$nnet == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
+print(paste0("       Percent nnet Predicted choices vs Human == Observed: ", round(length(which(Human_df$nnet == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
+NNET_obs_actual <- pw_pred_actual_sum[,-3]
+NNET_obs_actual<- cbind(NNET_obs_actual, NNET_obs_actual[,2]-NNET_obs_actual[,1])
+NNET_obs_actual<- cbind(NNET_obs_actual, round((100*NNET_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
+colnames(NNET_obs_actual) <- c("Obs","NNET","NNETvObs","Perc Diff")
+print(NNET_obs_actual)
+print("RESULT: It appears the neural net has 1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This indicates some difference in strategy.")
+print(chisq.test(NNET_obs_actual[,-c(3:4)]))
+print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs NNET) on the IV (Adversary) was NOT statistically significant at p < .05.")
+print("HELP: Is this the right test to compare observed and actual?")
+# pw_df_nnet <- as.data.frame(xtabs(~period + nnet +Adversary, data=pw_all_data_with_demo))
+# pw_df_nnet <- pw_df_nnet[pw_df_nnet$nnet=="Peace",]
+# pw_df_nnet$period <- as.numeric(pw_df_nnet$period)
+# p<- ggplot(data=pw_df_nnet, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
+#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   labs(title="PW- Neural Net Predicted Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 
 
