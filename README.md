@@ -9,6 +9,7 @@ Analysis Code (R) and Data file (.csv) from Jan 2019 Experiment for Dissertation
 - a manual check and calculation on:
 -- one data analysis
 -- one demographic alignment (to check data and demographic info are actually matched)
+- Demographic data visualization
 
 #To do (nice to have):
 - Clean up code
