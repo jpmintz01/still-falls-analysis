@@ -384,7 +384,7 @@ predictors <- c("my.round1decision","my.decision1","other.decision1","period")
 formula_my <- "my.decision~"
 formula_predictors <- paste(predictors[1:length(predictors)], collapse="+")
 f <- as.formula(paste(formula_my, formula_predictors))
-
+# predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
 #train/tst
 # all_data_subset <- all_data
 # all_data_subset$my.decision <- as.factor(all_data_subset$my.decision)
@@ -405,13 +405,21 @@ f <- as.formula(paste(formula_my, formula_predictors))
 #  pw_all_data_subset<-pw_all_data
 
 # nn <- neuralnet(f,data=pw_all_data_subset[pw_all_data_subset$period >1,],hidden=c(4,3,2),act.fct = "logistic",linear.output=FALSE)
-pw_all_data_subset_human <- pw_all_data_subset[pw_all_data$Adversary=="Human",]
-nn <- neuralnet(f,data=pw_all_data_subset_human[pw_all_data_subset_human$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
-# nn_test <- neuralnet(f,data=pw_all_data_subset,hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+# pw_all_data_subset_human <- pw_all_data_subset[pw_all_data$Adversary=="Human",]
+# nn <- neuralnet(f,data=pw_all_data_subset_human[pw_all_data_subset_human$period >1,],hidden=c(4,3,2),act.fct = "logistic",linear.output=FALSE)
 
-# nn_exp_all_data_test <- neuralnet(f,data=all_data_train[all_data_train$period >1,],hidden=c(10,4),act.fct = "logistic",linear.output=FALSE)
+all_data_subset <- all_data[1:10000,]
+# set.seed(3456)
+# trainIndex <- createDataPartition(all_data$Species, p = .8,
+#                                   list = FALSE,
+#                                   times = 1)
+all_data_subset$my.decision <- as.factor(all_data_subset$my.decision)
+all_data_subset$my.decision <- as.numeric(as.factor(all_data_subset$my.decision))
+all_data_subset$my.decision[all_data_subset$my.decision==2] <- 0
+nn_all <- neuralnet(f,data=all_data_subset[all_data_subset$period >1,],hidden=c(4,3,2),act.fct = "logistic",linear.output=FALSE, threshold = 0.5)
+
 pw_all_data_sub_subset <- pw_all_data_subset[,predictors]
-pw_nn_output<- compute(nn, pw_all_data_sub_subset)$net.result
+pw_nn_output<- compute(nn_all, pw_all_data_sub_subset)$net.result 
 # pw_nn_output<- compute(nn_test_only_human, pw_all_data_sub_subset)$net.result
 #this is just a test round here
 # all_data_nn_output_test<- compute(nn_exp, all_data_test[all_data_test$period >1,])$net.result
@@ -659,7 +667,7 @@ write.csv(demo_data, "demo_data.csv")
 
 
 
-#--------------------PW - Initial Data Analysis-----------------
+#--------------------PW - Initial Data Characterization-----------------
 print("----------------------------PW analysis-----------------------------")
 print("")
 print("         --PW: Aggregate Observed Choices--")
@@ -771,7 +779,7 @@ print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of Peace Choices) are statistically dependent at p <.05.")
 print("IMPLICATION: In this experiment, the group of participants varied their choices by adversary.")
 # print("    --PW: All Rounds: Individual Fisher test p-values: ")
-print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of thisexperiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary, despite the following results...")
+print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary, despite the following results...")
 # print("fisher test p-values: ")
 # for (i in pw_ids){
 #   print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
@@ -804,7 +812,7 @@ print("NOTE: depending on whether the graphing method is 'lm' or 'auto'/'loess' 
 
 print("")
 
-print("NOTE-opportunity for much more here...")
+print("NOTE-opportunity for more here...")
 print("")
 print("")
 
@@ -820,7 +828,8 @@ HAI_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human+AI",]
 print(paste0("       Percent TFT Predicted choices vs AI == Observed: ", round(length(which(AI_df$TFT == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
 print(paste0("       Percent TFT Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$TFT == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
 print(paste0("       Percent TFT Predicted choices vs Human == Observed: ", round(length(which(Human_df$TFT == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
-
+boxplot((colSums(pw_array)[1,]-colSums(xtabs(~Adversary+TFT+id, data=pw_all_data_with_demo))[1,])/30)
+print("visualize the error/accuracy of TFT")
 print("")
 print("     ---PW-TFT Test of Proportions---")
 print(TFT_obs_actual <- pw_sum)
@@ -856,10 +865,12 @@ GLM_obs_actual<- cbind(GLM_obs_actual, GLM_obs_actual[,2]-GLM_obs_actual[,1])
 GLM_obs_actual<- cbind(GLM_obs_actual, round((100*GLM_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
 colnames(GLM_obs_actual) <- c("Obs","GLM","GLMvObs","Perc Diff")
 print(GLM_obs_actual)
-print("RESULT: It appears the neural net has ~1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This indicates some difference in strategy.")
+print("RESULT: It appears the GLM has ~5% error for the Human (as expected) but 10% for the AI and 6% for the HAI. Like the TFT analysis, these differences also indicate some difference in strategic gameplay between adversaries.")
 print(chisq.test(GLM_obs_actual[,-c(3:4)]))
 print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs GLM) on the IV (Adversary) was NOT statistically significant at p < .05.")
 print("IMPLICATION:")
+print("")
+print("HELP: Maybe use three separate residuals tests (by adversary) to see the distribution of error?")
 # pw_df_glm <- as.data.frame(xtabs(~period + GLM +Adversary, data=pw_all_data_with_demo))
 # pw_df_glm <- pw_df_glm[pw_df_glm$GLM=="Peace",]
 # pw_df_glm$period <- as.numeric(pw_df_glm$period)
@@ -892,7 +903,7 @@ NNET_obs_actual<- cbind(NNET_obs_actual, NNET_obs_actual[,2]-NNET_obs_actual[,1]
 NNET_obs_actual<- cbind(NNET_obs_actual, round((100*NNET_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
 colnames(NNET_obs_actual) <- c("Obs","NNET","NNETvObs","Perc Diff")
 print(NNET_obs_actual)
-print("RESULT: It appears the neural net has 1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This indicates some difference in strategy.")
+print("RESULT: It appears the neural net has 1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This also indicates some difference in strategic gameplay.")
 print(chisq.test(NNET_obs_actual[,-c(3:4)]))
 print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs NNET) on the IV (Adversary) was NOT statistically significant at p < .05.")
 print("HELP: Is this the right test to compare observed and actual?")
