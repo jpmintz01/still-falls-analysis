@@ -488,11 +488,17 @@ pw_pred_actual_sum[,3] <- pw_GLM_sum[,1]
 #--------------------RPS - Data Transformation-----------------
 #bind the columns advisor_choice and adversary type
 rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
+#rps_cols_1 <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))], new_data[grepl('^rps.*payoff_vs_adv_1$', names(new_data))])
+
 #rps_vs_human_totals <- rowSums()#pwChangeColNames(rps_vs_human_cols, num_pw_rounds) #get a matrix of rps choices (row:player)x(column:round) with only the rps vs human
 names(rps_cols) <-  gsub(pattern = "rps.", replacement = "", x = names(rps_cols)) # removes the leading 'rps.' - just a cleanup
 names(rps_cols) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols)) # removes 'player.' - just a cleanup
+#names(rps_cols_1) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols_1))
+
 names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))])
 # line above adds leading zero to one-digit round numbers
+#names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))] <- paste0("0", names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))])
+
 a <- rps_cols
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
 
@@ -507,6 +513,8 @@ df_labels <- c("code","label","pw_cb","rps_cb")
 colnames(df) <- df_labels
 list_of_decision_cols <- names(rps_cols)[grepl('^.*choice$', names(rps_cols))]
 list_of_type_cols <- names(rps_cols)[grepl('^.*type$', names(rps_cols))]
+#list_of_payoff_cols <- names(rps_cols_1)[grepl('^.*payoff*$', names(rps_cols_1))]
+
 a <- bind_cols(as.data.frame(new_data$participant.label), rps_cols)  #change participant.label to whatever makes sense
 
 game_order_rps <-2-(3-new_data$session.config.pw_counterbalance%%2)%%2  #will be 2 if rps is played first. will be 2 if rps_played second
@@ -794,6 +802,17 @@ print("IMPLICATION: The difference in distribution fit BY ADVERSARY indicates a 
 print("       ----PW: Strategic Tests----")
 print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of Peace Choices) are statistically dependent at p <.05.")
+print("--post-hoc tests")
+n<-as.data.frame(xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo))
+n <- n[n$my.decision=="Peace",]
+n$my.decision <- NULL
+print(wilcox.test(n[n$Adversary=="Human",]$Freq, n[n$Adversary=="AI",]$Freq, paired=TRUE))
+print("RESULT: Paired wilcox test of the all-round sums comparing HUman and AI show difference at p <. 01")
+print(wilcox.test(n[n$Adversary=="AI",]$Freq, n[n$Adversary=="Human+AI",]$Freq, paired=TRUE))
+print("RESULT: Paired wilcox test of the all-round sums comparing AI and Human+AI show a difference at p <. 01")
+print(wilcox.test(n[n$Adversary=="Human",]$Freq, n[n$Adversary=="Human+AI",]$Freq, paired=TRUE))
+print("RESULT: Paired wilcox test of the all-round sums comparing HUman and Human+AI show NO difference at p <. 01, despite difference in adversary gameplay")
+
 print("IMPLICATION: In this experiment, the group of participants varied their choices by adversary.")
 # print("    --PW: All Rounds: Individual Fisher test p-values: ")
 print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary, despite the following results...")
@@ -812,6 +831,9 @@ print("IMPLICATION: Various statistical analyses show statistically significant 
 print("")
 print("LIMITATION: Differences in Adversary gameplay are a possible confounding factor.")
 print("")
+
+
+
 print("MITIGATION: One way to see if there are differences, despite the adversary gameplay is to compare distribution, another is to compare to predictive models, another is to compare against reactive strategies (TFT).")
 
 print("       ---PW: Strategic Gameplay BY ROUND and adversary---")
@@ -1064,11 +1086,14 @@ n_1<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_dem
 n_2<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))
 n_1<- n_1[,1]/30
 n_2 <- n_2[,1]/30
-n<-wilcox.test(n_1,n_2)
-n["data.name"] <- "Played PW First and Played PW Second"
-print(n)
-print("RESULT: A Wilcox test on Order of Play (first or second) and total 'peacefulness' (number of Peace choices) did NOT SHOW A STATISTICALLY SIGNIFICANT result at p <.05")
-print("HELP: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate? Probably the latter")
+# n<-wilcox.test(n_1,n_2, paired=FALSE)
+# n["data.name"] <- "Played PW First and Played PW Second"
+# print(n)
+# print("RESULT: A Wilcox test on Order of Play (first or second) and total 'peacefulness' (number of Peace choices) did NOT SHOW A STATISTICALLY SIGNIFICANT result at p <.05")
+# print("HELP: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate? Probably the latter")
+m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(Anova(m))
+print("RESULT: A RMLR on STRATEGIC decisions and pw_order DID NOT show a statistically significant difference at p <.05.")
 
 
 n_1<-as.data.frame(xtabs(~ id+Adversary+my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,])[,,1])
@@ -1080,6 +1105,7 @@ p<- ggplot(n_1, aes(x=Freq))+
   geom_density(data=n_2[n_2$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
   geom_density(data=n_2[n_2$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
   geom_density(data=n_2[n_2$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3) + labs(title="PW-Peace Choices Distribution (by PW Play order & Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=8))
+print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # print(p)
@@ -1331,6 +1357,18 @@ print("RESULT: A Chi-sq, G-test, and fisher test all show Adversary type is stat
 #using fisher test instead)
 print ("RPS: Indidividual ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with some expected value cells=0?")
 rps_ids <- unique(rps_all_data_with_demo$id)
+rps_chi_test <- data.frame("id"=rps_ids,"All"=NA)
+#"fisher test p-values
+rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+for (i in rps_ids){
+  rps_chi_test[rps_chi_test$id==i,"All"] <- chisq.test(rps_array[,,i])["p.value"]<0.05
+}
+d <- rps_chi_test
+d[is.na(d$All),]$All <- FALSE
+d<- d[d$All=="TRUE",]$id
+print(paste0("RESULT: Chisq tests on individual sum choices (across rounds) showed ", length(d), " participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+
+rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
 #"fisher test p-values
 rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
@@ -1349,7 +1387,7 @@ for (i in rps_ids){
   rps_G_test[rps_G_test$id==i,"All"] <- GTest(rps_array[,,i])["p.value"]<0.05
 }
 f<-rps_G_test[rps_G_test$All=="TRUE",]$id
-print(paste0("RESULT: A Friedman test of individual sum choices (across rounds) showed ", length(f), " participant(s) (",paste(f, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+print(paste0("RESULT: A G-test of individual sum choices (across rounds) showed ", length(f), " participant(s) (",paste(f, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 intersect(d,f)
 
 print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
@@ -1458,31 +1496,35 @@ print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
+n<-as.data.frame(xtabs( ~Choice_of_Advisor+ Adversary+Round,data=rps_all_data_with_demo))
+print(chisq.test())
+
+print("Should it be this: print(mantelhaen.test(xtabs(~Adversary+Choice_of_Advisor+Round, data=rps_all_data_with_demo))) or this:")
+print(mantelhaen.test(xtabs(~Round+Choice_of_Advisor+Adversary, data=rps_all_data_with_demo)))
+print("RESULT: A CMH test showed a statistically significant dependence between choice of advisor, adversary, and round.")
+print("HELP: Which of these two is correct? Is this test valid and the code correct?  It seems like it might mask variation in different directions")
 
 
-n<-xtabs(~Adversary+Choice_of_Advisor+Round, data=rps_all_data_with_demo)
-print(mantelhaen.test(n))
-print("RESULT: A CMH test showed no statistically significant dependence between choice of advisor, adversary, and round.")
-print("HELP: Is this test valid and the code correct?  It seems like it might mask variation in different directions")
-
-m <- glmer(Choice_of_Advisor ~ Adversary+Adversary*Round+(1|id)+(1|rps_order), data=rps_all_data_with_demo, family=binomial)
+m <- glmer(Choice_of_Advisor ~ Adversary+Round+Adversary*Round+(1|id)+(1|rps_order), data=rps_all_data_with_demo, family=binomial)
 print(summary(m))
 print(Anova(m, type="3"))
 print("HELP: How do I code this to determine whether Choice_of_Advisor varied across rounds, by Adversary? (i.e.compare (the slope of change across rounds) across adversaries")
 print("HELP: How do I do a multinomial version of this - it keeps excluding 'AI' adversary")
 
-print("---RPS: Aggregate: Tests of proportions on choices by Adversary AND ROUND ---")
-print("RPS: RMLR:")
-print("HELP: Am I doing the comparison of whether Adversary causes variation in the change across rounds?")
-print("human-AI choice comparison")
-print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="none",], family=binomial), type="3"))
-print("none-AI choice comparison")
-print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="human",], family=binomial), type="3"))
-print("human-none choice comparison")
-print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="AI",], family=binomial), type="3"))
-print("??RESULT: A multiple RMLR (should use multivariate repeated measures logistic regression if possible), showed Adversary did not cause a change across rounds, at p <.05.??")
 
-print("---code above here RMLR needs to be moved lower...---")
+
+# print("---RPS: Aggregate: Tests of proportions on choices by Adversary AND ROUND ---")
+# print("RPS: RMLR:")
+# print("HELP: Am I doing the comparison of whether Adversary causes variation in the change across rounds?")
+# print("human-AI choice comparison")
+# print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="none",], family=binomial), type="3"))
+# print("none-AI choice comparison")
+# print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="human",], family=binomial), type="3"))
+# print("human-none choice comparison")
+# print(Anova(glmer(Choice_of_Advisor ~ Adversary + Round + (1|id), data=rps_all_data_with_demo[!rps_all_data_with_demo$Choice_of_Advisor=="AI",], family=binomial), type="3"))
+# print("??RESULT: A multiple RMLR (should use multivariate repeated measures logistic regression if possible), showed Adversary did not cause a change across rounds, at p <.05.??")
+# 
+# print("---code above here RMLR needs to be moved lower...---")
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
 #check for correlation with counterbalancing
 rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
