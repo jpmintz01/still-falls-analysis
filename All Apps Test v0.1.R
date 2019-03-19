@@ -22,6 +22,7 @@ library(car)
 library(fitdistrplus)
 library(logspline)
 library(scales)
+library(corrplot)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -488,19 +489,20 @@ pw_pred_actual_sum[,3] <- pw_GLM_sum[,1]
 #--------------------RPS - Data Transformation-----------------
 #bind the columns advisor_choice and adversary type
 rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
-#rps_cols_1 <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))], new_data[grepl('^rps.*payoff_vs_adv_1$', names(new_data))])
+rps_cols_1 <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))], new_data[grepl('^rps.*payoff_vs_adv_1$', names(new_data))])
 
 #rps_vs_human_totals <- rowSums()#pwChangeColNames(rps_vs_human_cols, num_pw_rounds) #get a matrix of rps choices (row:player)x(column:round) with only the rps vs human
 names(rps_cols) <-  gsub(pattern = "rps.", replacement = "", x = names(rps_cols)) # removes the leading 'rps.' - just a cleanup
 names(rps_cols) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols)) # removes 'player.' - just a cleanup
-#names(rps_cols_1) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols_1))
+names(rps_cols_1) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols_1))
 
 names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))])
 # line above adds leading zero to one-digit round numbers
-#names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))] <- paste0("0", names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))])
+names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))] <- paste0("0", names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))])
 
 a <- rps_cols
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
+rps_cols1 <- rps_cols1[,order(colnames(rps_cols1))] #sorts columns by round number (two vars each)
 
 
 
@@ -637,6 +639,7 @@ for (i in 1:10) {
 write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
 write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
 write.csv(demo_data, "demo_data.csv")
+write.csv(all_data, "all_data.csv")
 
 # pw_all_data_with_demo<-read.csv("pw_all_data_with_demo.csv")
 # pw_all_data_with_demo$X <- NULL
@@ -674,6 +677,7 @@ write.csv(demo_data, "demo_data.csv")
 
 
 
+#------------********PW Analyses********--------------
 #--------------------PW - Initial Data Characterization-----------------
 print("----------------------------PW analysis-----------------------------")
 print("")
@@ -1055,18 +1059,24 @@ print("NOTE: Is it possible that participants' strategy against a human adversar
 
 #--------------------PW - Time <-> Strategic Decision Analysis-----------------
 print(" ---PW: Is BY-PAGE DECISION TIME correlated to decision-making?")
-m <- glmer(my.decision ~ my.decision1+other.decision1+seconds_on_page+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
-# print(summary(m))
-print(Anova(m))
-print("RESULT: A RMLR showed BY-PAGE DECISION TIME did not show a statistically significant correlation to decision at p < .05.\n")
+p<- ggplot(pw_all_data_with_demo, aes(x=seconds_on_page))+
+  geom_density(data=pw_all_data_with_demo[pw_all_data_with_demo$my.decision=="Peace",],fill="green", color="green",alpha=0.3)+
+  geom_density(data=pw_all_data_with_demo[pw_all_data_with_demo$my.decision=="War",],fill="red", color="red",alpha=0.3)+
+  # geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+
+  # geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+
+  scale_x_continuous(limits = c(0, 50))+
+  labs(title="PW-Decision Time Density Plot", x="Seconds per Decision", y = "Density", color = "Adversary type")  + 
+  scale_color_manual(values = c('Peace' = 'green', 'War' = 'red'))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
-print("   ---PW: Is BY-PAGE DECISION TIME related to Adversary type?")
-n <- lm(seconds_on_page ~ Adversary, data=pw_all_data_with_demo)
-print(Anova(n))
-m <- lm(seconds_on_page ~ Adversary, data=pw_all_data_with_demo)
-summary(n)
-Anova(m)
-print("A one-way Repeated Measures ANOVA shows relationship between decision time and Adversary is not statistically significant at p < .05.\nHELP: WHY DOESN'T 'AI' Adversary SHOW UP ON ANY OF THESE? \nHELP: Is this the correct way to do a 1-way RM Anova?\n")
+print("HELP:need help here...")
+# m <- glmer(my.decision ~ avg_time+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+# # print(summary(m))
+# print(Anova(m))
+# print("RESULT: A RMLR showed AVERAGE DECISION TIME did not show a statistically significant correlation to decision at p < .05.\n")
+# print("HELP: is this the correct way to code this?")
 
 #--------------------PW - Counterbalancing Data Analysis-----------------
 print("       ---PW: COUNTERBALANCING: Is P-W PLAY ORDER related to number of peace propensity (across all adversaries)--")
@@ -1152,9 +1162,11 @@ print(Anova(m))
 m <- glmer(my.decision ~ machine_learning_experience+game_theory_experience  + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(Anova(m))
 
-# print(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ gender + my.decision, data = pw_all_data_with_demo)))
+print("Chi-sq (aggregate) on whether GENDER affected decision-making, IN GENERAL was NOT statistically significant at p < .05 ")
 print(chisq.test(xtabs(~ Adversary + gender + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("Chi-sq (aggregate) on whether GENDER affected decision-making, by adversary was NOT statistically significant at p < .05 ")
+
 
 
 # print(xtabs(~ Adversary + service + my.decision, data = pw_all_data_with_demo)[,,1])
@@ -1163,44 +1175,35 @@ print("Chi-sq (aggregate) on whether SERVICE affected decision-making, by advers
 
 
 # print(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~ rank + my.decision, data = pw_all_data_with_demo)))
+print("Chi-sq (aggregate) on whether RANK affected decision-making, in general was NOT statistically significant at p < .05 ")
 print(chisq.test(xtabs(~ Adversary + rank + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("Chi-sq (aggregate) on whether RANK affected decision-making, by adversary was NOT statistically significant at p < .05 ")
 
-
-
+print(l<-chisq.test(xtabs(~ age + my.decision, data = pw_all_data_with_demo)))
+print("Chi-sq (aggregate) on whether AGE affected decision-making, in general was statistically significant at p < .001 ")
+m <- glmer(my.decision ~  age + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(Anova(m))
+print("RMLR  on whether AGE affected decision-making, in general was NOT statistically significant at p < .05 ")
 m <- glmer(my.decision ~  age + Adversary + age:Adversary+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(Anova(m))
 print("RMLR  on whether AGE affected decision-making, by adversary was NOT statistically significant at p < .05 ")
-# number_parts_by_age <- prop.table(xtabs(~ age,data = pw_all_data_with_demo))*28
-# print("in general - # of peace decisions by age")
-# print(xtabs(~ age + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_age) #first xtabs is number of Peace decisions by age. prop.table is proportion of participants by age
-# print(chisq.test(xtabs(~ age + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_age)) #note: trending significant that age made a difference in Warlike-ness
-# print("by adversary")
-# temp_matrix <- matrix(NA, nrow = 3, ncol = 12) #matrix of 
-# temp_matrix[1,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[1,,1])/number_parts_by_age 
-# temp_matrix[2,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[2,,1])/number_parts_by_age
-# temp_matrix[3,] <- (xtabs(~ Adversary + age + my.decision, data = pw_all_data_with_demo)[3,,1])/number_parts_by_age
-# print(chisq.test(temp_matrix)) #not significant that Age was related to differences in decision-making by adversary
 
+
+m <- glmer(my.decision ~  years_military_experience+(1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(Anova(m))
+print("RMLR  on whether YEARS OF MILITARY EXPERIENCE affected cooperation was NOT statistically significant at p < .05")
 
 m <- glmer(my.decision ~  years_military_experience+ Adversary +years_military_experience:Adversary+(1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(Anova(m))
 print("RMLR  on whether YEARS OF MILITARY EXPERIENCE affected cooperation was NOT statistically significant at p < .05, but the interaction between years_of_military experience and adversary was statstistically significant at p < .01 [p <.05], most likely due to the effect of Adversary.")
 print("HELP: How to test this correctly?")
-# number_parts_by_years <- prop.table(xtabs(~ years_military_experience,data = pw_all_data_with_demo))*28
-# print("in general")
-# print(xtabs(~ years_military_experience + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_years)#first xtabs is number of Peace decisions by age. prop.table is proportion of participants by age
-# print(chisq.test(xtabs(~ years_military_experience + my.decision, data = pw_all_data_with_demo)[,1]/number_parts_by_years)) #note: highly significant that years of military experience made a difference in Warlike-ness
-# print("by adversary")
-# temp_matrix <- matrix(NA, nrow = 3, ncol = length(number_parts_by_years)) #matrix of 
-# temp_matrix[1,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[1,,1])/number_parts_by_years
-# temp_matrix[2,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[2,,1])/number_parts_by_years
-# temp_matrix[3,] <- (xtabs(~ Adversary + years_military_experience + my.decision, data = pw_all_data_with_demo)[3,,1])/number_parts_by_years
-# temp_matrix
-# print(chisq.test(temp_matrix)) #not significant that years of military experience was related to differences in decision-making by adversary
+
 
 # print("Chi-sq (aggregate) on whether SCHOOL affected decision-making, by adversary")
 # print(xtabs(~ Adversary + school + my.decision, data = pw_all_data_with_demo)[,,1])
+print(chisq.test(xtabs(~  school + my.decision, data = pw_all_data_with_demo)))
+print("Chi-sq (aggregate) on whether SCHOOL affected decision-making, IN GENERAL WAS statistically significant at p < .01 [p  < .05], but..")
 print(chisq.test(xtabs(~ Adversary + school + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("Chi-sq (aggregate) on whether SCHOOL affected decision-making, by adversary was NOT statistically significant at p < .05 ")
 
@@ -1208,18 +1211,26 @@ print("Chi-sq (aggregate) on whether SCHOOL affected decision-making, by adversa
 # print("Chi-sq (aggregate) on whether GAME THEORY EXPERIENCE  affected decision-making, by adversary")
 # print(xtabs(~ Adversary + game_theory_experience + my.decision, data = pw_all_data_with_demo)[,,1])
 # print(chisq.test(xtabs(~ Adversary + game_theory_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
+
+m <- glmer(my.decision ~  game_theory_experience +  (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(Anova(m))
+print("RMLR on whether GAME THEORY EXPERIENCE affected cooperation was NOT statistically significant at p < .05")
 m <- glmer(my.decision ~  game_theory_experience + Adversary + game_theory_experience:Adversary+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(Anova(m))
-print("RMLR on whether GAME THEORY EXPERIENCE affected cooperation was NOT statistically significant at p < .05, but the interaction between game theory experience and adversary was statistically significant at p < .01 [p <.05], most likely due to the effect of Adversary.")
+print("RMLR on whether GAME THEORY EXPERIENCE affected cooperation, by adversary was NOT statistically significant at p < .05, but the interaction between game theory experience and adversary was statistically significant at p < .01 [p <.05], most likely due to the effect of Adversary.")
 print("HELP: How to test this correctly?")
 
-# print(n<- xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])
-print(chisq.test(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
 
+print(chisq.test(xtabs(~ machine_learning_experience + my.decision, data = pw_all_data_with_demo))) #not significant
+print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary, WAS statistically significant at  p < .001")
+print(chisq.test(xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1])) #not significant
 print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary, was not stastistically significant at  p < .05")
 n<- xtabs(~ Adversary + machine_learning_experience + my.decision, data = pw_all_data_with_demo)[,,1]
 print(friedman.test(Freq~machine_learning_experience|Adversary, data=as.data.frame(n)))
 print("RESULT: Friedman test on aggregate choices as a function of machine learning experience blocked by adversary showed a statistically significant result at p <.05")
+m <- glmer(my.decision ~  machine_learning_experience+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+print(Anova(m))
+print("RMLR on whether MACHINE LEARNING EXPERIENCE affected decision-making, by adversary was a finding of statistical interest (p < .10) but not statistically significant at p < .05.")
 m <- glmer(my.decision ~  machine_learning_experience+Adversary+machine_learning_experience:Adversary+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 print(Anova(m))
 print("RMLR on whether MACHINE LEARNING EXPERIENCE affected decision-making, by adversary was a finding of statistical interest (p < .10) but not statistically significant at p < .05. However, the interaction between machine learning experience and adversary was statistically significant at p < .01 [p <.05], most likely due to the effect of Adversary.")
@@ -1238,15 +1249,7 @@ print("HELP: How to test this correctly?")
 
 
 
-
-
-
-
-
-
-
-
-#--------------------RPS analysis----------------------------------
+#------------********RPS analyses********----------------------------------
 print("---------------------------------RPS analysis----------------------------------")
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
 print(rps_prop <- round(prop.table(rps_sum)*100, 0))
@@ -1426,7 +1429,7 @@ print(friedman.test(Freq~Choice_of_Advisor|Round, data=df))
 print("Is this (print(friedman.test(Freq~Choice_of_Advisor|Round, data=df)) the right way to see if Choice_of_Advisor varies by round?")
 print("Or should it be: print(friedman.test(Freq~Round|Choice_of_Advisor, data=df))")
 
-#--------------------RPS: Choice of Advisor by adversary and round---------
+#--------------------RPS - Choice of Advisor by adversary and round---------
 
 print("   -------RPS: Choice of Advisor by adversary and round")
 
@@ -1496,20 +1499,20 @@ print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
-n<-as.data.frame(xtabs( ~Choice_of_Advisor+ Adversary+Round,data=rps_all_data_with_demo))
-print(chisq.test())
+# n<-as.data.frame(xtabs( ~Choice_of_Advisor+ Adversary+Round,data=rps_all_data_with_demo))
+# print(chisq.test(n))
 
 print("Should it be this: print(mantelhaen.test(xtabs(~Adversary+Choice_of_Advisor+Round, data=rps_all_data_with_demo))) or this:")
 print(mantelhaen.test(xtabs(~Round+Choice_of_Advisor+Adversary, data=rps_all_data_with_demo)))
 print("RESULT: A CMH test showed a statistically significant dependence between choice of advisor, adversary, and round.")
-print("HELP: Which of these two is correct? Is this test valid and the code correct?  It seems like it might mask variation in different directions")
 
 
-m <- glmer(Choice_of_Advisor ~ Adversary+Round+Adversary*Round+(1|id)+(1|rps_order), data=rps_all_data_with_demo, family=binomial)
-print(summary(m))
-print(Anova(m, type="3"))
-print("HELP: How do I code this to determine whether Choice_of_Advisor varied across rounds, by Adversary? (i.e.compare (the slope of change across rounds) across adversaries")
-print("HELP: How do I do a multinomial version of this - it keeps excluding 'AI' adversary")
+
+# m <- glmer(Choice_of_Advisor ~ Adversary+Round+Adversary*Round+(1|id)+(1|rps_order), data=rps_all_data_with_demo, family=binomial)
+# print(summary(m))
+# print(Anova(m, type="3"))
+print("HELP: How do I code to determine whether Choice_of_Advisor varied across rounds, by Adversary? (i.e.compare (the slope of change across rounds) across adversaries")
+print("HELP: How do I do a multinomial version of this (see code) - it keeps excluding 'AI' adversary")
 
 
 
@@ -1527,28 +1530,107 @@ print("HELP: How do I do a multinomial version of this - it keeps excluding 'AI'
 # print("---code above here RMLR needs to be moved lower...---")
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
 #check for correlation with counterbalancing
-rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
-rps_all_data_with_demo[rps_all_data_with_demo$id==rps_fisher_test[rps_fisher_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
 
-#check for correlation with counterbalancing
-rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$pw_order# Not clearly correlated with pw_order
-rps_all_data_with_demo[rps_all_data_with_demo$id==rps_friedman_test[rps_friedman_test$All=="TRUE",]$id,]$rps_order #not clearly correlated with rps_order
-#--------------------RPS - Decision Time <-> Choices - Data Analysis-----------------
+rps_fisher_test$pw_order <- NA
+rps_fisher_test$rps_order <- NA
+for (i in rps_ids) {
+    rps_fisher_test[rps_fisher_test$id==i,"pw_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$pw_order)
+    rps_fisher_test[rps_fisher_test$id==i,"rps_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$rps_order)
+}
+
+
+print(n<-xtabs(~  pw_order+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(l<-chisq.test(n))
+print("Chi-sq test on aggregate shows GAME PLAY ORDER (pw_order) was correlated to differences in aggregate propensities for advisor choice in general, p < .01")
+contrib <- 100*l$residuals^2/l$statistic
+round(contrib, 0)
+corrplot(contrib, is.cor=FALSE)
+print("FURTHERMORE, the chi-sq test shows significance in GAME PLAY ORDER (pw_order) was primarly correlated to choices of AI, where people who played RPS second were significantly MORE LIKELY TO CHOOSE THE AI advisor than those who played it first, at p < .001, but...")
+# #mantelhaen only for binary predictor?
+print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+pw_order, data = rps_all_data_with_demo)))
+print("RESULT: A CMH/Mantelhaen test on aggregate shows GAME ORDER counterbalancing (pw_order) DID NOT affect decision-making by adversary at p < .05")
+print(fisher.test(xtabs(~All + pw_order, rps_fisher_test)))
+print("RESULT: A fisher test on the participants' pw_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
+
+print(n<-xtabs(~  rps_order+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(l<-chisq.test(n))
+print("Chi-sq test on aggregate shows RPS counterbalancing (rps_order) did affect decision-making IN GENERAL, p < .001, but")
+print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+rps_order, data = rps_all_data_with_demo)))
+print("A CMH/Mantelhaen test on aggregate shows RPS counterbalancing (rps_order) DID NOT affect decision-making by adversary at p < .05")
+print(fisher.test(xtabs(~All + rps_order, rps_fisher_test)))
+print("RESULT: A fisher test on the participants' rps_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
+
+print("")
+print("SUMMARY: Overall, it appears pw_order and rps_order both affected overall propensity for chocie of advisor, but was not related to whether participants varied their choice of advisor by adversary. ")
+
 #--------------------RPS - Demographics <-> Choices - Data Analysis-----------------
-print("--NOTE: how to analyze demo variables?  Probably similar answer to PW")
-print("Chi-sq (aggregate) on whether AI EXPERIENCE  affected decision-making, by adversary")
-print(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])
-print(fisher.test(xtabs(~ Adversary + machine_learning_experience + Choice_of_Advisor, data = rps_all_data_with_demo)[,,1])) #not significant
 
-print("shouldn't these demographic tests be 'by id' like an anova or something?")
+print(n<-xtabs(~  machine_learning_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(l<-chisq.test(n))
+print("Chi-sq test on aggregate shows self-reported AI EXPERIENCE was correlated to decision-making, in general, p < .001")
+print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+machine_learning_experience, data = rps_all_data_with_demo)))
 
-#--rps time Analysis
+
+print(n<-xtabs(~  game_theory_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows self-reported Game theory EXPERIENCE did not affect decision-making in general, p > .05")
+
+print(n<-xtabs(~  gender+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows GENDER did affect decision-making in general, p < .05")
+print(n<-xtabs(~  gender+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("Chi-sq test on aggregate shows GENDER did affect decision-making BY ADVERASRY, p < .05")
+print(n<-xtabs(~  age+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("CMH test on aggregate shows AGE did affect decision-making BY ADVERASRY, p < .05")
+
+print(n<-xtabs(~  years_military_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows YEARS OF MILITARY EXPERIENCE did affect decision-making in general, p < .01")
+print(n<-xtabs(~  years_military_experience+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("CMH test on aggregate shows YEARS MIL EXP did affect decision-making BY ADVERASRY, p < .05")
+
+print(n<-xtabs(~  rank+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows RANK did affect decision-making in general, p < .05")
+print(n<-xtabs(~  rank+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("CMH test on aggregate shows RANK did affect decision-making BY ADVERASRY, p < .05")
+
+print(n<-xtabs(~  school+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows SCHOOL did affect decision-making in general, p < .01")
+print(n<-xtabs(~  school+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("CMH test on aggregate shows SCHOOL did affect decision-making BY ADVERASRY, p < .05")
+
+print(n<-xtabs(~  service+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(chisq.test(n))
+print("Chi-sq test on aggregate shows SERVICE did affect decision-making in general, p < .01")
+print(n<-xtabs(~  service+Choice_of_Advisor+Adversary, data = rps_all_data_with_demo))
+print(mantelhaen.test(n))
+print("CMH test on aggregate shows SERVICE did affect decision-making BY ADVERASRY, p < .05")
+
+#--------------------RPS - Decision Time <-> Choices - Data Analysis-----------------
+
 p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print(p)
-print("RESULT: See PLOT: ")
+print("RESULT: PLOT shows average decision time by Adversary did not vary ")
+print(chisq.test(xtabs(~Adversary + seconds_on_page, data=rps_all_data_with_demo)))
+print("RESULT: Chisq test shows no signifciant relationship between decision time and Adversary")
 
+# 
+# p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Choice_of_Advisor)", x="Seconds per Decision", y = "Density", color = "Choice")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
+# print(chisq.test(xtabs(~Choice_of_Advisor + seconds_on_page, data=rps_all_data_with_demo)))
+# print("RESULT: Chisq test shows a signifciant relationship between decision time and Choice of Advisor at p < .001")
 
 #--------------------Multi-Game - Data Analyses-----------------
 print("--------------------Multi-Game Analyses-----------------")
