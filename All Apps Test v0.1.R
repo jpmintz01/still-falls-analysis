@@ -502,7 +502,7 @@ names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))] <- paste0("0", nam
 
 a <- rps_cols
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
-rps_cols1 <- rps_cols1[,order(colnames(rps_cols1))] #sorts columns by round number (two vars each)
+rps_cols_1 <- rps_cols_1[,order(colnames(rps_cols_1))] #sorts columns by round number (two vars each)
 
 
 
@@ -942,6 +942,173 @@ print("HELP: Is this the right test to compare observed and actual?")
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
+
+#strategy fingerprinting function
+fingerprint <- function(player_vec, adv_vec){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
+  #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
+  fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=10))
+  names(fingerprint_df) <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+  
+  if (!(length(player_vec)==length(adv_vec))) {
+    print(player_vec)
+    print(adv_vec)
+    print("Error: vector length not equal.")
+    return(fingerprint_df)
+  }
+  # maybe add "coop" or "defect"
+  if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
+    for (i in player_vec){ 
+      player_vec[player_vec=="Peace"] <- 1
+      player_vec[player_vec=="War"] <- 0
+      player_vec <- as.numeric(player_vec)
+    }
+  }
+  if(adv_vec[1]=="Peace"|adv_vec[1]=="War"){#convert factor to numeric
+    for (i in adv_vec){
+      adv_vec[adv_vec=="Peace"] <- 1
+      adv_vec[adv_vec=="War"] <- 0
+      adv_vec <- as.numeric(adv_vec)
+    }
+  }
+
+  #ALLC
+  if (sum(player_vec)==length(player_vec)){ # if all are cooperate (doesn't check whether adversary all cooperated, which would make it TFT also...)
+    fingerprint_df$AllC <- 1.0
+  } 
+  #AllD
+  else if (sum(player_vec)==0) {# if all are defect(doesn't check whether adversary all cooperated, which would make it TFT also...
+    fingerprint_df$AllD <- 1.0
+  }
+  #TFT
+  if (player_vec[1]==1) {#TFT
+    # print("pl")
+    TFT_true <- rep(TRUE, length(player_vec))
+    for(i in (2:length(player_vec))){
+      # print(player_vec[i])
+      # print(adv_vec[i-1])
+      if (!player_vec[i]==adv_vec[i-1]) {
+        TFT_true[i]<-FALSE
+        }
+    }
+    #print(paste0("TFT: ",(length(which(TFT_true))/length(player_vec))))
+    fingerprint_df$TFT <- length(which(TFT_true))/length(player_vec)
+  }
+  
+  #TF2T
+  if (player_vec[1]==1 & player_vec[2]==1) {#TF2T
+    TF2T_true <- rep(TRUE, length(player_vec))
+    for(i in (3:length(player_vec))){
+      # print(player_vec[i])
+      # print(adv_vec[i-1])
+      if (!(player_vec[i]==adv_vec[i-1] & player_vec[i]==adv_vec[i-2])) {
+        TF2T_true[i]<-FALSE
+      }
+    }
+    #print(paste0("TF2T: ",(length(which(TF2T_true))/length(player_vec))))
+    fingerprint_df$TF2T <- length(which(TF2T_true))/length(player_vec)
+  }
+  
+  #(TF2T) Not Tit for two tats (defects except cooperates after two defections)
+  if (player_vec[1]==0 & player_vec[2]==0 & grepl(paste(c(0,0),collapse=";"),paste(adv_vec,collapse=";"))) {#(TF2T) Pplayer must defect fro round 1 & two and adversary must have played a 0,0 sometime - am I missing a condition here?
+    temp_vec <- rep(0, length(player_vec))
+    for(i in (2:(length(player_vec)-1))){
+      # print(player_vec[i])
+      # print(adv_vec[i-1])
+      if (adv_vec[i-1]==0 & adv_vec[i]==0){
+        temp_vec[i+1] <- 1
+      }
+    }
+
+    #print(paste0("(TF2T): ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$NotTF2T <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  
+  #TwoTFT
+  if (player_vec[1]==1& grepl(paste(c(0,0),collapse=";"),paste(player_vec,collapse=";"))) {#TwoTFT defects twice for adv defect but otherwise coops (so has to cooperaet on round 1 and have at least one D-D sequence) --- assumes adversary defected at least once and not only on round 9.  If adv defected only on round 9, then TFT would be an appropriate match (as would TwoTFT)
+    TwoTFT_true <- rep(TRUE, length(player_vec))
+    temp_vec <- rep(1, length(player_vec))
+    for (i in (1:(length(player_vec)-2))) {
+      if (adv_vec[i]==0){
+        temp_vec[i+1] <- 0
+        temp_vec[i+2] <- 0
+      } #first has to check if a Defect after a defect
+    }
+    #print(paste0("2TFT: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$TwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  
+  #(2TFT) NotTwoTFT
+  if (player_vec[1]==0& grepl(paste(c(1,1),collapse=";"),paste(player_vec,collapse=";"))) {#NotTwoTFT does the opposite of 2TFT (starts with a defect?)
+    temp_vec <- rep(0, length(player_vec))
+    for (i in (1:(length(player_vec)-2))) { #creates a Not2TFT result from adv_vec
+      if (adv_vec[i]==0){
+        temp_vec[i+1] <- 1
+        temp_vec[i+2] <- 1
+      } #first has to check if a Defect after a defect
+    }
+    #print(paste0("(2TFT): ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$NotTwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+
+  #UC (usually cooperate)
+  if (player_vec[1]==1) {#UC cooperates except after a C following a D (0,1)
+    temp_vec <- rep(1, length(player_vec))
+    for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
+      if (adv_vec[i-1]==0 & adv_vec[i]==1){
+        temp_vec[i+1] <- 0
+      } #first has to check if a Defect after a defect
+    }
+    #print(paste0("UC: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$UC <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  
+  #UD (usually defects)
+  if (player_vec[1]==0) {#UC cooperates except after a C following a D (0,1)
+    temp_vec <- rep(1, length(player_vec))
+    for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
+      if (adv_vec[i-1]==1 & adv_vec[i]==0){
+        temp_vec[i+1] <- 1
+      } #first has to check if a Defect after a defect
+    }
+    #print(paste0("UD: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$UD <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  #wsls
+  temp_vec <- rep(player_vec[1],length(player_vec))
+  for (i in (1:(length(player_vec)-1))){
+    if (player_vec[i]==adv_vec[i]){
+      temp_vec[i+1] <- 1
+    } else {
+      temp_vec[i+1] <- 0
+    }
+  }
+  #print(paste0("WSLS: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+  fingerprint_df$WSLS <- length(which(temp_vec==player_vec))/length(player_vec)
+  return(fingerprint_df)
+}
+fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=12))
+names(fp_df) <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+fp_df$id <- rep(pw_ids,3)
+for (i in pw_ids) {
+  fp_df[fp_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
+}
+for (i in pw_ids) {
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices)
+  
+}
+print("PW Strategy Fingerprint")
+print(fp_df)
+fp_df_sum <- as.data.frame(matrix(NA, nrow=3, ncol=11))
+names(fp_df_sum) <- c("Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+fp_df_sum$Adversary <- c("Human","AI","Human+AI")
+fp_df_sum[fp_df_sum$Adversary=="Human",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human",c(3:12)])
+fp_df_sum[fp_df_sum$Adversary=="AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:12)])
+fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:12)])
+n<- melt(fp_df_sum)
+ggplot(n, aes(x= Adversary, y= variable, fill=value))+geom_raster(aes(fill=value))
+ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
 
 
 #--------------------PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
