@@ -1107,10 +1107,19 @@ fp_df_sum[fp_df_sum$Adversary=="Human",c(2:11)]<- colSums(fp_df[fp_df$Adversary=
 fp_df_sum[fp_df_sum$Adversary=="AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:12)])
 fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:12)])
 n<- melt(fp_df_sum)
-p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+geom_raster(aes(fill=value))
+#would be nice to order these by value, but not sure how to do that...
+p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+
+  geom_raster(aes(fill=value))+
+  labs(title="PW-Strategy Fingerprint: Strategies by Adversary",x="Adversary", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12))
 print(p)
-p<-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
-print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+# p<-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
+# 
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
@@ -1124,23 +1133,28 @@ for (i in pw_ids) {
   s<-colnames(t)[max.col(t)]
   r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
   m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match
+
   for (q in c(1:3)) {
-  if (length(which(t[q,]==t[q,s[q]]))>1) {
-      print(paste(i,l[q,2],"ties at",which.is.max(t[q,]),":"))
-      print(colnames(t)[t[q,]==t[q,s[q]]])
+    if (length(which(t[q,]==t[q,s[q]]))>1) {
+      if (max(t[q,]) < 0.8) {
+        s[q] <- "Unk"
+      } else {
+      s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
+}
+      print(paste(i,l[q,2],"ties at",max(t[q,]),":"))
+      # print(colnames(t)[t[q,]==t[q,s[q]]])
     }
   }
-
   pw_bestmatch[pw_bestmatch$id==i,]$Human <- s[1]
   pw_bestmatch[pw_bestmatch$id==i,]$AI <- s[2]
   pw_bestmatch[pw_bestmatch$id==i,]$HumanAI <- s[3]
+
 }
-pw_bestmatch$id <- as.factor(pw_bestmatch$id)
-pw_bestmatch$Human <- as.factor(pw_bestmatch$Human)
-pw_bestmatch$AI <- as.factor(pw_bestmatch$AI)
-pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
-print("Strategy Fingerprint of each player by adversary.")
-print("NOTE: doesn't account for ties...YET")
+# pw_bestmatch$id <- as.factor(pw_bestmatch$id)
+# pw_bestmatch$Human <- as.factor(pw_bestmatch$Human)
+# pw_bestmatch$AI <- as.factor(pw_bestmatch$AI)
+# pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
+print("Strategy Fingerprint of each player by adversary. Note: matches less than 80% (0.8) are listed as Unk")
 print(pw_bestmatch)
 
 #--------------------PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
