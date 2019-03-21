@@ -946,8 +946,9 @@ print("HELP: Is this the right test to compare observed and actual?")
 #strategy fingerprinting function
 fingerprint <- function(player_vec, adv_vec){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
-  fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=10))
-  names(fingerprint_df) <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho")
+  fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(types)))
+  names(fingerprint_df) <- types
   
   if (!(length(player_vec)==length(adv_vec))) {
     print(player_vec)
@@ -1084,28 +1085,42 @@ fingerprint <- function(player_vec, adv_vec){  #returns named vector percent mat
   }
   #print(paste0("WSLS: ",(length(which(temp_vec==player_vec))/length(player_vec))))
   fingerprint_df$WSLS <- length(which(temp_vec==player_vec))/length(player_vec)
+  
+  #Psyc (psycho does whatever adversary did last round)
+  if (adv_vec[1]==0) {#UC cooperates except after a C following a D (0,1)
+    temp_vec <- rep(0, length(player_vec))
+  } else if (adv_vec[1]==1) {
+    temp_vec <- rep(1, length(player_vec))
+  }
+    for (i in (2:length(player_vec))) { #creates a Not2TFT result from adv_vec 
+      temp_vec[i] <- adv_vec[i-1]
+    }
+    #print(paste0("Psycho: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$Psycho <- length(which(temp_vec==player_vec))/length(player_vec)
+  
   return(fingerprint_df)
 }
-fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=12))
-names(fp_df) <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho")
+fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
+names(fp_df) <- types
 fp_df$id <- rep(pw_ids,3)
 for (i in pw_ids) {
   fp_df[fp_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
 }
 for (i in pw_ids) {
-  fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices)
-  fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices)
-  fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:12)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices)
   
 }
 print("PW Strategy Fingerprint")
 print(fp_df)
-fp_df_sum <- as.data.frame(matrix(NA, nrow=3, ncol=11))
-names(fp_df_sum) <- c("Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS")
+fp_df_sum <- as.data.frame(matrix(NA, nrow=3, ncol=(length(types)-1)))
+names(fp_df_sum) <- c(types[-c(1)])
 fp_df_sum$Adversary <- c("Human","AI","Human+AI")
-fp_df_sum[fp_df_sum$Adversary=="Human",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human",c(3:12)])
-fp_df_sum[fp_df_sum$Adversary=="AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:12)])
-fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:12)])
+fp_df_sum[fp_df_sum$Adversary=="Human",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="Human",c(3:13)])
+fp_df_sum[fp_df_sum$Adversary=="AI",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:13)])
+fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:13)])
 n<- melt(fp_df_sum)
 #would be nice to order these by value, but not sure how to do that...
 p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+
@@ -1128,21 +1143,24 @@ pw_bestmatch[,1] <- pw_ids
 for (i in pw_ids) {
 
   l<-fp_df[fp_df$id==i,]
-  t<-l[,3:12]
+  t<-l[,3:13]
   # s<-colnames(l)[apply(l,1,which.max)]
   s<-colnames(t)[max.col(t)]
   r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
   m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match
 
-  for (q in c(1:3)) {
-    if (length(which(t[q,]==t[q,s[q]]))>1) {
-      if (max(t[q,]) < 0.8) {
-        s[q] <- "Unk"
-      } else {
+  for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI)
+    if (length(which(t[q,]==t[q,s[q]]))>1) { #if there are ties
+      if (max(t[q,]) < 0.8) { #if the accuracy is < 0.8
+        s[q] <- "unk" # say the strategy is unknown
+      } else { #otherwise, combine all ties and the accuracy figure
       s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
-}
-      print(paste(i,l[q,2],"ties at",max(t[q,]),":"))
-      # print(colnames(t)[t[q,]==t[q,s[q]]])
+      }
+
+    } else if (max(t[q,]) < 0.8) { # if no ties and < 0.8, just add accuracy figure
+      s[q] <- "unk"
+    } else if (max(t[q,]) > 0.7){
+      s[q] <- paste0(s[q],"(",max(t[q,]),")")# if no ties and >0.7, just add accuracy figure
     }
   }
   pw_bestmatch[pw_bestmatch$id==i,]$Human <- s[1]
