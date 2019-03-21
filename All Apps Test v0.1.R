@@ -1107,9 +1107,41 @@ fp_df_sum[fp_df_sum$Adversary=="Human",c(2:11)]<- colSums(fp_df[fp_df$Adversary=
 fp_df_sum[fp_df_sum$Adversary=="AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:12)])
 fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:11)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:12)])
 n<- melt(fp_df_sum)
-ggplot(n, aes(x= Adversary, y= variable, fill=value))+geom_raster(aes(fill=value))
-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
+p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+geom_raster(aes(fill=value))
+print(p)
+p<-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
+print(p)
 
+
+pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
+colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
+pw_bestmatch[,1] <- pw_ids
+for (i in pw_ids) {
+
+  l<-fp_df[fp_df$id==i,]
+  t<-l[,3:12]
+  # s<-colnames(l)[apply(l,1,which.max)]
+  s<-colnames(t)[max.col(t)]
+  r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
+  m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match
+  for (q in c(1:3)) {
+  if (length(which(t[q,]==t[q,s[q]]))>1) {
+      print(paste(i,l[q,2],"ties at",which.is.max(t[q,]),":"))
+      print(colnames(t)[t[q,]==t[q,s[q]]])
+    }
+  }
+
+  pw_bestmatch[pw_bestmatch$id==i,]$Human <- s[1]
+  pw_bestmatch[pw_bestmatch$id==i,]$AI <- s[2]
+  pw_bestmatch[pw_bestmatch$id==i,]$HumanAI <- s[3]
+}
+pw_bestmatch$id <- as.factor(pw_bestmatch$id)
+pw_bestmatch$Human <- as.factor(pw_bestmatch$Human)
+pw_bestmatch$AI <- as.factor(pw_bestmatch$AI)
+pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
+print("Strategy Fingerprint of each player by adversary.")
+print("NOTE: doesn't account for ties...YET")
+print(pw_bestmatch)
 
 #--------------------PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
 print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
