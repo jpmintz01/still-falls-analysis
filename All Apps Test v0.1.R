@@ -950,7 +950,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
   #inputs: adv_vec = a vector of 1's and zero's with 1 being cooperate
   #inputs: types = a vector names of strategy types
-  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT")
+  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2")
   fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(types)))
   names(fingerprint_df) <- types
   
@@ -1210,6 +1210,29 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
     fingerprint_df$WSLS <- length(which(temp_vec==player_vec))/length(player_vec)
   }
   
+  #T2
+  if ("T2" %in% types) {
+    if (player_vec[1]==1){ #needs to start with 1
+      if (grepl(paste(c(0,0,1),collapse=";"),paste(player_vec,collapse=";"))){ #needs to see at least one 0,0,1 from the player
+        temp_vec <- rep(1, length(player_vec))
+        i<-1
+        while (i %in% (1:length(adv_vec))) {
+          i <- i+1 #i=2
+          if (adv_vec[i-1]==0){ #adv_vec[1] = 0
+            temp_vec[i] <- 0 #p_v[2] = 0
+            temp_vec[i+1] <- 0#p_v[3] = 0
+            temp_vec[i+2] <- 1#p_v[4] = 0
+            i <- i+2 #i=4
+          } else {
+            temp_vec[i] <- 1
+          }
+        }
+        temp_vec <- temp_vec[1:10]
+        #print(paste0("T2: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+        fingerprint_df$T2 <- length(which(temp_vec==player_vec))/length(player_vec)
+      }
+    }
+  }
   #Psyc or AntiTFT (psycho does whatever adversary did last round)
   if ("Psycho" %in% types) {
     if (adv_vec[1]==0) {
@@ -1243,7 +1266,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   
   return(fingerprint_df)
 }
-types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT")
+types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2")
 fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
 names(fp_df) <- types
 fp_df$id <- rep(pw_ids,3)
