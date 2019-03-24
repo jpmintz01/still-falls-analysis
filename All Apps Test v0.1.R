@@ -23,6 +23,7 @@ library(fitdistrplus)
 library(logspline)
 library(scales)
 library(corrplot)
+library(stratEst)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -414,6 +415,7 @@ formula_my <- "my.decision~"
 formula_predictors <- paste(predictors_3_plus[1:length(predictors_3_plus)], collapse="+")
 f_3_plus <- as.formula(paste(formula_my, formula_predictors))
 nn_all_3_plus<- neuralnet(f_3_plus,data=all_data_subset[all_data_subset$period>2,],hidden=c(5,3,2),act.fct = "logistic",linear.output=FALSE, threshold = 0.3)
+
 
 pw_all_data_sub_subset <- pw_all_data_subset[,predictors]
 pw_nn_output<- compute(nn_all_2, pw_all_data_sub_subset)$net.result
@@ -942,21 +944,26 @@ print("HELP: Is this the right test to compare observed and actual?")
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
-
+#--------------------PW - Strategy Fingerprint Analysis-----------------
 #strategy fingerprinting function
-fingerprint <- function(player_vec, adv_vec){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
+fingerprint <- function(player_vec, adv_vec, types){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
-  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho")
+  #inputs: adv_vec = a vector of 1's and zero's with 1 being cooperate
+  #inputs: types = a vector names of strategy types
+  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT")
   fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(types)))
   names(fingerprint_df) <- types
   
+  #check if player & adverasry choice vectors are equal length
   if (!(length(player_vec)==length(adv_vec))) {
     print(player_vec)
     print(adv_vec)
     print("Error: vector length not equal.")
     return(fingerprint_df)
   }
-  # maybe add "coop" or "defect"
+  
+  # Convert factors to 1 or 0
+  #maybe add "coop" or "defect"
   if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
     for (i in player_vec){ 
       player_vec[player_vec=="Peace"] <- 1
@@ -972,30 +979,102 @@ fingerprint <- function(player_vec, adv_vec){  #returns named vector percent mat
     }
   }
 
-  #ALLC
-  if (sum(player_vec)==length(player_vec)){ # if all are cooperate (doesn't check whether adversary all cooperated, which would make it TFT also...)
-    fingerprint_df$AllC <- 1.0
-  } 
-  #AllD
-  else if (sum(player_vec)==0) {# if all are defect(doesn't check whether adversary all cooperated, which would make it TFT also...
-    fingerprint_df$AllD <- 1.0
+  #ALLC & ALLD
+  if ("AllC" %in% types) {
+    if (sum(player_vec)==length(player_vec)){ # if all are cooperate (doesn't check whether adversary all cooperated, which would make it TFT also...)
+      fingerprint_df$AllC <- 1.0
+    } 
   }
-  #TFT
-  if (player_vec[1]==1) {#TFT
-    # print("pl")
-    TFT_true <- rep(TRUE, length(player_vec))
-    for(i in (2:length(player_vec))){
-      # print(player_vec[i])
-      # print(adv_vec[i-1])
-      if (!player_vec[i]==adv_vec[i-1]) {
-        TFT_true[i]<-FALSE
-        }
+  
+  #AllD
+  if ("AllD" %in% types) {
+    if (sum(player_vec)==0) {# if all are defect(doesn't check whether adversary all cooperated, which would make it TFT also...
+      fingerprint_df$AllD <- 1.0
     }
-    #print(paste0("TFT: ",(length(which(TFT_true))/length(player_vec))))
-    fingerprint_df$TFT <- length(which(TFT_true))/length(player_vec)
+  }
+  
+  #TFT
+  if ("TFT" %in% types) {
+    if (player_vec[1]==1) {#TFT
+      # print("pl")
+      TFT_true <- rep(TRUE, length(player_vec))
+      for(i in (2:length(player_vec))){
+        # print(player_vec[i])
+        # print(adv_vec[i-1])
+        if (!player_vec[i]==adv_vec[i-1]) {
+          TFT_true[i]<-FALSE
+          }
+      }
+      #print(paste0("TFT: ",(length(which(TFT_true))/length(player_vec))))
+      fingerprint_df$TFT <- length(which(TFT_true))/length(player_vec)
+    }
+  }
+
+  
+  #DTFT (defect then TFT)
+  if ("DTFT" %in% types) {
+    if (player_vec[1]==0) {#DTFT
+      # print("pl")
+      DTFT_true <- rep(TRUE, length(player_vec))
+      for(i in (2:length(player_vec))){
+        # print(player_vec[i])
+        # print(adv_vec[i-1])
+        if (!player_vec[i]==adv_vec[i-1]) {
+          DTFT_true[i]<-FALSE
+        }
+      }
+      #print(paste0("DTFT: ",(length(which(DTFT_true))/length(player_vec))))
+      fingerprint_df$DTFT <- length(which(DTFT_true))/length(player_vec)
+    }
   }
   
   #TF2T
+  if ("TF2T" %in% types) {
+    if (player_vec[1]==1 & player_vec[2]==1) {#TF2T
+      TF2T_true <- rep(TRUE, length(player_vec))
+      for(i in (3:length(player_vec))){
+        # print(player_vec[i])
+        # print(adv_vec[i-1])
+        if (!(player_vec[i]==adv_vec[i-1] & player_vec[i]==adv_vec[i-2])) {
+          TF2T_true[i]<-FALSE
+        }
+      }
+      #print(paste0("TF2T: ",(length(which(TF2T_true))/length(player_vec))))
+      fingerprint_df$TF2T <- length(which(TF2T_true))/length(player_vec)
+    }
+  }
+  
+  #TF3T
+  if ("TF3T" %in% types) {
+    if (player_vec[1]==1 & player_vec[2]==1 & player_vec[3]==1) {#TF2T
+      TF3T_true <- rep(TRUE, length(player_vec))
+      for(i in (4:length(player_vec))){
+        # print(player_vec[i])
+        # print(adv_vec[i-1])
+        if (!(player_vec[i]==adv_vec[i-1] & player_vec[i]==adv_vec[i-2] & player_vec[i]==adv_vec[i-3])) {
+          TF3T_true[i]<-FALSE
+        }
+      }
+     # print(paste0("TF3T: ",(length(which(TF3T_true))/length(player_vec))))
+      fingerprint_df$TF3T <- length(which(TF3T_true))/length(player_vec)
+    }
+  }
+  
+  #DTF3T ## not added b/c not a factor...
+  if (player_vec[1]==0 & player_vec[2]==1 & player_vec[3]==1) {#DTF3T
+    DTF3T_true <- rep(TRUE, length(player_vec))
+    for(i in (4:length(player_vec))){
+      # print(player_vec[i])
+      # print(adv_vec[i-1])
+      if (!(player_vec[i]==adv_vec[i-1] & player_vec[i]==adv_vec[i-2] & player_vec[i]==adv_vec[i-3])) {
+        DTF3T_true[i]<-FALSE
+      }
+    }
+    print(paste0("DTF3T: ",(length(which(DTF3T_true))/length(player_vec))))
+    #fingerprint_df$DTF3T <- length(which(DTF3T_true))/length(player_vec)
+  }
+  
+  #DTF2T (not ready yet)
   if (player_vec[1]==1 & player_vec[2]==1) {#TF2T
     TF2T_true <- rep(TRUE, length(player_vec))
     for(i in (3:length(player_vec))){
@@ -1005,102 +1084,166 @@ fingerprint <- function(player_vec, adv_vec){  #returns named vector percent mat
         TF2T_true[i]<-FALSE
       }
     }
-    #print(paste0("TF2T: ",(length(which(TF2T_true))/length(player_vec))))
-    fingerprint_df$TF2T <- length(which(TF2T_true))/length(player_vec)
+    print(paste0("DTF2T: ",(length(which(TF2T_true))/length(player_vec))))
+    #fingerprint_df$TF2T <- length(which(TF2T_true))/length(player_vec)
   }
   
   #(TF2T) Not Tit for two tats (defects except cooperates after two defections)
-  if (player_vec[1]==0 & player_vec[2]==0 & grepl(paste(c(0,0),collapse=";"),paste(adv_vec,collapse=";"))) {#(TF2T) Pplayer must defect fro round 1 & two and adversary must have played a 0,0 sometime - am I missing a condition here?
+  if ("NotTF2T" %in% types) {
     temp_vec <- rep(0, length(player_vec))
-    for(i in (2:(length(player_vec)-1))){
-      # print(player_vec[i])
-      # print(adv_vec[i-1])
-      if (adv_vec[i-1]==0 & adv_vec[i]==0){
-        temp_vec[i+1] <- 1
+    if (player_vec[1]==0 & player_vec[2]==0 & grepl(paste(c(0,0),collapse=";"),paste(adv_vec,collapse=";"))) {#(TF2T) Pplayer must defect fro round 1 & two and adversary must have played a 0,0 sometime - am I missing a condition here?
+      for(i in (2:(length(player_vec)-1))){
+        # print(player_vec[i])
+        # print(adv_vec[i-1])
+        if (adv_vec[i-1]==0 & adv_vec[i]==0){
+          temp_vec[i+1] <- 1
+        }
       }
     }
-
     #print(paste0("(TF2T): ",(length(which(temp_vec==player_vec))/length(player_vec))))
     fingerprint_df$NotTF2T <- length(which(temp_vec==player_vec))/length(player_vec)
   }
   
   #TwoTFT
-  if (player_vec[1]==1& grepl(paste(c(0,0),collapse=";"),paste(player_vec,collapse=";"))) {#TwoTFT defects twice for adv defect but otherwise coops (so has to cooperaet on round 1 and have at least one D-D sequence) --- assumes adversary defected at least once and not only on round 9.  If adv defected only on round 9, then TFT would be an appropriate match (as would TwoTFT)
-    TwoTFT_true <- rep(TRUE, length(player_vec))
-    temp_vec <- rep(1, length(player_vec))
-    for (i in (1:(length(player_vec)-2))) {
-      if (adv_vec[i]==0){
-        temp_vec[i+1] <- 0
-        temp_vec[i+2] <- 0
-      } #first has to check if a Defect after a defect
+  if ("TwoTFT" %in% types) {
+    if (player_vec[1]==1& grepl(paste(c(0,0),collapse=";"),paste(player_vec,collapse=";"))) {#TwoTFT defects twice for adv defect but otherwise coops (so has to cooperaet on round 1 and have at least one D-D sequence) --- assumes adversary defected at least once and not only on round 9.  If adv defected only on round 9, then TFT would be an appropriate match (as would TwoTFT)
+      TwoTFT_true <- rep(TRUE, length(player_vec))
+      temp_vec <- rep(1, length(player_vec))
+      for (i in (1:(length(player_vec)-2))) {
+        if (adv_vec[i]==0){
+          temp_vec[i+1] <- 0
+          temp_vec[i+2] <- 0
+        } #first has to check if a Defect after a defect
+      }
+      #print(paste0("2TFT: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$TwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
     }
-    #print(paste0("2TFT: ",(length(which(temp_vec==player_vec))/length(player_vec))))
-    fingerprint_df$TwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
   }
   
   #(2TFT) NotTwoTFT
-  if (player_vec[1]==0& grepl(paste(c(1,1),collapse=";"),paste(player_vec,collapse=";"))) {#NotTwoTFT does the opposite of 2TFT (starts with a defect?)
-    temp_vec <- rep(0, length(player_vec))
-    for (i in (1:(length(player_vec)-2))) { #creates a Not2TFT result from adv_vec
-      if (adv_vec[i]==0){
-        temp_vec[i+1] <- 1
-        temp_vec[i+2] <- 1
-      } #first has to check if a Defect after a defect
+  if ("NotTwoTFT" %in% types) {
+    if (player_vec[1]==0& grepl(paste(c(1,1),collapse=";"),paste(player_vec,collapse=";"))) {#NotTwoTFT does the opposite of 2TFT (starts with a defect?)
+      temp_vec <- rep(0, length(player_vec))
+      for (i in (1:(length(player_vec)-2))) { #creates a Not2TFT result from adv_vec
+        if (adv_vec[i]==0){
+          temp_vec[i+1] <- 1
+          temp_vec[i+2] <- 1
+        } #first has to check if a Defect after a defect
+      }
+      #print(paste0("(2TFT): ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$NotTwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
     }
-    #print(paste0("(2TFT): ",(length(which(temp_vec==player_vec))/length(player_vec))))
-    fingerprint_df$NotTwoTFT <- length(which(temp_vec==player_vec))/length(player_vec)
   }
-
+  
   #UC (usually cooperate)
-  if (player_vec[1]==1) {#UC cooperates except after a C following a D (0,1)
-    temp_vec <- rep(1, length(player_vec))
-    for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
-      if (adv_vec[i-1]==0 & adv_vec[i]==1){
-        temp_vec[i+1] <- 0
-      } #first has to check if a Defect after a defect
+  if ("UC" %in% types) {
+    if (player_vec[1]==1) {#UC cooperates except after a C following a D (0,1)
+      temp_vec <- rep(1, length(player_vec))
+      for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
+        if (adv_vec[i-1]==0 & adv_vec[i]==1){
+          temp_vec[i+1] <- 0
+        } #first has to check if a Defect after a defect
+      }
+      #print(paste0("UC: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$UC <- length(which(temp_vec==player_vec))/length(player_vec)
     }
-    #print(paste0("UC: ",(length(which(temp_vec==player_vec))/length(player_vec))))
-    fingerprint_df$UC <- length(which(temp_vec==player_vec))/length(player_vec)
   }
   
   #UD (usually defects)
-  if (player_vec[1]==0) {#UC cooperates except after a C following a D (0,1)
-    temp_vec <- rep(1, length(player_vec))
-    for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
-      if (adv_vec[i-1]==1 & adv_vec[i]==0){
-        temp_vec[i+1] <- 1
-      } #first has to check if a Defect after a defect
-    }
-    #print(paste0("UD: ",(length(which(temp_vec==player_vec))/length(player_vec))))
-    fingerprint_df$UD <- length(which(temp_vec==player_vec))/length(player_vec)
-  }
-  #wsls
-  temp_vec <- rep(player_vec[1],length(player_vec))
-  for (i in (1:(length(player_vec)-1))){
-    if (player_vec[i]==adv_vec[i]){
-      temp_vec[i+1] <- 1
-    } else {
-      temp_vec[i+1] <- 0
+  if ("UD" %in% types) {
+    if (player_vec[1]==0) {#UC cooperates except after a C following a D (0,1)
+      temp_vec <- rep(1, length(player_vec))
+      for (i in (2:(length(player_vec)-1))) { #creates a Not2TFT result from adv_vec
+        if (adv_vec[i-1]==1 & adv_vec[i]==0){
+          temp_vec[i+1] <- 1
+        } #first has to check if a Defect after a defect
+      }
+      #print(paste0("UD: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$UD <- length(which(temp_vec==player_vec))/length(player_vec)
     }
   }
-  #print(paste0("WSLS: ",(length(which(temp_vec==player_vec))/length(player_vec))))
-  fingerprint_df$WSLS <- length(which(temp_vec==player_vec))/length(player_vec)
   
-  #Psyc (psycho does whatever adversary did last round)
-  if (adv_vec[1]==0) {#UC cooperates except after a C following a D (0,1)
-    temp_vec <- rep(0, length(player_vec))
-  } else if (adv_vec[1]==1) {
-    temp_vec <- rep(1, length(player_vec))
+  #PTFT, Round 1= C then C if both players played same, else D
+  if ("PTFT" %in% types) {
+    if (player_vec[1]==1) {
+      temp_vec <- rep(1, length(player_vec))
+      for (i in (2:length(player_vec))) { #creates a Not2TFT result from adv_vec
+        if (adv_vec[i-1]==player_vec[i-1]){
+          temp_vec[i] <- 1
+        } else {
+          temp_vec[i] <- 0
+        }
+      }
+      #print(paste0("PTFT: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$PTFT <- length(which(temp_vec==player_vec))/length(player_vec)
+    }
   }
-    for (i in (2:length(player_vec))) { #creates a Not2TFT result from adv_vec 
+  
+  #PT2FT, coop then C if(last 2 rounds = C/C, C/C, or D/D,D/D, or C/C,D/D) else D
+  if ("PT2FT" %in% types) {
+    if (player_vec[1]==1) {
+      temp_vec <- c(1,1,rep(0, (length(player_vec)-2)))
+      for (i in (3:length(player_vec))) { #creates a Not2TFT result from adv_vec
+        if ((adv_vec[i-2]==player_vec[i-2] & adv_vec[i-1]==player_vec[i-1])|((adv_vec[i-2]==1 & player_vec[i-2]==1) & (adv_vec[i-1]==0 & player_vec[i-1]==0))){
+          temp_vec[i] <- 1
+        } else {
+          temp_vec[i] <- 0
+        }
+      }
+      #print(paste0("PT2FT: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+      fingerprint_df$PT2FT <- length(which(temp_vec==player_vec))/length(player_vec)
+    }
+  }
+  
+  #wsls
+  if ("WSLS" %in% types) {
+    temp_vec <- rep(player_vec[1],length(player_vec))
+    for (i in (1:(length(player_vec)-1))){
+      if (player_vec[i]==adv_vec[i]){
+        temp_vec[i+1] <- 1
+      } else {
+        temp_vec[i+1] <- 0
+      }
+    }
+    temp_vec[1] <- 1 #initial move is coop
+    #print(paste0("WSLS: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    fingerprint_df$WSLS <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  
+  #Psyc or AntiTFT (psycho does whatever adversary did last round)
+  if ("Psycho" %in% types) {
+    if (adv_vec[1]==0) {
+      temp_vec <- rep(0, length(player_vec))
+      temp_vec[1] <- 1
+    } else if (adv_vec[1]==1) {
+      temp_vec <- rep(1, length(player_vec))
+    }
+    for (i in (2:length(player_vec))) {
       temp_vec[i] <- adv_vec[i-1]
     }
-    #print(paste0("Psycho: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+
     fingerprint_df$Psycho <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
+  
+    #bully (psycho does whatever adversary did last round)
+  if ("Bully" %in% types) {
+    if (adv_vec[1]==0) {
+      temp_vec <- rep(0, length(player_vec))
+      
+    } else if (adv_vec[1]==1) {
+      temp_vec <- rep(1, length(player_vec))
+    }
+    temp_vec[1] <- 0
+    for (i in (2:length(player_vec))) { 
+      temp_vec[i] <- adv_vec[i-1]
+    }
+    print(paste0("Bully: ",(length(which(temp_vec==player_vec))/length(player_vec))))
+    #fingerprint_df$Bully <- length(which(temp_vec==player_vec))/length(player_vec)
+  }
   
   return(fingerprint_df)
 }
-types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho")
+types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT")
 fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
 names(fp_df) <- types
 fp_df$id <- rep(pw_ids,3)
@@ -1108,9 +1251,9 @@ for (i in pw_ids) {
   fp_df[fp_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
 }
 for (i in pw_ids) {
-  fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices)
-  fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices)
-  fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:13)]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices)
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices, types)
+  fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices, types)
+  fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices, types)
   
 }
 print("PW Strategy Fingerprint")
@@ -1118,9 +1261,9 @@ print(fp_df)
 fp_df_sum <- as.data.frame(matrix(NA, nrow=3, ncol=(length(types)-1)))
 names(fp_df_sum) <- c(types[-c(1)])
 fp_df_sum$Adversary <- c("Human","AI","Human+AI")
-fp_df_sum[fp_df_sum$Adversary=="Human",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="Human",c(3:13)])
-fp_df_sum[fp_df_sum$Adversary=="AI",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:13)])
-fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:12)]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:13)])
+fp_df_sum[fp_df_sum$Adversary=="Human",c(2:(length(types)-1))]<- colSums(fp_df[fp_df$Adversary=="Human",c(3:length(types))])
+fp_df_sum[fp_df_sum$Adversary=="AI",c(2:(length(types)-1))]<- colSums(fp_df[fp_df$Adversary=="AI",c(3:length(types))])
+fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:(length(types)-1))]<- colSums(fp_df[fp_df$Adversary=="Human+AI",c(3:length(types))])
 n<- melt(fp_df_sum)
 #would be nice to order these by value, but not sure how to do that...
 p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+
@@ -1140,10 +1283,11 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
 pw_bestmatch[,1] <- pw_ids
+strat_threshold <- 0.8
 for (i in pw_ids) {
 
   l<-fp_df[fp_df$id==i,]
-  t<-l[,3:13]
+  t<-l[,3:length(types)]
   # s<-colnames(l)[apply(l,1,which.max)]
   s<-colnames(t)[max.col(t)]
   r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
@@ -1151,15 +1295,15 @@ for (i in pw_ids) {
 
   for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI)
     if (length(which(t[q,]==t[q,s[q]]))>1) { #if there are ties
-      if (max(t[q,]) < 0.8) { #if the accuracy is < 0.8
+      if (max(t[q,]) < strat_threshold) { #if the accuracy is < 0.8
         s[q] <- "unk" # say the strategy is unknown
       } else { #otherwise, combine all ties and the accuracy figure
       s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
       }
 
-    } else if (max(t[q,]) < 0.8) { # if no ties and < 0.8, just add accuracy figure
+    } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add accuracy figure
       s[q] <- "unk"
-    } else if (max(t[q,]) > 0.7){
+    } else if (max(t[q,]) >= strat_threshold){
       s[q] <- paste0(s[q],"(",max(t[q,]),")")# if no ties and >0.7, just add accuracy figure
     }
   }
@@ -1172,8 +1316,51 @@ for (i in pw_ids) {
 # pw_bestmatch$Human <- as.factor(pw_bestmatch$Human)
 # pw_bestmatch$AI <- as.factor(pw_bestmatch$AI)
 # pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
-print("Strategy Fingerprint of each player by adversary. Note: matches less than 80% (0.8) are listed as Unk")
-print(pw_bestmatch)
+print(paste0("Strategy Fingerprint of each player by adversary. Note: matches less than ",strat_threshold*100,"% (",strat_threshold,") are listed as Unk"))
+
+
+##stratEst function - doesn't work right, it seems...
+a <- pw_all_data_with_demo
+a <- a[,c("Adversary","id","period","my.decision")]
+# a$period <- as.integer(period)
+a$my.decision <- as.integer(a$my.decision)
+a[a$my.decision==2,]$my.decision <- 0
+a$other_cooperation <- rep(0,nrow(a))
+a$Adversary <- as.integer(as.factor(a$Adversary)) #1 = AI, 2 = Human, 3=HAI
+adv_choices <- matrix(ai_adv_choices, ncol=10)
+adv_choices <- rbind(adv_choices, human_adv_choices, hai_adv_choices)
+colnames(a) <- c("treatment","id","period","cooperation","other_cooperation")
+a$id <-as.factor(a$id)
+a$cooperation <- as.integer(a$cooperation)
+a$other_cooperation <- as.integer(a$other_cooperation)
+# a$supergame <- rep(1, nrow(a)) # not needed
+
+#adds adversary choics to other_cooperation
+for (j in (1:3)) { #each adversary
+  for (i in (1:10)){ #each round
+    a[a$treatment==j & a$period ==i,]$other_cooperation <- rep(adv_choices[j,i], length(a[a$treatment==j & a$period ==i,]$other_cooperation))
+  }
+}
+strats <- rbind(ALLD,ALLC,DC,DGRIM2, DGRIM3, DTF2T, DTF3T, DTFT, FC, GRIM, GRIM2, GRIM3, M1BF, PT2FT, PTFT, SGRIM, T2F2T, T2FT, TF2T, TF3T, TFT, WSLS )
+l <- c("ALLD","ALLC","DC","DGRIM2", "DGRIM3", "DTF2T", "DTF3T", "DTFT", "FC", "GRIM", "GRIM2", "GRIM3", "M1BF", "PT2FT", "PTFT", "SGRIM", "T2F2T", "T2FT", "TF2T", "TF3T", "TFT", "WSLS")
+
+# strat_df <- as.data.frame(matrix(NA, nrow=length(l), ncol=length(pw_ids)))
+#colnames(strat_df) <- pw_ids
+strat_array <- array(NA, c(length(l),length(pw_ids),3))
+colnames(strat_array) <- pw_ids
+
+for (i in pw_ids) { #each particiapnt
+  for (j in (1:3)) { #each adversary
+    
+    b<-a[a$id==i & a$treatment==j,]
+    model <- stratEst(b, strats,print.messages = F)
+    strat_array[,i,j] <- round(model$shares,3)
+    # strat_df[,i] <- round(model$shares,3)
+  }
+}
+# rownames(strat_df) <- l
+rownames(strat_array) <- l
+print(strat_array)
 
 #--------------------PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
 print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
@@ -1290,19 +1477,18 @@ print("NOTE: Is it possible that participants' strategy against a human adversar
 
 #--------------------PW - Time <-> Strategic Decision Analysis-----------------
 print(" ---PW: Is BY-PAGE DECISION TIME correlated to decision-making?")
-p<- ggplot(pw_all_data_with_demo, aes(x=seconds_on_page))+
-  geom_density(data=pw_all_data_with_demo[pw_all_data_with_demo$my.decision=="Peace",],fill="green", color="green",alpha=0.3)+
-  geom_density(data=pw_all_data_with_demo[pw_all_data_with_demo$my.decision=="War",],fill="red", color="red",alpha=0.3)+
-  # geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+
-  # geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+
-  scale_x_continuous(limits = c(0, 50))+
-  labs(title="PW-Decision Time Density Plot", x="Seconds per Decision", y = "Density", color = "Adversary type")  + 
-  scale_color_manual(values = c('Peace' = 'green', 'War' = 'red'))
+p<- ggplot(pw_all_data_with_demo, aes(x=seconds_on_page, group=my.decision))+
+  geom_density(aes(fill=my.decision, color=my.decision),alpha=0.3)+
+  labs(title="PW-Decision Time Density Plot", x="Seconds per Decision", y = "Density", fill="Decision",color="Decision")
+
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+print(wilcox.test(xtabs(~seconds_on_page + my.decision, data=pw_all_data_with_demo)))
+print("RESULT: Wilcox test (V = 3655, p-value = 0.000000000000001097415) between peace and war decisions by time shows a statistically signficant relationship between (IV) decision and (DV) decision time, p < .001.")
+print(colMeans(xtabs(~seconds_on_page + my.decision, data=pw_all_data_with_demo)))
+print("RESULT: Average time for Peace decisions is 7.9 seconds and average time for War decisions is 9.6 seconds. ")
 
-print("HELP:need help here...")
 # m <- glmer(my.decision ~ avg_time+ (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 # # print(summary(m))
 # print(Anova(m))
