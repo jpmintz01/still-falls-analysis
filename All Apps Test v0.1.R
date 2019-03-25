@@ -78,6 +78,7 @@ stripFails <- function (data){
   good_data <- unique(good_data) #remove dupliprintes
   return (good_data)
 }
+
 stripBadCols <- function (data, badColList = c("session.mturk_HITGroupId", "session.mturk_HITId", "session.is_demo","session.comment","session.experimenter_name","group.id_in_subsession","player.player_guess_adv_1_type","participant.mturk_assignment_id","participant.mturk_worker_id","participant.visited", "participant.payoff_plus_participation_fee", "session.config.participation_fee","session.config.real_world_currency_per_point","informed_consent.1.player.id_in_group","informed_consent.1.player.payoff","informed_consent.1.group.id_in_subsession","informed_consent.1.subsession.round_number")
 ){
   #other ones to remove: "prisoner_multiplayer.x.player.id_in_group" where x is round number
@@ -490,21 +491,25 @@ pw_pred_actual_sum[,3] <- pw_GLM_sum[,1]
 
 #--------------------RPS - Data Transformation-----------------
 #bind the columns advisor_choice and adversary type
-rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
-rps_cols_1 <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))], new_data[grepl('^rps.*payoff_vs_adv_1$', names(new_data))])
+# rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))])#get rps_vs_human choices as a df row:player, col:colnames
+rps_cols <- bind_cols(new_data[grepl('^rps.*advisor_choice$', names(new_data))], new_data[grepl('^rps.*adv_1_type$', names(new_data))], new_data[grepl('^rps.*payoff_vs_adv_1$', names(new_data))])
 
 #rps_vs_human_totals <- rowSums()#pwChangeColNames(rps_vs_human_cols, num_pw_rounds) #get a matrix of rps choices (row:player)x(column:round) with only the rps vs human
+# names(rps_cols) <-  gsub(pattern = "rps.", replacement = "", x = names(rps_cols)) # removes the leading 'rps.' - just a cleanup
+# names(rps_cols) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols)) # removes 'player.' - just a cleanup
 names(rps_cols) <-  gsub(pattern = "rps.", replacement = "", x = names(rps_cols)) # removes the leading 'rps.' - just a cleanup
-names(rps_cols) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols)) # removes 'player.' - just a cleanup
-names(rps_cols_1) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols_1))
+names(rps_cols) <-  gsub(pattern = "player.", replacement = "", x = names(rps_cols))
 
-names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))])
+
+# names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))])
 # line above adds leading zero to one-digit round numbers
-names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))] <- paste0("0", names(rps_cols_1)[grepl('^[1-9][.](.*)$', names(rps_cols_1))])
+names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))])
+
+rps_cols[,names(rps_cols)[grepl('^(.*)([3][1-9]|[4-6][0-9])[.](.*)$', names(rps_cols))]] <- NULL #strip unused columns
 
 a <- rps_cols
+
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
-rps_cols_1 <- rps_cols_1[,order(colnames(rps_cols_1))] #sorts columns by round number (two vars each)
 
 
 
@@ -517,7 +522,7 @@ df_labels <- c("code","label","pw_cb","rps_cb")
 colnames(df) <- df_labels
 list_of_decision_cols <- names(rps_cols)[grepl('^.*choice$', names(rps_cols))]
 list_of_type_cols <- names(rps_cols)[grepl('^.*type$', names(rps_cols))]
-#list_of_payoff_cols <- names(rps_cols_1)[grepl('^.*payoff*$', names(rps_cols_1))]
+list_of_payoff_cols <- names(rps_cols)[grepl('^.*payoff.*$', names(rps_cols))]
 
 a <- bind_cols(as.data.frame(new_data$participant.label), rps_cols)  #change participant.label to whatever makes sense
 
@@ -538,9 +543,13 @@ names(df_types)[3] <- "Adversary"
 df_decs = melt(a, id="id", measure=list_of_decision_cols)
 names(df_decs)[3] <- "Choice_of_Advisor"
 df_decs$variable = NULL
+df_payoffs = melt(a, id="id", measure=list_of_payoff_cols)
+#df_payoffs$variable = NULL
+names(df_payoffs)[3] <- "Payoff"
 # f<- inner_join(df_types,df_decs,by="id")
-rps_long<- bind_cols(df_types, as.data.frame(df_decs$Choice_of_Advisor))
+rps_long<- bind_cols(df_types, as.data.frame(df_decs$Choice_of_Advisor),as.data.frame(df_payoffs$Payoff))
 names(rps_long)[4] <- "Choice_of_Advisor"
+names(rps_long)[5] <- "Payoff"
 rps_long$Round <- gsub(pattern=".adv_1_type", replacement="",x=rps_long$Round)
 rps_long$Round <- as.integer(rps_long$Round)
 rps_long$Adversary <- as.factor(rps_long$Adversary)
@@ -2127,6 +2136,7 @@ b <- rownames(b[b$AI %in% c(0,30),])
 print(paste0(length(b), " participants (",paste(b, collapse=", "),") played the exact same choice for all rounds in Rock-Paper-Scissors."))
 c <- intersect(b,a)
 print(paste0(length(c), " participants (",paste(c, collapse=", "),") played the exact same choice for all rounds in both Peace-War and Rock-Paper-Scissors."))
+print("need to adjust to allow for 0.9 vs 1.0 match of allC or allD...")
 
 #find the round1 participants who chose differently across adversaries in round 1
 d<- xtabs(~id + Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
@@ -2135,9 +2145,11 @@ d<- rowSums(d)
 d<-names(d[d %in% c(1,2)])
 print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
 
+
+
 e <- rps_fisher_test[rps_fisher_test$All,]$id
 print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
 f<- intersect(d,e)
 print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
-
+print("need to adjust this to include fingerprint")
 
