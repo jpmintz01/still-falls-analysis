@@ -2020,6 +2020,44 @@ print("HELP: How do I do a multinomial version of this (see code) - it keeps exc
 # print("??RESULT: A multiple RMLR (should use multivariate repeated measures logistic regression if possible), showed Adversary did not cause a change across rounds, at p <.05.??")
 # 
 # print("---code above here RMLR needs to be moved lower...---")
+#--------------------RPS - Switch-Loss Analysis----------------
+switch_array <- rps_array
+rps_switch_df <- as.data.frame(rps_array)
+
+rps_switch_df$Win_Stay <- 0
+rps_switch_df$Win_Switch <- 0
+rps_switch_df$Loss_Stay <- 0
+rps_switch_df$Loss_Switch <- 0
+rps_switch_df$Draw_Stay <- 0
+rps_switch_df$Draw_Switch <- 0
+
+for (i in rps_ids) {
+  for (j in list("Human","AI","Human+AI")) {
+    for (k in c(2:10)){
+      prev_choice <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j& rps_long_ten_rounds$Round==(k-1),]$Choice_of_Advisor
+      current_choice <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j& rps_long_ten_rounds$Round==k,]$Choice_of_Advisor
+      prev_payoff <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j&rps_long_ten_rounds$Round==(k-1),]$Payoff
+      prev_adv <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j&rps_long_ten_rounds$Round==(k-1),]$Adversary
+      # rps_switch_df$prev_choice <- prev_choice
+      if ((prev_choice != current_choice) & (prev_payoff==-1)){ #if previous round's choice and current round's choice are different, and previous payoff is -1
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Switch  #log a counter as a "switch"
+      } else if ((prev_choice != current_choice) & (prev_payoff==0)){
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Switch
+      } else if ((prev_choice != current_choice) & (prev_payoff==1)){
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Switch
+      } else if ((prev_choice == current_choice) & (prev_payoff==-1)) {
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Stay
+      } else if ((prev_choice == current_choice) & (prev_payoff==0)){
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Stay
+      } else if ((prev_choice == current_choice) & (prev_payoff==1)){
+        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Stay
+      }
+    }
+  }
+}
+names(rps_switch_df)[1] <- "prev_adversary"
+names(rps_switch_df)[2] <- "prev_choice"
+rps_switch_df_melt <- melt(rps_switch_df, id=c("prev_adversary","prev_choice","id"))
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
 #check for correlation with counterbalancing
 
