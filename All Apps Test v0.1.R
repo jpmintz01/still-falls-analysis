@@ -831,10 +831,10 @@ print("RESULT: Paired wilcox test of the all-round sums comparing HUman and Huma
 print("IMPLICATION: In this experiment, the group of participants varied their choices by adversary.")
 # print("    --PW: All Rounds: Individual Fisher test p-values: ")
 print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary, despite the following results...")
-# print("fisher test p-values: ")
-# for (i in pw_ids){
-#   print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
-# }
+print("fisher test p-values: ")
+for (i in pw_ids){
+  print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
+}
 print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice=="Peace",]))
 print("RESULT: A Friedman test shows the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p <.01 (.05).")
 
@@ -959,7 +959,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
   #inputs: adv_vec = a vector of 1's and zero's with 1 being cooperate
   #inputs: types = a vector names of strategy types
-  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF")
+  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet")
   fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(types)))
   names(fingerprint_df) <- types
   
@@ -1317,7 +1317,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   
   return(fingerprint_df)
 }
-types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF")
+types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet")
 fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
 names(fp_df) <- types
 fp_df$id <- rep(pw_ids,3)
@@ -1330,6 +1330,25 @@ for (i in pw_ids) {
   fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices, types)
   
 }
+#Add GLM & nnet predictions
+
+temp_vec_GLM <- rep(1,10)
+temp_vec_nnet <- rep(1,10)
+player_vec <- rep(1,10)
+for (i in pw_ids) {
+  #print(i)
+  for (j in list("Human","Human+AI","AI")){
+    #print(j)
+    for (k in (1:10)) {
+      player_vec[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$my.decision
+      temp_vec_GLM[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
+      temp_vec_nnet[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
+    }
+    fp_df[fp_df$id==i & fp_df$Adversary==j,]$GLM <- length(which(player_vec==temp_vec_GLM))/length(temp_vec_GLM)
+    fp_df[fp_df$id==i & fp_df$Adversary==j,]$nnet <- length(which(player_vec==temp_vec_nnet))/length(temp_vec_nnet)
+  }
+}
+
 print("PW Strategy Fingerprint")
 print(fp_df)
 fp_df_sum <- as.data.frame(matrix(NA, nrow=3, ncol=(length(types)-1)))
@@ -1354,6 +1373,7 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 
+#create the matrix of ids vs strategies and percent match
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
 pw_bestmatch[,1] <- pw_ids
@@ -1369,12 +1389,14 @@ for (i in pw_ids) {
 
   for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI)
     if (length(which(t[q,]==t[q,s[q]]))>1) { #if there are ties
-      if (max(t[q,]) < strat_threshold) { #if the accuracy is < 0.8
+      if (max(t[q,]) < strat_threshold) { #if the accuracy is < threshold (0.81)
         s[q] <- "unk" # say the strategy is unknown
       } else { #otherwise, combine all ties and the accuracy figure
       s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
       }
-
+      # if ((grepl('^(.*)AllC(.*)$',s[q]))&((grepl('^(.*)nnet(.*)$',s[q]))|(grepl('^(.*)GLM(.*)$',s[q]))) ) { #if AllC included wth GLM & nnet, remove GLM & nnet
+      #   
+      # }
     } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add accuracy figure
       s[q] <- "unk"
     } else if (max(t[q,]) >= strat_threshold){
@@ -2154,27 +2176,27 @@ print(chisq.test(xtabs(~Adversary + seconds_on_page, data=rps_all_data_with_demo
 print("RESULT: Chisq test shows no signifciant relationship between decision time and Adversary")
 
 # 
-# p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Choice_of_Advisor)", x="Seconds per Decision", y = "Density", color = "Choice")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
-# print(p)
-# print(paste0("Insert ", p$labels$title," Plot"))
-# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-# print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
-# print(chisq.test(xtabs(~Choice_of_Advisor + seconds_on_page, data=rps_all_data_with_demo)))
-# print("RESULT: Chisq test shows a signifciant relationship between decision time and Choice of Advisor at p < .001")
+p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Choice_of_Advisor)", x="Seconds per Decision", y = "Density", color = "Choice")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
+print(chisq.test(xtabs(~Choice_of_Advisor + seconds_on_page, data=rps_all_data_with_demo)))
+print("RESULT: Chisq test shows a signifciant relationship between decision time and Choice of Advisor at p < .001")
 
 #--------------------Multi-Game - Data Analyses-----------------
 print("--------------------Multi-Game Analyses-----------------")
 
 #played "non-strategically"
 a<-as.data.frame(t(colSums(pw_array)))
-a <- rownames(a[a$Peace %in% c(0,30),])
-print(paste0(length(a), " participants (",paste(a, collapse=", "),") played the exact same choice for all rounds in Peace-War."))
+a <- rownames(a[a$Peace %in% c(0,30,1,29),])
+print(paste0(length(a), " participants (",paste(a, collapse=", "),") played the same choice for all rounds in Peace-War (1 decision error allowed)."))
 b<- as.data.frame(t(colSums(rps_array)))
-b <- rownames(b[b$AI %in% c(0,30),])
-print(paste0(length(b), " participants (",paste(b, collapse=", "),") played the exact same choice for all rounds in Rock-Paper-Scissors."))
+b <- rownames(b[b$AI %in% c(0,30,1,29),])
+print(paste0(length(b), " participants (",paste(b, collapse=", "),") played the exact same choice for all rounds in Rock-Paper-Scissors (1 decision error allowed)."))
 c <- intersect(b,a)
 print(paste0(length(c), " participants (",paste(c, collapse=", "),") played the exact same choice for all rounds in both Peace-War and Rock-Paper-Scissors."))
-print("need to adjust to allow for 0.9 vs 1.0 match of allC or allD...")
+
 
 #find the round1 participants who chose differently across adversaries in round 1
 d<- xtabs(~id + Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
@@ -2182,6 +2204,7 @@ d<- d[,,"Peace"]
 d<- rowSums(d)
 d<-names(d[d %in% c(1,2)])
 print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
+
 
 
 
