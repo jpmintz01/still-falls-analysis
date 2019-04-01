@@ -127,7 +127,8 @@ new_data <- stripBadCols(good_data)  #some error here...
 num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 #split off the columns which describe pw_vs_human
 num_rps_rounds <- new_data$session.config.num_RPS_rounds[[1]]
-
+filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/pw_all_data_onehot.csv"
+pw_from_keras <- read.csv(filepath, header=TRUE, stringsAsFactors = TRUE)
 #--------------------Time -data transformation--------------------
 #choose and readthe all_data data file
 #filepath <- file.choose()
@@ -643,7 +644,7 @@ for (i in 1:10) {
   pw_all_data_with_demo[pw_all_data_with_demo$period==i & pw_all_data_with_demo$Adversary=="AI","TFT"] <- ai_tft_choices[i]
   pw_all_data_with_demo[pw_all_data_with_demo$period==i & pw_all_data_with_demo$Adversary=="Human+AI","TFT"] <- hai_tft_choices[i]
 }
-
+pw_all_data_with_demo$keras <- pw_from_keras$keras  
 
 
 #--------------------Data Write to .csv--------------------
@@ -959,7 +960,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
   #inputs: adv_vec = a vector of 1's and zero's with 1 being cooperate
   #inputs: types = a vector names of strategy types
-  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet")
+  types <- c("AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet","keras")
   fingerprint_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(types)))
   names(fingerprint_df) <- types
   
@@ -1317,7 +1318,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
   
   return(fingerprint_df)
 }
-types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet")
+types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet","keras")
 fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
 names(fp_df) <- types
 fp_df$id <- rep(pw_ids,3)
@@ -1330,10 +1331,11 @@ for (i in pw_ids) {
   fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices, types)
   
 }
-#Add GLM & nnet predictions
+#Add GLM & nnet & keras predictions
 
 temp_vec_GLM <- rep(1,10)
 temp_vec_nnet <- rep(1,10)
+temp_vec_keras <- rep(1,10)
 player_vec <- rep(1,10)
 for (i in pw_ids) {
   #print(i)
@@ -1343,9 +1345,11 @@ for (i in pw_ids) {
       player_vec[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$my.decision
       temp_vec_GLM[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
       temp_vec_nnet[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
+      temp_vec_keras[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$keras
     }
     fp_df[fp_df$id==i & fp_df$Adversary==j,]$GLM <- length(which(player_vec==temp_vec_GLM))/length(temp_vec_GLM)
     fp_df[fp_df$id==i & fp_df$Adversary==j,]$nnet <- length(which(player_vec==temp_vec_nnet))/length(temp_vec_nnet)
+    fp_df[fp_df$id==i & fp_df$Adversary==j,]$keras <- length(which(player_vec==temp_vec_keras))/length(temp_vec_keras)
   }
 }
 
@@ -2079,7 +2083,114 @@ for (i in rps_ids) {
 }
 names(rps_switch_df)[1] <- "prev_adversary"
 names(rps_switch_df)[2] <- "prev_choice"
+switchnames <- c("Win_Stay","Win_Switch","Loss_Stay","Loss_Switch","Draw_Stay","Draw_Switch")
 rps_switch_df_melt <- melt(rps_switch_df, id=c("prev_adversary","prev_choice","id"))
+rps_switch_df_melt_sum <- melt(rps_switch_df, c("prev_adversary","prev_choice",switchnames))
+rps_switch_df_sum <- as.data.frame(rps_switch_df_melt_sum %>%
+  group_by(prev_adversary, prev_choice) %>%
+  summarise (sum(value))) 
+names(rps_switch_df_sum)[3] <- "value"
+
+
+rps_switch_array <- array(NA, dim=c(3,3,6), dimnames=list(c("AI","Human","Human+AI"),c("AI","human","none"),switchnames))
+rps_switch_table_adv <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","human","none"),switchnames))
+rps_switch_table_adversary <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","Human","Human+AI"),switchnames))
+for (i in switchnames) {
+  
+  f <- as.formula(paste0(i, "~prev_adversary+prev_choice"))
+  rps_switch_array[,,i] <-xtabs(f, data= rps_switch_df)
+  f1 <- as.formula(paste0(i, "~prev_choice"))
+  rps_switch_table_adv[,i] <- xtabs(f1, data= rps_switch_df)
+  f2 <- as.formula(paste0(i, "~prev_adversary"))
+  rps_switch_table_adversary[,i] <- xtabs(f2, data= rps_switch_df)
+}
+rps_switch_table <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","human","none"),c("Stay","Switch")))
+
+print(rps_switch_table_adv)
+print(chisq.test(rps_switch_table_adv))
+print("RESULT: A Chisq.test (X-squared = 31.319552, df = 10, p-value = 0.0005194981) showed a statistically significant difference in whether participants stayed or switched, ")
+for (i in seq(1,5,by=2)){
+  print(rps_switch_table_adv[,c(i,i+1)])
+  print(chisq.test(rps_switch_table_adv[,c(i,i+1)]))#["p.value"])
+
+}
+
+for (i in c(1:2)){
+rps_switch_table[,i] <- rps_switch_table_adv[,i]+rps_switch_table_adv[,i+2]+rps_switch_table_adv[,i+4]
+}
+print(rps_switch_table)
+print(chisq.test(rps_switch_table))
+print("RESULT: chisq test (X-squared = 23.48782, df = 2, p-value = 0.000007937518) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their previous choice of advisor, regardless of a win or loss")
+
+
+for (i in (1:3)) {
+  print(rps_switch_table[-i,])
+  print(chisq.test(rps_switch_table[-i,]))#["p.value"])
+}
+print("post-hoc tests also showed that all previous choices of advisor had an effect on whether the participant switched or stayed.")
+
+for (j in seq(1,5,by=2)){
+
+    print(rps_switch_table_adv[,c(j,j+1)])
+  print(chisq.test(rps_switch_table_adv[,c(j,j+1)]))#["p.value"])
+}
+print("RESULT: post hoc tests show the differences in switching and staying are primarily in the win and loss frames, but that when a participant has a draw, their previous choice of advisor doesn't affect whether they switch or stay.")
+
+for (j in seq(1,5,by=2)){
+  for (i in (1:3)) {
+    print(rps_switch_table_adv[-i,c(j,j+1)])
+    print(chisq.test(rps_switch_table_adv[-i,c(j,j+1)]))#["p.value"])
+  }
+}
+cat("Specifically, post-hoc tests showed: \n-Win Frame:\n--Human-none (X-squared = 9.1331159, df = 1, p-value = 0.002510238)\n--Human-AI (X-squared = 4.2615712, df = 1, p-value = 0.03898385) \n--(but not AI-none) \n-Loss Frame:\n--Human-none (X-squared = 12.650194, df = 1, p-value = 0.0003755267)\n--Human-AI (X-squared = 5.859798, df = 1, p-value = 0.01549057)\n--(but not AI-none)\n-Draw Frame:\n--no relationship.")
+
+
+#now by adversary
+rps_switch_table_advers <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","Human","Human+AI"),c("Stay","Switch")))
+for (i in c(1:2)){
+  rps_switch_table_advers[,i] <- rps_switch_table_adversary[,i]+rps_switch_table_adversary[,i+2]+rps_switch_table_adversary[,i+4]
+}
+print(rps_switch_table_advers)
+print(chisq.test(rps_switch_table_advers))
+print("RESULT: chisq test (X-squared = 7.6698859, df = 2, p-value = 0.02160257) showed a statistically signifciant relationship between whether a participant switched or stayed based on their adversary")
+for (i in (1:3)) {
+  print(rps_switch_table_advers[-i,])
+  print(chisq.test(rps_switch_table_advers[-i,]))#["p.value"])
+}
+print("RESULT: Post-hoc chisq test (X-squared = 6.3197118, df = 1, p-value = 0.0119403) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their adversary (Human vs Human+AI), and a finding of statistical interest (X-squared = 3.317602, df = 1, p-value = 0.06854174) between AI & Human+AI), but no statistically significant relationship between staying and switching between (Human and AI)")
+
+print(rps_switch_table_adversary)
+print(chisq.test(rps_switch_table_adversary))
+print("RESULT: chisq test (X-squared = 10.295055, df = 10, p-value = 0.4149997) showed NO statistically signifciant relationship between whether a participant switched or stayed based on their adversary across ")
+
+for (i in seq(1,5,by=2)){
+  print(rps_switch_table_adversary[,c(i,i+1)])
+  print(chisq.test(rps_switch_table_adversary[,c(i,i+1)]))#["p.value"])
+  
+}
+print("RESULT: Chisq tests by Win, Lose, or Draw do not show that adversary statistically affects switching, but the loss frame shows a finding of stastical interest: (X-squared = 4.6976168, df = 2, p-value = 0.09548287) ")
+
+for (j in seq(1,5,by=2)){
+for (i in (1:3)) {
+  print(rps_switch_table_adversary[-i,c(j,j+1)])
+  print(chisq.test(rps_switch_table_adversary[-i,c(j,j+1)]))#["p.value"])
+}
+}
+print("post-hoc tests also showed non-statistically significant relationship between win/lost/draw switch and stay by adversary, but Human-HAI (Loss frame -> X-squared = 3.8131779, df = 1, p-value = 0.05085088) and the Human-HAI (Win frame -> X-squared = 2.9844016, df = 1, p-value = 0.08407036) were findings of statistical interest.")
+
+#win-loss-draw analyses
+a <- as.data.frame(matrix(colSums(rps_switch_table_adv), nrow=3, ncol=2, byrow=TRUE))
+colnames(a)  <- c("Stay","Switch")
+rownames(a) <- c("Win","Loss","Draw")
+print(a)
+print(chisq.test(a))
+print("RESULT: Chisq test shows no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
+#post-hoc
+print(chisq.test(a[-3,]))
+print(chisq.test(a[-2,]))
+print(chisq.test(a[-1,]))
+print("RESULT: POst-hoc tests confirm no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
+
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
 #check for correlation with counterbalancing
 
@@ -2116,6 +2227,14 @@ print("")
 print("SUMMARY: Overall, it appears pw_order and rps_order both affected overall propensity for chocie of advisor, but was not related to whether participants varied their choice of advisor by adversary. ")
 
 #--------------------RPS - Demographics <-> Choices - Data Analysis-----------------
+# n <- demo_relevant_data
+# o <- rps_fisher_test[,c("id","All")]
+# n <- merge(n,o, by="id")
+# f1 <- "All~"
+# 
+# f2 <- paste0(colnames(n)[!colnames(n) %in% colnames(n[,c("id","All")])], collapse="+")
+# f <- as.formula(paste0(f1, f2, "+(1|id)"))
+# m <- glmer(f, data=n, family="binomial")
 
 print(n<-xtabs(~  machine_learning_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
 print(l<-chisq.test(n))
@@ -2165,6 +2284,7 @@ print(n<-xtabs(~  service+Choice_of_Advisor+Adversary, data = rps_all_data_with_
 print(mantelhaen.test(n))
 print("CMH test on aggregate shows SERVICE did affect decision-making BY ADVERASRY, p < .05")
 
+#m <- glmer(Choice_of_Advisor ~machine_learning_experience +(1|id), data=rps_all_data_with_demo)
 #--------------------RPS - Decision Time <-> Choices - Data Analysis-----------------
 
 p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
