@@ -2340,8 +2340,8 @@ d<- rowSums(d)
 d<-names(d[d %in% c(1,2)])
 print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
 
-
-
+g <- c("yyj35","v6i85","txk26","snd43","i5b85","s4441","qs924","p8v34","n1i23","k1o66","h0s22","epb14","b8g12","3z144")
+print(paste0(length(g), " participant(s) (",paste(g, collapse=", "),") varied their strategies by adversary in Peace-War ."))
 
 e <- rps_fisher_test[rps_fisher_test$All,]$id
 print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
@@ -2349,3 +2349,6 @@ f<- intersect(d,e)
 print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
 print("need to adjust this to include fingerprint")
 
+f<- intersect(g,e)
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
+print("need to adjust this to include fingerprint")
