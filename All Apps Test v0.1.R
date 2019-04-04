@@ -644,8 +644,8 @@ for (i in 1:10) {
   pw_all_data_with_demo[pw_all_data_with_demo$period==i & pw_all_data_with_demo$Adversary=="AI","TFT"] <- ai_tft_choices[i]
   pw_all_data_with_demo[pw_all_data_with_demo$period==i & pw_all_data_with_demo$Adversary=="Human+AI","TFT"] <- hai_tft_choices[i]
 }
-pw_all_data_with_demo$keras <- pw_from_keras$keras  
-
+pw_all_data_with_demo$keras <- as.factor(pw_from_keras$keras) 
+levels(pw_all_data_with_demo$keras) <- c("War","Peace")
 
 #--------------------Data Write to .csv--------------------
 write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
@@ -1333,25 +1333,29 @@ for (i in pw_ids) {
 }
 #Add GLM & nnet & keras predictions
 
-temp_vec_GLM <- rep(1,10)
-temp_vec_nnet <- rep(1,10)
-temp_vec_keras <- rep(1,10)
-player_vec <- rep(1,10)
+
+
 for (i in pw_ids) {
   #print(i)
   for (j in list("Human","Human+AI","AI")){
     #print(j)
-    for (k in (1:10)) {
-      player_vec[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$my.decision
-      temp_vec_GLM[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
-      temp_vec_nnet[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
-      temp_vec_keras[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$keras
-    }
-    fp_df[fp_df$id==i & fp_df$Adversary==j,]$GLM <- length(which(player_vec==temp_vec_GLM))/length(temp_vec_GLM)
-    fp_df[fp_df$id==i & fp_df$Adversary==j,]$nnet <- length(which(player_vec==temp_vec_nnet))/length(temp_vec_nnet)
-    fp_df[fp_df$id==i & fp_df$Adversary==j,]$keras <- length(which(player_vec==temp_vec_keras))/length(temp_vec_keras)
+    # for (k in (1:10)) {
+    #   player_vec[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$my.decision
+    #   temp_vec_GLM[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
+    #   temp_vec_nnet[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$GLM
+    #   temp_vec_keras[k] <- pw_all_data_with_demo[pw_all_data_with_demo$id==i &pw_all_data_with_demo$Adversary==j & pw_all_data_with_demo$period==k, ]$keras
+    # }
+    #fp_df[fp_df$id==i & fp_df$Adversary==j,]$GLM <- length(which(player_vec==temp_vec_GLM))/length(temp_vec_GLM)
+    #fp_df[fp_df$id==i & fp_df$Adversary==j,]$nnet <- length(which(player_vec==temp_vec_nnet))/length(temp_vec_nnet)
+    #fp_df[fp_df$id==i & fp_df$Adversary==j,]$keras <- length(which(player_vec==temp_vec_keras))/length(temp_vec_keras)
+    
+  
+  fp_df[fp_df$id==i & fp_df$Adversary==j,]$GLM <- length(which(pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$my.decision==pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$GLM))/10
+  fp_df[fp_df$id==i & fp_df$Adversary==j,]$nnet <- length(which(pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$my.decision==pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$nnet))/10
+  fp_df[fp_df$id==i & fp_df$Adversary==j,]$keras <- length(which(pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$my.decision==pw_all_data_with_demo[pw_all_data_with_demo$id==i & pw_all_data_with_demo$Adversary==j,]$keras))/10
   }
 }
+
 
 print("PW Strategy Fingerprint")
 print(fp_df)
@@ -1381,7 +1385,7 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
 pw_bestmatch[,1] <- pw_ids
-strat_threshold <- 0.81
+strat_threshold <- 0.8
 for (i in pw_ids) {
 
   l<-fp_df[fp_df$id==i,]
