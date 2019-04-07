@@ -1465,6 +1465,36 @@ for (i in pw_ids) { #each particiapnt
 # rownames(strat_df) <- l
 rownames(strat_array) <- l
 print(strat_array)
+#----memory-length estimator (needs work) - 
+a <- pw_all_data_with_demo
+a$my.decision <- as.integer(a$my.decision)
+a[a$my.decision==2,]$my.decision <-0
+b <-  array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("C","D"),c("Human","AI","Human+AI"),pw_ids))
+n<-matrix(NA,nrow=2, ncol=2)
+for (i in pw_ids) {
+  for (j in c("Human","AI","Human+AI")){
+    b[1,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[1,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[2,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[2,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[3,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[3,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[4,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[4,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    for (k in c(1,4)) {
+      n[1,] <- colSums(b[,,j,i])
+      n[2,] <- b[k,,j,i]
+      m <- fisher.test(n)["p.value"]
+      if (m < 0.2) {
+        print(i)
+        print(j)
+        print(m)
+      }
+    }
+  }
+}
+
+
 
 #--------------------PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
 print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
