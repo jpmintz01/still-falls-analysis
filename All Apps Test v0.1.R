@@ -129,6 +129,45 @@ num_pw_rounds <- new_data$session.config.num_PW_rounds[[1]]
 num_rps_rounds <- new_data$session.config.num_RPS_rounds[[1]]
 filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/pw_all_data_onehot.csv"
 pw_from_keras <- read.csv(filepath, header=TRUE, stringsAsFactors = TRUE)
+filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/AI_output_all_strategies.csv"
+pw_Axelrod_AI <- read.csv(filepath, header=TRUE, stringsAsFactors = TRUE)
+filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/HAI_output_all_strategies.csv"
+pw_Axelrod_HAI <- read.csv(filepath, header=TRUE, stringsAsFactors = TRUE)
+filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/Human_output_all_strategies.csv"
+pw_Axelrod_Human <- read.csv(filepath, header=TRUE, stringsAsFactors = TRUE)
+#read the "vs AI" strategies and chocies from the axelrod library
+b <- as.data.frame(matrix(pw_Axelrod_AI$Player.name, nrow=length(pw_Axelrod_AI$Player.name)))
+n <- gsub("C", "1", pw_Axelrod_AI$Actions)
+n <- gsub("D", "0", n)
+a<-strsplit(as.character(n),"")
+a_AI <- data.frame(matrix(unlist(a), nrow=length(a), byrow=T),stringsAsFactors=FALSE)
+names(a_AI) <- c(1:10)
+AI_actions <- cbind(pw_Axelrod_AI$Player.name, a_AI)
+names(AI_actions)[1] <- "Strategy"
+AI_actions$Adversary <- "AI"
+
+#read the "vs HAI" strategies and chocies from the axelrod library
+b <- as.data.frame(matrix(pw_Axelrod_HAI$Player.name, nrow=length(pw_Axelrod_HAI$Player.name)))
+n <- gsub("C", "1", pw_Axelrod_HAI$Actions)
+n <- gsub("D", "0", n)
+a<-strsplit(as.character(n),"")
+a_HAI <- data.frame(matrix(unlist(a), nrow=length(a), byrow=T),stringsAsFactors=FALSE)
+names(a_HAI) <- c(1:10)
+HAI_actions <- cbind(pw_Axelrod_HAI$Player.name, a_HAI)
+names(HAI_actions)[1] <- "Strategy"
+HAI_actions$Adversary <- "Human+AI"
+
+#read the "vs Human" strategies and chocies from the axelrod library
+b <- as.data.frame(matrix(pw_Axelrod_Human$Player.name, nrow=length(pw_Axelrod_Human$Player.name)))
+n <- gsub("C", "1", pw_Axelrod_Human$Actions)
+n <- gsub("D", "0", n)
+a<-strsplit(as.character(n),"")
+a_Human <- data.frame(matrix(unlist(a), nrow=length(a), byrow=T),stringsAsFactors=FALSE)
+names(a_Human) <- c(1:10)
+Human_actions <- cbind(pw_Axelrod_Human$Player.name, a_Human)
+names(Human_actions)[1] <- "Strategy"
+Human_actions$Adversary <- "Human"
+
 #--------------------Time -data transformation--------------------
 #choose and readthe all_data data file
 #filepath <- file.choose()
@@ -955,6 +994,27 @@ print("HELP: Is this the right test to compare observed and actual?")
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 #--------------------PW - Strategy Fingerprint Analysis-----------------
+#Axelrod fingerprint function
+axelrod_fp <- function(player_vec, strat_actions) {
+  if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
+    for (i in player_vec){ 
+      player_vec[player_vec=="Peace"] <- 1
+      player_vec[player_vec=="War"] <- 0
+      player_vec <- as.numeric(player_vec)
+    }
+  }
+  strat_types <- strat_actions$Strategy
+  axelrod_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(strat_types)))
+  names(axelrod_df) <- strat_types
+  for (i in strat_types) {
+    # print(i)
+    # print(as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)])))
+    # print(length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec))
+    axelrod_df[,i] <- length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec)
+  }
+  
+  return(axelrod_df)
+}
 #strategy fingerprinting function
 fingerprint <- function(player_vec, adv_vec, types){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
@@ -1094,7 +1154,7 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
         DTF2T_true[i]<-FALSE
       }
     }
-    print(paste0("DTF2T: ",(length(which(DTF2T_true))/length(player_vec))))
+    #print(paste0("DTF2T: ",(length(which(DTF2T_true))/length(player_vec))))
     #fingerprint_df$TF2T <- length(which(TF2T_true))/length(player_vec)
   }
   
@@ -1320,21 +1380,26 @@ fingerprint <- function(player_vec, adv_vec, types){  #returns named vector perc
 }
 types <- c("id","Adversary","AllC","AllD","TFT","TF2T","NotTF2T","TwoTFT","NotTwoTFT","UC","UD","WSLS","Psycho","DTFT","PTFT","PT2FT","T2","FBF","GLM","nnet","keras")
 fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(types)))
+axl_types <- c("id","Adversary", as.character(AI_actions$Strategy))
+axl_fp_df <- as.data.frame(matrix(data=0, nrow=(length(pw_ids)*3), ncol=length(axl_types)))
 names(fp_df) <- types
+names(axl_fp_df) <- axl_types
 fp_df$id <- rep(pw_ids,3)
+axl_fp_df$id <- rep(pw_ids,3)
 for (i in pw_ids) {
   fp_df[fp_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
+  axl_fp_df[axl_fp_df$id==i,]$Adversary<- c("Human","AI","Human+AI")
 }
 for (i in pw_ids) {
   fp_df[fp_df$id==i & fp_df$Adversary=="Human",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,human_adv_choices, types)
+  axl_fp_df[axl_fp_df$id==i & axl_fp_df$Adversary=="Human",c(3:length(axl_types))]<- axelrod_fp(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human",]$Choice,Human_actions)
   fp_df[fp_df$id==i & fp_df$Adversary=="AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,ai_adv_choices, types)
+  axl_fp_df[axl_fp_df$id==i & axl_fp_df$Adversary=="AI",c(3:length(axl_types))]<- axelrod_fp(pw_cols[pw_cols$id==i & pw_cols$Adversary=="AI",]$Choice,AI_actions)
   fp_df[fp_df$id==i & fp_df$Adversary=="Human+AI",c(3:length(types))]<- fingerprint(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,hai_adv_choices, types)
+  axl_fp_df[axl_fp_df$id==i & axl_fp_df$Adversary=="Human+AI",c(3:length(axl_types))]<- axelrod_fp(pw_cols[pw_cols$id==i & pw_cols$Adversary=="Human+AI",]$Choice,HAI_actions)
   
 }
-#Add GLM & nnet & keras predictions
-
-
-
+#Add GLM & nnet & keras predictions (needs to add to axl_fp_df)
 for (i in pw_ids) {
   #print(i)
   for (j in list("Human","Human+AI","AI")){
@@ -1385,10 +1450,10 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
 pw_bestmatch[,1] <- pw_ids
-strat_threshold <- 0.8
+strat_threshold <- 0.9
 for (i in pw_ids) {
 
-  l<-fp_df[fp_df$id==i,]
+  l<-axl_fp_df[axl_fp_df$id==i,]
   t<-l[,3:length(types)]
   # s<-colnames(l)[apply(l,1,which.max)]
   s<-colnames(t)[max.col(t)]
@@ -1422,6 +1487,41 @@ for (i in pw_ids) {
 # pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
 print(paste0("Strategy Fingerprint of each player by adversary. Note: matches less than ",strat_threshold*100,"% (",strat_threshold,") are listed as Unk"))
 
+#axl bestmatch create the matrix of ids vs strategies and percent match
+axl_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
+colnames(axl_bestmatch) <- c("id","Human","AI","HumanAI")
+axl_bestmatch[,1] <- pw_ids
+strat_threshold <- 0.9
+for (i in pw_ids) {
+  
+  l<-axl_fp_df[axl_fp_df$id==i,]
+  t<-l[,3:length(types)]
+  # s<-colnames(l)[apply(l,1,which.max)]
+  s<-colnames(t)[max.col(t)]
+  r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
+  m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match
+  
+  for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI)
+    if (length(which(t[q,]==t[q,s[q]]))>1) { #if there are ties
+      if (max(t[q,]) < strat_threshold) { #if the accuracy is < threshold (0.81)
+        s[q] <- "unk" # say the strategy is unknown
+      } else { #otherwise, combine all ties and the accuracy figure
+        s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
+      }
+      # if ((grepl('^(.*)AllC(.*)$',s[q]))&((grepl('^(.*)nnet(.*)$',s[q]))|(grepl('^(.*)GLM(.*)$',s[q]))) ) { #if AllC included wth GLM & nnet, remove GLM & nnet
+      #   
+      # }
+    } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add accuracy figure
+      s[q] <- "unk"
+    } else if (max(t[q,]) >= strat_threshold){
+      s[q] <- paste0(s[q],"(",max(t[q,]),")")# if no ties and >0.7, just add accuracy figure
+    }
+  }
+  axl_bestmatch[axl_bestmatch$id==i,]$Human <- s[1]
+  axl_bestmatch[axl_bestmatch$id==i,]$AI <- s[2]
+  axl_bestmatch[axl_bestmatch$id==i,]$HumanAI <- s[3]
+  
+}
 
 ##stratEst function - doesn't work right, it seems...
 a <- pw_all_data_with_demo
@@ -2386,3 +2486,19 @@ print("need to adjust this to include fingerprint")
 f<- intersect(g,e)
 print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
 print("need to adjust this to include fingerprint")
+
+#Trust measurement. compare those who chose peace with the AI vs those who chose the AI Advisor
+n <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=1))
+names(n)[1] <- "id"
+n$id <- pw_ids
+m<-as.data.frame(pw_array[1,1,])
+m$id <- rownames(m)
+names(m)[1] <- "Peace_w_AI"
+n<- merge(m,n, by="id")
+o <-as.data.frame(colSums(rps_array[,1,]))
+o$id <- rownames(o)
+names(o)[1] <- "AI_Advisor"
+p<- merge(n,o, by="id")
+print(cor.test(p$Peace_w_AI, p$AI_Advisor, method="spearman"))
+print("RESULT: Spearman correlation test (a rank test) (S = 3987.5446, p-value = 0.6441073, rho=-0.09128204218) shows little to no statistical correlation between those who chose Peace with the AI and those who chose the AI Advisor more")
+
