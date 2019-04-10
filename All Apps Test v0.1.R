@@ -1450,10 +1450,10 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 pw_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(pw_bestmatch) <- c("id","Human","AI","HumanAI")
 pw_bestmatch[,1] <- pw_ids
-strat_threshold <- 0.9
+strat_threshold <- 0.8
 for (i in pw_ids) {
 
-  l<-axl_fp_df[axl_fp_df$id==i,]
+  l<-fp_df[fp_df$id==i,]
   t<-l[,3:length(types)]
   # s<-colnames(l)[apply(l,1,which.max)]
   s<-colnames(t)[max.col(t)]
@@ -1481,6 +1481,7 @@ for (i in pw_ids) {
   pw_bestmatch[pw_bestmatch$id==i,]$HumanAI <- s[3]
 
 }
+
 # pw_bestmatch$id <- as.factor(pw_bestmatch$id)
 # pw_bestmatch$Human <- as.factor(pw_bestmatch$Human)
 # pw_bestmatch$AI <- as.factor(pw_bestmatch$AI)
@@ -1495,7 +1496,7 @@ strat_threshold <- 0.9
 for (i in pw_ids) {
   
   l<-axl_fp_df[axl_fp_df$id==i,]
-  t<-l[,3:length(types)]
+  t<-l[,3:length(axl_types)]
   # s<-colnames(l)[apply(l,1,which.max)]
   s<-colnames(t)[max.col(t)]
   r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
