@@ -1021,6 +1021,16 @@ for (i in pw_ids) {
     }
   }
 }
+
+# for (i in pw_ids) {
+#   for (j in c("Human","AI","Human+AI")) {
+#     if (fisher.test(b[,,j,i])["p.value"] < 0.1) {
+#     print(i)
+#     print(j)
+#     print(fisher.test(b[,,j,i])["p.value"])
+#     }
+#   }
+# }
 pw_prob_array <-  array(NA, c(4,3,length(pw_ids)))
 pw_prob_array <- b[,1,,]/(b[,1,,]+b[,2,,])
 dimnames(pw_prob_array) = list(c("p1","p2","p3","p4"),c("Human","AI","Human+AI"),pw_ids)
@@ -1028,7 +1038,7 @@ pw_prob_array[is.na(pw_prob_array)] <- 0
 for (i in pw_ids) {
   print(i)
   if (sum(pw_prob_array[,,i])!=0) {
-    print(fisher.test(pw_prob_array[,,i]*10)["p.value"])
+    print(fisher.test(pw_prob_array[,,i])["p.value"])
   }
 }
 print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
