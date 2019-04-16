@@ -992,6 +992,46 @@ print("HELP: Is this the right test to compare observed and actual?")
 # print(p)
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+#--------------------PW - Strat Probability Analysis---------------
+a <- pw_all_data_with_demo
+a$my.decision <- as.integer(a$my.decision)
+a[a$my.decision==2,]$my.decision <-0
+b <-  array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("C","D"),c("Human","AI","Human+AI"),pw_ids))
+
+n<-matrix(NA,nrow=2, ncol=2)
+for (i in pw_ids) {
+  for (j in c("Human","AI","Human+AI")){
+    b[1,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[1,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[2,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[2,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[3,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[3,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    b[4,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+    b[4,2,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==0) & (a[a$id==i & a$Adversary==j,]$other.decision1==0) & a[a$id==i & a$Adversary==j,]$my.decision==0))
+    for (k in c(1,4)) {
+      n[1,] <- colSums(b[,,j,i])
+      n[2,] <- b[k,,j,i]
+      m <- fisher.test(n)["p.value"]
+      if (m < 0.2) {
+        print(i)
+        print(j)
+        print(m)
+      }
+    }
+  }
+}
+pw_prob_array <-  array(NA, c(4,3,length(pw_ids)))
+pw_prob_array <- b[,1,,]/(b[,1,,]+b[,2,,])
+dimnames(pw_prob_array) = list(c("p1","p2","p3","p4"),c("Human","AI","Human+AI"),pw_ids)
+pw_prob_array[is.na(pw_prob_array)] <- 0
+for (i in pw_ids) {
+  print(i)
+  if (sum(pw_prob_array[,,i])!=0) {
+    print(fisher.test(pw_prob_array[,,i]*10)["p.value"])
+  }
+}
+print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
 
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
@@ -2485,8 +2525,12 @@ print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied th
 print("need to adjust this to include fingerprint")
 
 f<- intersect(g,e)
-print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
-print("need to adjust this to include fingerprint")
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their decisions by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
+
+t <- c("2b574", "3z144", "6lk32", "b8g12", "epb14", "h0s22", "i5b85", "k1o66", "n1i23", "p8v34", "qs924", "s4441", "snd43", "txk36", "v6i85", "yda14", "yyj35")
+h <- intersect(t,e)
+print(paste0(length(h), " participant(s) (",paste(h, collapse=", "),") varied their fingerprint strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
+
 
 #Trust measurement. compare those who chose peace with the AI vs those who chose the AI Advisor
 n <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=1))
