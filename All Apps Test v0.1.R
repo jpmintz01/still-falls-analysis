@@ -1038,10 +1038,29 @@ pw_prob_array[is.na(pw_prob_array)] <- 0
 for (i in pw_ids) {
   print(i)
   if (sum(pw_prob_array[,,i])!=0) {
-    print(fisher.test(pw_prob_array[,,i])["p.value"])
+    print(fisher.test(pw_prob_array[,,i]*9)["p.value"])
   }
 }
+print("NOTE: NEed to fix this - simply multiplying by 9 doesn't make it an accurate test. need a test of proportions...")
 print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
+pw_prob_df <- adply(pw_prob_array, c(3,2,1))
+names(pw_prob_df) <- c("id","Adversary","condition","prob")
+p1<- ggplot(pw_prob_df[pw_prob_df$condition=="p1",], aes(x=prob, group=Adversary))+
+  geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
+  #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
+print(p1)
+p2<- ggplot(pw_prob_df[pw_prob_df$condition=="p2",], aes(x=prob, group=Adversary))+
+  geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
+#labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
+print(p2)
+p3<- ggplot(pw_prob_df[pw_prob_df$condition=="p3",], aes(x=prob, group=Adversary))+
+  geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
+#labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
+print(p3)
+p4<- ggplot(pw_prob_df[pw_prob_df$condition=="p4",], aes(x=prob, group=Adversary))+
+  geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
+#labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
+print(p4)
 
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
