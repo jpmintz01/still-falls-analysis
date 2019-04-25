@@ -24,12 +24,14 @@ library(logspline)
 library(scales)
 library(corrplot)
 library(stratEst)
+library(ggplot2)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
 if(!require(car)){install.packages("car")}
 if(!require(multcompView)){install.packages("multcompView")}
 if(!require(lsmeans)){install.packages("lsmeans")}
+
 
 
 #--------------------Data Ingestion functions--------------------
@@ -992,6 +994,24 @@ print("HELP: Is this the right test to compare observed and actual?")
 # print(p)
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+#--------------------PW - Strat Decisions Same Count Analysis -------------
+q <- pw_all_data_with_demo
+a <- matrix(NA, nrow=length(pw_ids), ncol=4)
+colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
+a<- as.data.frame(a)
+a$id <- pw_ids
+
+
+for (i in pw_ids){
+  a[a$id==i,2] = length(which(q[q$id==i & q$Adversary=="Human",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
+  a[a$id==i,3] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
+  a[a$id==i,4] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="Human",]$my.decision))
+}
+a$sum <- rowSums(a[,2:4])
+print(a)
+print(ggplot(a) + geom_bar(aes(sum)))
+
+print("RESULT: x number of participants played same choices across multiple competitors")
 #--------------------PW - Strat Probability Analysis---------------
 ## This checks memory-one likelihood
 a <- pw_all_data_with_demo
