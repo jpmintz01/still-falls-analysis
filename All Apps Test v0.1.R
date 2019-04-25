@@ -1008,8 +1008,9 @@ for (i in pw_ids){
   a[a$id==i,4] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="Human",]$my.decision))
 }
 a$sum <- rowSums(a[,2:4])
-print(a)
-print(ggplot(a) + geom_bar(aes(sum)))
+pw_same_count_df <- a
+print(pw_same_count_df)
+print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
 
 print("RESULT: x number of participants played same choices across multiple competitors")
 #--------------------PW - Strat Probability Analysis---------------
@@ -1019,7 +1020,7 @@ a$my.decision <- as.integer(a$my.decision)
 a[a$my.decision==2,]$my.decision <-0
 b <-  array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("C","D"),c("Human","AI","Human+AI"),pw_ids))
 
-mem_1_prob_array <- array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("Prob","pVal"),c("Human","AI","Human+AI"),pw_ids))
+mem_2_prob_array <- array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("Prob","pVal"),c("Human","AI","Human+AI"),pw_ids))
 
 for (i in pw_ids) {
   for (j in c("Human","AI","Human+AI")){
@@ -1036,8 +1037,8 @@ for (i in pw_ids) {
     for (k in c(1,2,3,4)) {
       n[2,] <- b[k,,j,i] # [k=context (CC, CD, DC, DD), C or D count, j = Adversary, i = 
       m <- fisher.test(n)["p.value"]
-      mem_1_prob_array[k,"Prob",j,i] <- (n[2,1] / sum(n[2,]))
-      mem_1_prob_array[k,"pVal",j,i] <- m$p.value
+      mem_2_prob_array[k,"Prob",j,i] <- (n[2,1] / sum(n[2,]))
+      mem_2_prob_array[k,"pVal",j,i] <- m$p.value
       # if (m$p.value < 0.2) {
       #   print(paste(i,j))
       #   print(paste("p=", m$p.value))
@@ -1078,6 +1079,18 @@ p4<- ggplot(pw_prob_df[pw_prob_df$condition=="p4",], aes(x=prob, group=Adversary
   geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
 #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
 print(p4)
+# a <- pw_all_data_with_demo
+# a$my.decision <- as.integer(a$my.decision)
+# a[a$my.decision==2,]$my.decision <-0
+# c <-  array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("CCCC","CCCD","CCDC","CCDD","CDCC","CDCD","CDDC","CDDD","DCCC","DCCD","DCDC","DCDD","DDCC","DDCD","DDDC","DDDD"),c("C","D"),c("Human","AI","Human+AI"),pw_ids))
+# 
+# mem_2_prob_array <- array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("Prob","pVal"),c("Human","AI","Human+AI"),pw_ids))
+# for (i in pw_ids) {
+#   for (j in c("Human","AI","Human+AI")){
+#     c[1,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
+#   }
+#   }
+
 
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
@@ -2546,7 +2559,8 @@ print("--------------------Multi-Game Analyses-----------------")
 #played "non-strategically"
 a<-as.data.frame(t(colSums(pw_array)))
 a <- rownames(a[a$Peace %in% c(0,30,1,29),])
-print(paste0(length(a), " participants (",paste(a, collapse=", "),") played the same choice for all rounds in Peace-War (1 decision error allowed)."))
+a <- union(a, pw_same_count_df[pw_same_count_df$sum>28,]$id)
+print(paste0(length(a), " participants (",paste(a, collapse=", "),") played the same choice for all rounds and all adversaries in Peace-War (1 decision error allowed)."))
 b<- as.data.frame(t(colSums(rps_array)))
 b <- rownames(b[b$AI %in% c(0,30,1,29),])
 print(paste0(length(b), " participants (",paste(b, collapse=", "),") played the exact same choice for all rounds in Rock-Paper-Scissors (1 decision error allowed)."))
@@ -2561,22 +2575,18 @@ d<- rowSums(d)
 d<-names(d[d %in% c(1,2)])
 print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
 
-g <- c("yyj35","v6i85","txk26","snd43","i5b85","s4441","qs924","p8v34","n1i23","k1o66","h0s22","epb14","b8g12","3z144")
+
+g <- c("2b574","3z144","6lk32","epb14","h0s22","i5b85","k1o66","n1i23","qs924","p8v34","snd43","s4441","txk36","yyj35","yda14","v6i85","epb14")# "b8g12" -uncertain)
 print(paste0(length(g), " participant(s) (",paste(g, collapse=", "),") varied their strategies by adversary in Peace-War ."))
 
 e <- rps_fisher_test[rps_fisher_test$All,]$id
 print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
 f<- intersect(d,e)
 print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
-print("need to adjust this to include fingerprint")
+
 
 f<- intersect(g,e)
-print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their decisions by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
-
-t <- c("2b574", "3z144", "6lk32", "b8g12", "epb14", "h0s22", "i5b85", "k1o66", "n1i23", "p8v34", "qs924", "s4441", "snd43", "txk36", "v6i85", "yda14", "yyj35")
-h <- intersect(t,e)
-print(paste0(length(h), " participant(s) (",paste(h, collapse=", "),") varied their fingerprint strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
-
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
 
 #Trust measurement. compare those who chose peace with the AI vs those who chose the AI Advisor
 n <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=1))
