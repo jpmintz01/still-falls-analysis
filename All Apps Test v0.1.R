@@ -1061,11 +1061,36 @@ for (i in pw_ids) {
 }
 print("NOTE: NEed to fix this - simply multiplying by 9 doesn't make it an accurate test. need a test of proportions...")
 print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
-print(friedman.test(rowSums(pw_prob_array, dims=2)))
-print(l<-friedman.test(rowSums(pw_prob_array, dims=2)[,-3]))
-print("RESULT: Significant difference between AI and Human")
-print(l<-friedman.test(rowSums(pw_prob_array, dims=2)[,-2]))
-print("RESULT: No difference between Human and Human+AI")
+print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p1",]))
+print("RESULT: Friedman test shows a result of statistical interest in p1")
+print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p2",]))
+print("RESULT: Friedman test shows a statistically significant (p <0.05) in p2")
+print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p3",]))
+print("RESULT: Friedman test shows no statistical significance (p <0.05) in p3")
+print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p4",]))
+print("RESULT: Friedman test shows no statistical significance (p <0.05) in p4")
+
+print("POST-HOC pw probability")
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p1 (human-ai)")
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human+AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p1 (human-hai)")
+
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p2 (human-ai)")
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human+AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p2 (human-hai)")
+
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p3 (human-ai)")
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human+AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p3 (human-hai)")
+
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p4 (human-ai)")
+wilcox.test(pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human+AI",]$prob)
+print("RESULT: Wilcox test shows no statistical significance in p4 (human-hai)")
+
 
 pw_prob_df <- adply(pw_prob_array, c(3,2,1))
 names(pw_prob_df) <- c("id","Adversary","condition","prob")
