@@ -1061,6 +1061,12 @@ for (i in pw_ids) {
 }
 print("NOTE: NEed to fix this - simply multiplying by 9 doesn't make it an accurate test. need a test of proportions...")
 print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
+print(friedman.test(rowSums(pw_prob_array, dims=2)))
+print(l<-friedman.test(rowSums(pw_prob_array, dims=2)[,-3]))
+print("RESULT: Significant difference between AI and Human")
+print(l<-friedman.test(rowSums(pw_prob_array, dims=2)[,-2]))
+print("RESULT: No difference between Human and Human+AI")
+
 pw_prob_df <- adply(pw_prob_array, c(3,2,1))
 names(pw_prob_df) <- c("id","Adversary","condition","prob")
 p1<- ggplot(pw_prob_df[pw_prob_df$condition=="p1",], aes(x=prob, group=Adversary))+
