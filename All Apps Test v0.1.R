@@ -689,6 +689,14 @@ pw_all_data_with_demo$keras <- as.factor(pw_from_keras$keras)
 levels(pw_all_data_with_demo$keras) <- c("War","Peace")
 
 #--------------------Data Write to .csv--------------------
+#[[remove? “non-human-believers” – failed manipulation check]]
+#Clear fails: 7ic14 (3xunk, RPS: ), gdg26 (3xAllC, RPS: ), oez14 (3xAllD, RPS: ), s4441 (4/6, 6/4, 6/4, RPS: )
+#Possible Fails: amm45 (2xAllD, RPS: ), k1o66 (2xAllC, 8/2, RPS: ), zxq33 (3xAllC, RPS: )
+clear_fails <- c("7ic14","gdg26","oez14","s4441")
+possible_fails <- c("amm45","k1o66","zxq33")
+pw_all_data_with_demo <- pw_all_data_with_demo[!(pw_all_data_with_demo$id %in% clear_fails),] #exclude manipulation check fails (those that failed clearly)
+#pw_all_data_with_demo <- pw_all_data_with_demo[!(pw_all_data_with_demo$id %in% possible_fails),]#exclude manipulation check fails (those that were possible fails )
+
 write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
 write.csv(rps_all_data_with_demo, "rps_all_data_with_demo.csv")
 write.csv(demo_data, "demo_data.csv")
