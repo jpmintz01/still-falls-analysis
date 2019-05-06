@@ -694,7 +694,9 @@ levels(pw_all_data_with_demo$keras) <- c("War","Peace")
 #Possible Fails: amm45 (2xAllD, RPS: ), k1o66 (2xAllC, 8/2, RPS: ), zxq33 (3xAllC, RPS: )
 clear_fails <- c("7ic14","gdg26","oez14","s4441")
 possible_fails <- c("amm45","k1o66","zxq33")
-pw_all_data_with_demo <- pw_all_data_with_demo[!(pw_all_data_with_demo$id %in% clear_fails),] #exclude manipulation check fails (those that failed clearly)
+pw_all_data_with_demo <- pw_all_data_with_demo[!(pw_all_data_with_demo$id %in% clear_fails),]
+rps_all_data_with_demo <- rps_all_data_with_demo[!(rps_all_data_with_demo$id %in% clear_fails),]
+#exclude manipulation check fails (those that failed clearly)
 #pw_all_data_with_demo <- pw_all_data_with_demo[!(pw_all_data_with_demo$id %in% possible_fails),] #exclude manipulation check fails (those that were possible fails )
 
 write.csv(pw_all_data_with_demo, "pw_all_data_with_demo.csv")
@@ -873,17 +875,22 @@ print("RESULT: Cullen & Frey plot indicates a departure from normal distributon 
 
 print("       ----PW: Strategic Tests----")
 print(chisq.test(pw_sum))
-print("RESULT: A Chi-Sq test on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of Peace Choices) are statistically dependent at p <.05.")
+print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of Peace Choices) are statistically dependent at p <.01.")
 print("--post-hoc tests")
+print(fisher.test(pw_sum[-3,]))
+print(chisq.test(pw_sum[-3,]))
 n<-as.data.frame(xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo))
 n <- n[n$my.decision=="Peace",]
 n$my.decision <- NULL
 print(wilcox.test(n[n$Adversary=="Human",]$Freq, n[n$Adversary=="AI",]$Freq, paired=TRUE))
-print("RESULT: Paired wilcox test of the all-round sums comparing HUman and AI show difference at p <. 01")
+print("RESULT: Paired wilcox test, chisq.test, and fisher.test of the all-round sums comparing HUman and AI show difference at p <. 01")
+
 # print(wilcox.test(n[n$Adversary=="AI",]$Freq, n[n$Adversary=="Human+AI",]$Freq, paired=TRUE))
 # print("RESULT: Paired wilcox test of the all-round sums comparing AI and Human+AI show a difference at p <. 05")
+print(fisher.test(pw_sum[-1,]))
+print(chisq.test(pw_sum[-1,]))
 print(wilcox.test(n[n$Adversary=="Human",]$Freq, n[n$Adversary=="Human+AI",]$Freq, paired=TRUE))
-print("RESULT: Paired wilcox test of the all-round sums comparing HUman and Human+AI show NO difference at p <. 01, despite difference in adversary gameplay")
+print("RESULT: Paired wilcox test, chisq.test, and fisher.test of the all-round sums comparing HUman and Human+AI show NO difference at p <. 05, despite difference in adversary gameplay")
 
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
 # print("    --PW: All Rounds: Individual Fisher test p-values: ")
@@ -899,7 +906,7 @@ for (i in pw_ids){
 for (i in pw_ids){
   print(paste(i, as.character(fisher.test(pw_array[-1,,i])["p.value"])))
 }
-print("RESULT: Post-hoc pairwise fisher tests showed only one player with statistically significant differences in gameplay and that was in the Human-AI pairwise comparison. ")
+print("RESULT: Post-hoc pairwise fisher tests showed only one player with statistically significant differences in gameplay and that was in the Human-AI pairwise comparison. This is interesting because one would expect a difference between the Human and Human+AI condition")
 
 
 print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice=="Peace",]))
@@ -937,15 +944,33 @@ print("REMOVE THIS SECTION       ---PW: Strategic Gameplay BY ROUND and adversar
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision=="Peace",]
 pw_df$period <- as.numeric(pw_df$period)
-p<- ggplot(data=pw_df, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
-  geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  labs(title="PW - Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
+a<- as.data.frame(matrix(NA, nrow=10, ncol=3))
+names(a) <- names(pw_df)[-4]
+a$period <- c(1:10)
+a$Adversary <- "Agg"
+n<- aggregate(Freq ~period, data=pw_df, FUN=sum)
+a<- merge(a,n, by="period")
+a$ratio <- a$Freq/(3*length(pw_ids))
+pw_df$ratio <- pw_df$Freq/(length(pw_ids))
+pw_df <- rbind(pw_df, a)
+pw_df$Adv_delta <- 0.05
+pw_df[pw_df$Adversary=="AI",]$Adv_delta <- (ai_adv_choices-.5)/10
+pw_df[pw_df$Adversary=="Human",]$Adv_delta <- (human_adv_choices-.5)/10
+pw_df[pw_df$Adversary=="Human+AI",]$Adv_delta <- (hai_adv_choices-.5)/10
+pw_df[pw_df$Adversary=="Agg",]$Adv_delta <- NA
+
+p<- ggplot(data=pw_df, aes(x=period, y=ratio, group="Adversary"))+  geom_point(aes(color=Adversary)) +
+  #geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+  geom_line(aes(group=Adversary, color=Adversary))+ 
+  labs(title="PW - Peace Choices by Round and Aversary",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
+  geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary, alpha=0.5),
+               arrow = arrow(length = unit(0.1,"cm")))
+#or use method="lm"
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("NOTE: depending on whether the graphing method is 'lm' or 'auto'/'loess' the amount of cooperation (Peace Choices) went down similarly (at almost exactly the same rate) against all adversary types, but very similarly to HAI+AI, but worse vs human.  This is unexpected and INTERESTING because the HAI had more cooperation than the human, the AI had much less, so there was clearly something else going on here.  Maybe participants have a memory-1 or memory-2 (or a lag-1 or lag-2) decision schema.")
-
-print("")
+print("need to make aggregate a bold black line")
+print("RESULT: INTERESTING - It appears the AI responses mostly (all but 1) followed the adv's previous round's coop/defect (i.e. the aggregate memory is mem-1 and akin to TFT), but for BOTH the human and human+AI, the responses mostly differed or ignored (5/10 or 5/9) the adv's previous round coop/defect decision ")
 
 print("NOTE-opportunity for more here...")
 print("")
@@ -1070,6 +1095,36 @@ print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
 
 print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors"))
 # nrow(pw_same_count_df[pw_same_count_df$sum >24.5 | pw_same_count_df$sum <19.4,])
+
+a<- xtabs(~period+id+my.decision, data=pw_all_data_with_demo)[,,1]
+a[a==0|a==3] <- 3
+a[a==1|a==2] <- 1
+a[a==1] <- 0
+a[a==3] <- 1
+b<- data.frame(rowMeans(a))
+b$period <- c(1:10)
+names(b)[1] <- "mean"
+b$type <- "players"
+c<- xtabs(~period+id+other.decision1, data=pw_all_data_with_demo)[,,1]
+c[c==0|c==3] <- 3
+c[c==1|c==2] <- 1
+c[c==1] <- 0
+c[c==3] <- 1
+d<- data.frame(rowMeans(c))
+d$period <- c(1:9)
+names(d)[1] <- "mean"
+d$type <-"adv"
+e<- rbind(d,b)
+p<- ggplot(data=e[e$type=="players",], aes(x=period, y=mean))+
+  #geom_smooth(method='auto',formula=y~x)+ 
+  geom_line()+ 
+  geom_point(data=e[e$type=="adv",])+
+  labs(title="PW - Ratio of all3-same Choice by Round",x="Round", y = "Ratio of all 3 same choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+ylim(0,1)#or use method="lm"
+
+print(p)
+print("need to fix y labels and cooperative play by adversaries?")
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 #--------------------PW - Strat Probability Analysis---------------
 # a context is a condition.  Memory is how many previous turns
 #mem0
@@ -1144,121 +1199,8 @@ for (i in pw_ids) {
   }
 }
 print(mem_df[with(mem_df, order(id)),])
-# 
-# 
-# #probably get rid of this section
-# # pw_prob_array <-  array(NA, c(4,3,length(pw_ids)))
-# # pw_prob_array <- b[,1,,]/(b[,1,,]+b[,2,,])
-# # dimnames(pw_prob_array) = list(c("p1","p2","p3","p4"),c("Human","AI","Human+AI"),pw_ids)
-# # #pw_prob_array[is.na(pw_prob_array)] <- 0
-# # for (i in pw_ids) {
-# #   print(i)
-# #   if (sum(pw_prob_array[,,i])!=0) {
-# #     print(fisher.test(pw_prob_array[,,i]*9)["p.value"])
-# #   }
-# # }
-# # print("NOTE: NEed to fix this - simply multiplying by 9 doesn't make it an accurate test. need a test of proportions...")
-# # print("RESULT: 19(count these) of the participants showed a statistcially significant probability of variation in strategy between the adversaries using the p1-4 memory-2 method and a fisher.test. 6 played AllD or AllC. 3 showed no statistically significant variation based on this test.")
-# # print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p1",]))
-# # print("RESULT: Friedman test shows a result of statistical interest in p1")
-# # print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p2",]))
-# # print("RESULT: Friedman test shows a statistically significant (p <0.05) in p2")
-# # print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p3",]))
-# # print("RESULT: Friedman test shows no statistical significance (p <0.05) in p3")
-# # print(friedman.test(prob~Adversary|id, data=pw_prob_df[pw_prob_df$condition=="p4",]))
-# # print("RESULT: Friedman test shows no statistical significance (p <0.05) in p4")
-# # 
-# # print("POST-HOC pw probability")
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p1 (human-ai)")
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p1" & pw_prob_df$Adversary=="Human+AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p1 (human-hai)")
-# # 
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p2 (human-ai)")
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p2" & pw_prob_df$Adversary=="Human+AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p2 (human-hai)")
-# # 
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p3 (human-ai)")
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p3" & pw_prob_df$Adversary=="Human+AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p3 (human-hai)")
-# # 
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p4 (human-ai)")
-# # wilcox.test(pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human",]$prob, pw_prob_df[pw_prob_df$condition=="p4" & pw_prob_df$Adversary=="Human+AI",]$prob)
-# # print("RESULT: Wilcox test shows no statistical significance in p4 (human-hai)")
-# # 
-# # 
-# # pw_prob_df <- adply(pw_prob_array, c(3,2,1))
-# # names(pw_prob_df) <- c("id","Adversary","condition","prob")
-# # p1<- ggplot(pw_prob_df[pw_prob_df$condition=="p1",], aes(x=prob, group=Adversary))+
-# #   geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
-# #   #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
-# # print(p1)
-# # p2<- ggplot(pw_prob_df[pw_prob_df$condition=="p2",], aes(x=prob, group=Adversary))+
-# #   geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
-# # #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
-# # print(p2)
-# # p3<- ggplot(pw_prob_df[pw_prob_df$condition=="p3",], aes(x=prob, group=Adversary))+
-# #   geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
-# # #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
-# # print(p3)
-# # p4<- ggplot(pw_prob_df[pw_prob_df$condition=="p4",], aes(x=prob, group=Adversary))+
-# #   geom_density(aes(fill=prob, color=Adversary),alpha=0.3)#+
-# # #labs(title="PW-Probability Chart", x="Probability", y = "Density", fill="Decision",color="Decision")
-# # print(p4)
-# # a <- pw_all_data_with_demo
-# # a$my.decision <- as.integer(a$my.decision)
-# # a[a$my.decision==2,]$my.decision <-0
-# # c <-  array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("CCCC","CCCD","CCDC","CCDD","CDCC","CDCD","CDDC","CDDD","DCCC","DCCD","DCDC","DCDD","DDCC","DDCD","DDDC","DDDD"),c("C","D"),c("Human","AI","Human+AI"),pw_ids))
-# # 
-# # mem_2_prob_array <- array(NA, c(4,2,3,length(pw_ids)), dimnames = list(c("C,C","C,D","D,C","D,D"),c("Prob","pVal"),c("Human","AI","Human+AI"),pw_ids))
-# # for (i in pw_ids) {
-# #   for (j in c("Human","AI","Human+AI")){
-# #     c[1,1,j,i] <- length(which((a[a$id==i & a$Adversary==j,]$my.decision1==1) & (a[a$id==i & a$Adversary==j,]$other.decision1==1) & a[a$id==i & a$Adversary==j,]$my.decision==1))
-# #   }
-# #   }
-# 
-# #mem-1 analysis - outputs an Adversary x 4 context (CC, CD, DC, DD) matrix)
-# rowSums(c[,,"Human",], dims=2)
-# rowSums(c[,,"Human+AI",], dims=2)
-# rowSums(c[,,"AI",], dims=2)
-# mem_1_df <- data.frame(matrix(NA, nrow=12, ncol=4))
-# names(mem_1_df) <- c("Adversary","Var1","Var2","value")
-# mem_1_df$Adversary <- c(rep("Human",4),rep("AI",4),rep("Human+AI",4))
-# mem_1_df$Var1 <- c(rep(c("C","C","D","D"),3))
-# mem_1_df$Var2 <- c(rep(c("C","D","C","D"),3))
-# for (i in Adversary_list) {
-#   q_temp <-data.frame(melt(rowSums(c[,,i,], dims=2)))
-#   q_temp$Adversary<-i
-#   for (j in c("C","D")) {
-#     for (k in c("C","D")){
-#       mem_1_df[mem_1_df$Adversary==i & mem_1_df$Var1==j & mem_1_df$Var2==k,]$value <- q_temp[q_temp$Adversary==i & q_temp$Var1==j & q_temp$Var2==k,]$value
-#     }
-#   }
-# }
-# names(mem_1_df) <- c("Adversary","other.decision1","my.decision","sum")
-# mem_1_df$cond <- paste0(mem_1_df$other.decision1,mem_1_df$my.decision)
-# print(mem_1_matrix <- xtabs(sum~Adversary+cond,data=mem_1_df))
-# print(p<-chisq.test(mem_1_matrix[,c(1:2)]))
-# print("RESULT: A chisq test (X-squared = 7.0188412, df = 2, p-value = 0.02991424) of cooperation in memory-1 contexts (i.e. only factoring the adversary's previous move) by adversary shows a statistically signifciant difference in memory-1 gameplay as a function of adversary.")
-# print(fisher.test(mem_1_matrix[-3,c(1:2)])["p.value"]) #Human-AI
-# print(p<-fisher.test(mem_1_matrix[-1,c(1:2)])["p.value"]) #Human-HAI
-# print(p<-fisher.test(mem_1_matrix[-2,c(1:2)])["p.value"]) #AI-HAI
-# print("RESULT: Post-hoc fisher test pairwise comparisons show the difference is significant in the AI-Human+AI comparison (p-value = 0.01327383) and a finding of statistical interest in the Human-AI comparison (p-value = 0.09369257)")
-# 
-# #mem-2 analysis - outputs an Adversary x 8 context (CC, CD, DC, DD) matrix)
-# # mem_2_df <- melt(rowSums(b, dims=3))
-# # names(mem_2_df) <- c("my1other1","my","Adversary","sum")
-# # mem_2_df$cond <- paste0(mem_2_df$my1other1,mem_2_df$my)
-# # print(mem_2_matrix <- xtabs(sum~Adversary+cond,data=mem_2_df))
-# # print(q<-chisq.test(mem_2_matrix))
-# # print("RESULT: A chisq test (X-squared = 118.85, df = 14, p-value < 2.2e-16) of the memory-2 contexts (i.e.  factoring the adversary's and participant's previous move) by adversary shows a statistically signifciant difference in memory-2 gameplay as a function of adversary")
-# # print("BUT, does this method fail to account for the fact that there are differences in the adversary's gameplay (meaning what percent of those conditions exist only because the adversary played this - extreme example: allD by one adversary and allC by another)")
-# m <- glmer(my.decision ~ Adversary+(1|id)+(1|other.decision1)+(1|other.decision2), data=pw_all_data_with_demo, family=binomial)
-# print(summary(m))
-# print(Anova(m, type="3"))
+
+
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
 axelrod_fp <- function(player_vec, strat_actions) {
@@ -2169,7 +2111,7 @@ print("RESULT:Chisq on AI EXPERIENCE  was related to cooperativeness in general 
 #------------********RPS analyses********----------------------------------
 print("---------------------------------RPS analysis----------------------------------")
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
-print(rps_prop <- round(prop.table(rps_sum)*100, 0))
+print(rps_prop <- round(prop.table(rps_sum)*100, 1))
 #--------------------RPS - Initial Data characterization-----------------
 
 
@@ -2256,7 +2198,7 @@ print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
 # GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq?
 # fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#is exact test more appropriate than chisq.test here
-print("RESULT: A Chi-sq, G-test, and fisher test all show Adversary type is statistically independent at p < .05.")
+print("RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
 
 
 
@@ -2275,18 +2217,18 @@ print("RESULT: A Chi-sq, G-test, and fisher test all show Adversary type is stat
 
 # "Chi Squared for individual participants -- not valid because some expected values are < 5"
 #using fisher test instead)
-print ("RPS: Indidividual ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with some expected value cells=0?")
-rps_ids <- unique(rps_all_data_with_demo$id)
-rps_chi_test <- data.frame("id"=rps_ids,"All"=NA)
-#"fisher test p-values
-rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-for (i in rps_ids){
-  rps_chi_test[rps_chi_test$id==i,"All"] <- chisq.test(rps_array[,,i])["p.value"]<0.05
-}
-d <- rps_chi_test
-d[is.na(d$All),]$All <- FALSE
-d<- d[d$All=="TRUE",]$id
-print(paste0("RESULT: Chisq tests on individual sum choices (across rounds) showed ", length(d), " participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+# print ("RPS: Indidividual ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with some expected value cells=0?")
+# rps_ids <- unique(rps_all_data_with_demo$id)
+# rps_chi_test <- data.frame("id"=rps_ids,"All"=NA)
+# #"fisher test p-values
+# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+# for (i in rps_ids){
+#   rps_chi_test[rps_chi_test$id==i,"All"] <- chisq.test(rps_array[,,i])["p.value"]<0.05
+# }
+# d <- rps_chi_test
+# d[is.na(d$All),]$All <- FALSE
+# d<- d[d$All=="TRUE",]$id
+# print(paste0("RESULT: Chisq tests on individual sum choices (across rounds) showed ", length(d), " participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
@@ -2296,34 +2238,34 @@ for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-print(paste0("RESULT: A Fisher test of individual sum choices (across rounds) showed ", length(d), " participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+print(paste0("RESULT: A Fisher test of individual sum choices (across rounds) showed ", round(100*length(d)/length(rps_ids),1), "% of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
-print ("RPS ID's which showed difference in choices by Adversary using G-Test")
-rps_ids <- unique(rps_all_data_with_demo$id)
-rps_G_test <- data.frame("id"=rps_ids,"All"=NA)
-#"fisher test p-values
-rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-for (i in rps_ids){
-  rps_G_test[rps_G_test$id==i,"All"] <- GTest(rps_array[,,i])["p.value"]<0.05
-}
-f<-rps_G_test[rps_G_test$All=="TRUE",]$id
-print(paste0("RESULT: A G-test of individual sum choices (across rounds) showed ", length(f), " participant(s) (",paste(f, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
-intersect(d,f)
-
-print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
-rps_ids <- unique(rps_all_data_with_demo$id)
-rps_friedman_test <- data.frame("id"=rps_ids,"All"=NA)
-#"fisher test p-values
-rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-for (i in rps_ids){
-  rps_friedman_test[rps_friedman_test$id==i,"All"] <- friedman.test(t(rps_array[,,i]))["p.value"]<0.05
-  # print(paste(i,friedman.test(t(rps_array[,,i]))["p.value"]))
-}
-e<-rps_friedman_test[rps_friedman_test$All=="TRUE",]$id
-print(paste0("RESULT: A Friedman test of individual sum choices (across rounds) showed ", length(e), " participant(s) (",paste(e, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
-
-print("HELP: It seems odd that the fisher test showed 7 participants, the friedman test showed 9, and none of the participants are the same. Why are these results mutually exclusive?")
-intersect(d,e)
+# print ("RPS ID's which showed difference in choices by Adversary using G-Test")
+# rps_ids <- unique(rps_all_data_with_demo$id)
+# rps_G_test <- data.frame("id"=rps_ids,"All"=NA)
+# #"fisher test p-values
+# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+# for (i in rps_ids){
+#   rps_G_test[rps_G_test$id==i,"All"] <- GTest(rps_array[,,i])["p.value"]<0.05
+# }
+# f<-rps_G_test[rps_G_test$All=="TRUE",]$id
+# print(paste0("RESULT: A G-test of individual sum choices (across rounds) showed ", length(f), " participant(s) (",paste(f, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+# intersect(d,f)
+# 
+# print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
+# rps_ids <- unique(rps_all_data_with_demo$id)
+# rps_friedman_test <- data.frame("id"=rps_ids,"All"=NA)
+# #"fisher test p-values
+# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+# for (i in rps_ids){
+#   rps_friedman_test[rps_friedman_test$id==i,"All"] <- friedman.test(t(rps_array[,,i]))["p.value"]<0.05
+#   # print(paste(i,friedman.test(t(rps_array[,,i]))["p.value"]))
+# }
+# e<-rps_friedman_test[rps_friedman_test$All=="TRUE",]$id
+# print(paste0("RESULT: A Friedman test of individual sum choices (across rounds) showed ", length(e), " participant(s) (",paste(e, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+# 
+# print("HELP: It seems odd that the fisher test showed 7 participants, the friedman test showed 9, and none of the participants are the same. Why are these results mutually exclusive?")
+# intersect(d,e)
 
 #--------------------RPS - Decisions by Round - Data Analysis-----------------
 
@@ -2343,11 +2285,11 @@ print("RESULT: See PLOT: Visual inspection shows advice-taking seems to increase
 print(chisq.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo))) 
 print("RESULT: Chisq test showed variation in choice of advisor by round")
 
-print(friedman.test(Freq~Choice_of_Advisor|Round, data=df))
-print("Is this (print(friedman.test(Freq~Choice_of_Advisor|Round, data=df)) the right way to see if Choice_of_Advisor varies by round?")
-print("Or should it be: print(friedman.test(Freq~Round|Choice_of_Advisor, data=df))")
+# print(friedman.test(Freq~Choice_of_Advisor|Round, data=df))
+# print("Is this (print(friedman.test(Freq~Choice_of_Advisor|Round, data=df)) the right way to see if Choice_of_Advisor varies by round?")
+# print("Or should it be: print(friedman.test(Freq~Round|Choice_of_Advisor, data=df))")
 
-#--------------------RPS - Choice of Advisor by adversary and round---------
+#--------------------CUT...RPS - Choice of Advisor by adversary and round---------
 
 print("   -------RPS: Choice of Advisor by adversary and round")
 
@@ -2508,12 +2450,20 @@ rps_switch_table <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","human","non
 
 print(rps_switch_table_adv)
 print(chisq.test(rps_switch_table_adv))
+
 print("RESULT: A Chisq.test (X-squared = 31.319552, df = 10, p-value = 0.0005194981) showed a statistically significant difference in whether participants stayed or switched, ")
 for (i in seq(1,5,by=2)){
   print(rps_switch_table_adv[,c(i,i+1)])
   print(chisq.test(rps_switch_table_adv[,c(i,i+1)]))#["p.value"])
 
 }
+print("REWRITE this section to be more similar to pw_probinference section for fisher test with 'contexts' being # of losses, # of wins, etc, then compare it like this: win-stay count, win context")
+a<- rbind(rps_switch_table_adv[,c(1:2)], rps_switch_table_adv[,c(3:4)], rps_switch_table_adv[,c(5:6)])
+a[,2] <- a[,1]+a[,2]
+fisher.test(a[c(1:3),]) #ns
+fisher.test(a[c(4:6),]) #ns
+fisher.test(a[c(7:9),]) #ns
+
 
 for (i in c(1:2)){
 rps_switch_table[,i] <- rps_switch_table_adv[,i]+rps_switch_table_adv[,i+2]+rps_switch_table_adv[,i+4]
