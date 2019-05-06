@@ -252,12 +252,14 @@ pw_cols <- rbind(pw_human_cols,pw_HAI_cols,pw_AI_cols)
 pw_cols$Adversary <- as.factor(pw_cols$Adversary)
 pw_cols <- pw_cols[!is.na(pw_cols$Choice),] #strip the ones who never did pw
 pw_cols <- pw_cols[pw_cols$id!="0pr16",] #strip off the test case
-# pw_cols <- pw_cols[!(pw_cols$id %in% c("gdg26","s4441","7ic14","oez14")),] #strip off those who didn't believe the humans in the game were real
+pw_cols <- pw_cols[!(pw_cols$id %in% c("gdg26","s4441","7ic14","oez14")),] #strip off those who didn't believe the humans in the game were real
+pw_cols$Choice <- as.factor(pw_cols$Choice)
+pw_cols$Choice <- as.integer(pw_cols$Choice)
+pw_cols[pw_cols$Choice==2,]$Choice <- 0
 
 pw_ids <- levels(factor(pw_cols$id))
-pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo) #more R-like way of creating the array than the ten lines below
-row.names <- c("AI","Human","Human+AI")
-col.names <- c("Peace", "War")
+# row.names <- c("AI","Human","Human+AI")
+# col.names <- c("Peace", "War")
 # pw_array <- array(NA, dim = c(3,2,length(pw_ids)), dimnames=list(row.names, col.names, pw_ids))
 # #creates an array where [x,,] = rows of Adversary types, [,y,] = columns of advisor choices, and [,,z]=player id's
 Adversary_list <- c("AI","Human","Human+AI")
@@ -276,11 +278,12 @@ Choice_list <- c("Peace", "War")
 # rownames(pw_HvAI_array)[1:2] <- rownames(pw_HvAI_array)[2:1] #swap rownames
 # pw_HvAI_array[1:2,,] <- pw_HvAI_array[2:1,,] #swap row values (to make Human first)
 # pw_HvHAI_array <- pw_array[-1,,]
-pw_round_1s <- pw_cols[pw_cols$Round == 1,]
-pw_round_1s <- pw_round_1s[!is.na(pw_round_1s$Choice),]
-pw_round_1s$id <- factor(pw_round_1s$id)
-pw_round_1s$Choice <- factor(pw_round_1s$Choice)
-pw_round_1s_sum <- rowSums(xtabs(~Adversary+Choice+id, data=pw_round_1s), dims=2)
+
+# pw_round_1s <- pw_cols[pw_cols$Round == 1,]
+# pw_round_1s <- pw_round_1s[!is.na(pw_round_1s$Choice),]
+# pw_round_1s$id <- factor(pw_round_1s$id)
+# pw_round_1s$Choice <- factor(pw_round_1s$Choice)
+# pw_round_1s_sum <- rowSums(xtabs(~Adversary+Choice+id, data=pw_round_1s), dims=2)
 
 # pw_percent_matrix <- matrix(nrow=length(pw_ids),ncol=3)
 # rownames(pw_percent_matrix) <- pw_ids
@@ -303,9 +306,8 @@ c<- zoo(all_data$my.round1decision)
 d<- na.locf(c)
 all_data$my.round1decision <- as.integer(d)
 
-pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",]))
-pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols))
-
+pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",])) #is this used?
+pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols)) #is this used?
 
 #--------------------PW - Machine Learning/NNET/TFT section--------------------
 
@@ -338,6 +340,42 @@ pw_all_data_colnames <- c("X","id","Adversary","period","my.decision","risk","de
 pw_all_data <- matrix(NA, nrow=nrow(pw_cols), ncol=length(pw_all_data_colnames))
 colnames(pw_all_data) <- pw_all_data_colnames
 pw_all_data <- as.data.frame(pw_all_data)
+
+d<- arrange(pw_cols, id)
+pw_all_data$period <- d$Round
+pw_all_data$Adversary <- d$Adversary
+pw_all_data$id <- d$id
+pw_all_data$my.decision <- d$Choice  #1 = coop
+pw_all_data$other.decision <- rep(c(human_adv_choices, hai_adv_choices, ai_adv_choices), nrow(pw_all_data)/30) #delete this after use
+
+
+#this nested for loop fills my.decisionX and other.decisionX with the previous choices (as 1 or zero) based on my.decision or other.decision which are filled above
+
+a<-pw_all_data#[,c("id","Adversary","period","my.decision","other.decision","my.decision1","my.decision2","my.decision3","my.decision4","my.decision5","my.decision6","my.decision7","my.decision8","my.decision9","other.decision1","other.decision2", "other.decision3" ,"other.decision4" ,"other.decision5", "other.decision6", "other.decision7", "other.decision8" ,"other.decision9")]
+#a$my.decision <- as.integer(a$my.decision)
+#a[a$my.decision==2,]$my.decision <- 0
+a.zoo<- zoo(a)
+for (p in 1:9){
+  my_dec_col <- paste0("my.decision",p)
+  other_dec_col <- paste0("other.decision",p)
+  a.zoo[,other_dec_col] <-rep(head(lag(a.zoo$other.decision, p), 10), nrow(a.zoo)/10)
+  a.zoo[,my_dec_col] <-rep(head(lag(a.zoo$my.decision, p), 10), nrow(a.zoo)/10)
+}
+a<-as.data.frame(a.zoo)
+for (p in 1:9){
+  my_dec_col <- paste0("my.decision",p)
+  other_dec_col <- paste0("other.decision",p)
+  a[,other_dec_col] <- as.integer(as.character(a[,other_dec_col]))
+  a[,my_dec_col] <- as.integer(as.character(a[,my_dec_col]))
+
+}
+pw_all_data<-a
+pw_all_data$period<-as.integer(as.character(pw_all_data$period))
+pw_all_data$my.decision <- as.integer(as.character(pw_all_data$my.decision))
+#levels(pw_all_data$my.decision) <- c("War","Peace")
+# pw_all_data$id <- as.factor(pw_all_data$id)
+
+
 pw_all_data$r <-	1 #do I need to normalize these?
 pw_all_data$t <- 3#do I need to normalize these?
 pw_all_data$s <- -3#do I need to normalize these?
@@ -349,28 +387,14 @@ pw_all_data$delta <- 0.9
 pw_all_data$contin <- 0
 pw_all_data$r1 <- 1/3
 pw_all_data$r2 <- 2/3
-d<- arrange(pw_cols, id)
-pw_all_data$period <- d$Round
-pw_all_data$Adversary <- d$Adversary
-pw_all_data$id <- d$id
-pw_all_data$my.decision <- d$Choice  #need to change to coop/defect?
-pw_all_data$other.decision <- rep(c(human_adv_choices, hai_adv_choices, ai_adv_choices), nrow(pw_all_data)/30) #delete this after use
-
+pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
+pw_all_data$my.round1decision<-NA
 #this loop fills my.round1decision
-pw_all_data$my.round1decision[pw_all_data$period == 1]<-(pw_all_data$my.decision[pw_all_data$period ==1]=="Peace")*1
+pw_all_data[pw_all_data$period==1,]$my.round1decision <- pw_all_data[pw_all_data$period==1,]$my.decision
+#pw_all_data$my.round1decision[pw_all_data$period == 1]<-(pw_all_data$my.decision[pw_all_data$period ==1]=="Peace")*1
 c<- zoo(pw_all_data$my.round1decision)
 d<- na.locf(c)
 pw_all_data$my.round1decision <- as.integer(d)
-#this nested for loop fills my.decisionX and other.decisionX with the previous choices (as 1 or zero) based on my.decision or other.decision which are filled above
-for (i in 2:10) {
-  for (j in 1:(i-1)) {
-    my_dec_col <- paste0("my.decision",j)
-    pw_all_data[[my_dec_col]][pw_all_data$period == i] <- (pw_all_data$my.decision[pw_all_data$period == (i-1)]=="Peace")*1
-    other_dec_col <- paste0("other.decision",j)
-    pw_all_data[[other_dec_col]][pw_all_data$period == i] <- pw_all_data$other.decision[pw_all_data$period == (i-1)]
-  }
-}
-pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
 pw_all_data$X <- c(1:nrow(pw_all_data))
 #begin machine learning (generalized linear model) section
 predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infin","contin","my.round1decision")
@@ -396,25 +420,25 @@ predictors <- c("period","risk","delta","r1","r2","error", "r","s","t","p","infi
 lmFit<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin, data = subset(all_data, period == 1), method = 'glm', na.action = na.pass)
 #this line below uses above model to predict static model (round 1's)
 outcomes_1 <- predict(lmFit, subset(pw_all_data, period == 1)) # this is the static outcomes
-levels(outcomes_1) <- c("Peace","War")
+#levels(outcomes_1) <- c("Peace","War")
 #this line below uses all_data to train line 2 in the dynamic model (the first dynamic row) - could use something else
-lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
+lmFit1<-train(my.decision~r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1, data = all_data[all_data$period==2,], method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_2 <- predict(lmFit1, pw_all_data)
-levels(outcomes_2) <- c("Peace","War")
+#levels(outcomes_2) <- c("Peace","War")
 
 #this line below uses all_data to train lines 3-10 in the dynamic model (the first dynamic row) - could use something else (can remove this since it only gains additional .5% in predictive power)
-lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
-lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
+lmFit2<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+my.decision2+other.decision2, data = all_data[all_data$period==3,], method = 'glm', na.action = na.pass)
+#lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_3 <- predict(lmFit2, pw_all_data)
-levels(outcomes_3) <- c("Peace","War")
+#levels(outcomes_3) <- c("Peace","War")
 
 lmFit3<-train(my.decision~my.round1decision+r1+r2+risk+error+delta+r1:delta+r2:delta+infin+contin+delta:infin+my.decision1+other.decision1+error:other.decision1+period+my.decision2+other.decision2+my.decision3+other.decision3, data = all_data, method = 'glm', na.action = na.pass)
 # lmFit2<-train(my.decision~my.round1decision, data = all_data, method = 'glm', na.action = na.pass)
 #this line below uses the dynamic model to predict all the rounds 2-10
 outcomes_4_10 <- predict(lmFit3, pw_all_data)
-levels(outcomes_4_10) <- c("Peace","War")
+#levels(outcomes_4_10) <- c("Peace","War")
 
 # other GLMM
 # m <- glmer(my.decision ~ my.round1decision + my.decision1 + my.decision2 + other.decision1 + other.decision2 + Adversary + (1|id), data=df, family = binomial(link = "logit"))
@@ -430,9 +454,9 @@ q<-gather(q)
 
 # # test nnet on pw_all_data
 pw_all_data_subset <- pw_all_data
-pw_all_data_subset$my.decision <- as.factor(pw_all_data_subset$my.decision)
-pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.decision))
-pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
+# pw_all_data_subset$my.decision <- as.factor(pw_all_data_subset$my.decision)
+# pw_all_data_subset$my.decision <- as.numeric(as.factor(pw_all_data_subset$my.decision))
+# pw_all_data_subset$my.decision[pw_all_data_subset$my.decision==2] <- 0
 predictors <- c("my.round1decision","my.decision1","other.decision1","period")
 formula_my <- "my.decision~"
 formula_predictors <- paste(predictors[1:length(predictors)], collapse="+")
@@ -446,8 +470,8 @@ trainIndex <- createDataPartition(all_data$period, p = .1,
                                   list = FALSE,
                                   times = 1)
 all_data_subset <- all_data[trainIndex,]
-all_data_subset$my.decision <- as.factor(all_data_subset$my.decision)
-all_data_subset$my.decision <- as.numeric(as.factor(all_data_subset$my.decision))
+#all_data_subset$my.decision <- as.factor(all_data_subset$my.decision)
+all_data_subset$my.decision <- as.numeric(all_data_subset$my.decision)
 all_data_subset$my.decision[all_data_subset$my.decision==2] <- 0
 # nn_all <- neuralnet(f,data=all_data_subset[all_data_subset$period>1,],hidden=c(5,3,2),act.fct = "logistic",linear.output=FALSE, threshold = 0.4)
 
@@ -483,8 +507,8 @@ pw_nn_output_rounded <- round(pw_nn_output) #(is this the right function for cla
 
 
 pw_nn_outcome <- pw_nn_output_rounded
-pw_nn_outcome[pw_nn_outcome==1]<-"Peace"
-pw_nn_outcome[pw_nn_outcome==0]<-"War"
+#pw_nn_outcome[pw_nn_outcome==1]<-"Peace"
+#pw_nn_outcome[pw_nn_outcome==0]<-"War"
 # pw_nn_outcome <- c(round(rbind(matrix(rep(1, 84), nrow=1),matrix(pw_nn_output, nrow=9))))#test needed if training on only rounds 2-10
 
 #compute using history-2
@@ -505,15 +529,15 @@ pw_nn_outcome[pw_nn_outcome==0]<-"War"
 
 pw_all_data <- add_column(pw_all_data, pw_nn_outcome, .before = "risk") #insert nnet values into p
 colnames(pw_all_data)[colnames(pw_all_data) =="pw_nn_outcome"] <- "nnet"
-pw_all_data$nnet <- as.factor(pw_all_data$nnet)
-levels(pw_all_data$nnet) <- c("Peace","War")
+#pw_all_data$nnet <- as.factor(pw_all_data$nnet)
+#levels(pw_all_data$nnet) <- c("Peace","War")
 
 pw_all_data <- add_column(pw_all_data, q$value, .after = "nnet") #insert GLM values into p
 colnames(pw_all_data)[colnames(pw_all_data) =="q$value"] <- "GLM"
-pw_all_data$GLM <- as.factor(pw_all_data$GLM)
-levels(pw_all_data$GLM) <- c("Peace","War")
+#pw_all_data$GLM <- as.factor(pw_all_data$GLM)
+#levels(pw_all_data$GLM) <- c("Peace","War")
 
-pw_all_data$my.decision <- as.factor(pw_all_data$my.decision)
+#pw_all_data$my.decision <- as.factor(pw_all_data$my.decision)
 
 #
 pw_nnet_array <- xtabs(~Adversary + nnet + id, data=pw_all_data)
@@ -1145,6 +1169,11 @@ a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1, data=mem2_df, FUN=
 names(a)[5] <- "context"
 mem2_df <- merge(a, mem2_df)
 
+mem1_plus_1_df<-as.data.frame(xtabs(~Adversary+id+other.decision2+other.decision1+my.decision, data=pw_all_data_with_demo))
+a<- aggregate(Freq~Adversary+id+other.decision2+other.decision1, data=mem1_plus_1_df, FUN=sum)
+names(a)[5] <- "context"
+mem1_plus_1_df <- merge(a, mem1_plus_1_df)
+
 #mem3 
 mem3_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+other.decision2+my.decision, data=pw_all_data_with_demo))
 a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1+other.decision2, data=mem3_df, FUN=sum)
@@ -1198,7 +1227,7 @@ for (i in pw_ids) {
 # 
   }
 }
-print(mem_df[with(mem_df, order(id)),])
+#print(mem_df[with(mem_df, order(id)),])
 
 
 
@@ -1207,8 +1236,30 @@ a$id <- NULL
 for (i in Adversary_list){
   print(a[a$Adversary==i,])
   print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
+  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+  print(cor(a[a$Adversary==i,c("context","Freq")], method="spearman"))
 }
 print("RESULT: Play vs the AI was VERY SIGNIFICANTLY a memory-one strategy, but not vs Human and Human+AI - see Figure X, PW - Peace Choices by Round and Adverasry (i.e. ratio of choices)")
+
+a<- aggregate(. ~ Adversary+other.decision1+my.decision1+my.decision, data=mem2_df, FUN=sum)
+a$id <- NULL
+for (i in Adversary_list){
+  print(a[a$Adversary==i,])
+  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
+  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+}
+print("RESULT: Context vs each competitor was SIGNIFICANT in memory-two")
+
+a<- aggregate(. ~ Adversary+other.decision1+other.decision2+my.decision, data=mem1_plus_1_df, FUN=sum)
+a$id <- NULL
+for (i in Adversary_list){
+  print(a[a$Adversary==i,])
+  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
+  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+}
+print("RESULT: Context vs each competitor was SIGNIFICANT in memory-two")
+
+
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
 axelrod_fp <- function(player_vec, strat_actions) {
