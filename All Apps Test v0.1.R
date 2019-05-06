@@ -1201,6 +1201,14 @@ for (i in pw_ids) {
 print(mem_df[with(mem_df, order(id)),])
 
 
+
+a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
+a$id <- NULL
+for (i in Adversary_list){
+  print(a[a$Adversary==i,])
+  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
+}
+print("RESULT: Play vs the AI was VERY SIGNIFICANTLY a memory-one strategy, but not vs Human and Human+AI - see Figure X, PW - Peace Choices by Round and Adverasry (i.e. ratio of choices)")
 #--------------------PW - Strategy Fingerprint Analysis-----------------
 #Axelrod fingerprint function
 axelrod_fp <- function(player_vec, strat_actions) {
