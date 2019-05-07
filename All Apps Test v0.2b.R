@@ -363,11 +363,15 @@ a<-pw_all_data#[,c("id","Adversary","period","my.decision","other.decision","my.
 #a$my.decision <- as.integer(a$my.decision)
 #a[a$my.decision==2,]$my.decision <- 0
 a.zoo<- zoo(a)
-for (p in 1:9){
-  my_dec_col <- paste0("my.decision",p)
-  other_dec_col <- paste0("other.decision",p)
-  a.zoo[,other_dec_col] <-rep(head(lag(a.zoo$other.decision, p), 10), nrow(a.zoo)/10)
-  a.zoo[,my_dec_col] <-rep(head(lag(a.zoo$my.decision, p), 10), nrow(a.zoo)/10)
+for (i in pw_ids) {
+  for (j in Adversary_list) {
+    for (p in 1:9){
+      my_dec_col <- paste0("my.decision",p)
+      other_dec_col <- paste0("other.decision",p)
+      a.zoo[a.zoo$id==i & a.zoo$Adversary==j,other_dec_col] <- lag(a.zoo[a.zoo$id==i & a.zoo$Adversary==j,"other.decision"], p)
+      a.zoo[a.zoo$id==i & a.zoo$Adversary==j,my_dec_col] <- lag(a.zoo[a.zoo$id==i & a.zoo$Adversary==j,"my.decision"], p)
+    }
+  }
 }
 a<-as.data.frame(a.zoo)
 for (p in 1:9){
@@ -395,7 +399,7 @@ pw_all_data$my.decision <- as.integer(as.character(pw_all_data$my.decision))
 # pw_all_data$contin <- 0
 # pw_all_data$r1 <- 1/3
 # pw_all_data$r2 <- 2/3
-pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
+# pw_all_data$other.decision <- NULL #delete other.decision column since it has no simile in the example
 pw_all_data$my.round1decision<-NA
 #this loop fills my.round1decision
 pw_all_data[pw_all_data$period==1,]$my.round1decision <- pw_all_data[pw_all_data$period==1,]$my.decision
@@ -1214,6 +1218,9 @@ mem_df$mem4 <- NA
 for (i in pw_ids) {
 #   #print(i)
   for (j in Adversary_list) {
+      # l<- matrix(mem0_df[mem0_df$Adversary==i,]$Freq, nrow=length(mem0_df[mem0_df$Adversary==i,]$Freq)/2)
+      # q <- fisher.test(l)
+      # mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- q$p.value
       t <- fisher.test(mem0_df[mem0_df$id==i & mem0_df$Adversary==j, c("Freq","context")])
       mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- t$p.value
       t <- fisher.test(mem1_df[mem1_df$id==i & mem1_df$Adversary==j, c("Freq","context")])
@@ -1224,6 +1231,7 @@ for (i in pw_ids) {
       mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem3 <- t$p.value
       t <- fisher.test(mem4_df[mem4_df$id==i & mem4_df$Adversary==j, c("Freq","context")])
       mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem4 <- t$p.value
+      
 
 #     e_temp <- e[,,adv,i]
 #     e_temp <- e_temp[complete.cases(e_temp),]
@@ -1239,7 +1247,57 @@ for (i in pw_ids) {
 }
 #print(mem_df[with(mem_df, order(id)),])
 
+mem_df_1 <- NULL
+mem_df_1 <- data.frame(rep(pw_ids,3))
+names(mem_df_1) <- "id"
+mem_df_1$Adversary <- "H"
+for (i in pw_ids) {
+  mem_df_1[mem_df_1$id==i,]$Adversary <- c("Human","AI","Human+AI")
+}
+mem_df_1$mem0 <- NA
+mem_df_1$mem1 <- NA
+mem_df_1$mem2 <- NA
+mem_df_1$mem1plus1 <- NA
+mem_df_1$mem3 <- NA
+mem_df_1$mem4 <- NA
+# 
+for (i in pw_ids) {
+  #   #print(i)
+  for (j in Adversary_list) {
+    # l<- matrix(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq, nrow=length(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq)/2)
+    # q <- fisher.test(l)
+    # mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- q$p.value
 
+    l<- matrix(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq, nrow=length(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1 <- q$p.value
+    
+    l<- matrix(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq, nrow=length(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem2 <- q$p.value
+    
+    l<- matrix(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq, nrow=length(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1plus1 <- q$p.value
+    
+    l<- matrix(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq, nrow=length(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem3 <- q$p.value
+    
+    
+    l<- matrix(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq, nrow=length(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem4 <- q$p.value
+
+    if (mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq[1] %in% c(0,10)) {
+      mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 0
+    } else {
+      mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 1
+    }
+   
+  }
+}
+print(mem_df_1)
 
 a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
 a$id <- NULL
@@ -1251,21 +1309,30 @@ for (i in Adversary_list){
 }
 print("RESULT: Play vs the AI was SIGNIFICANTLY a memory-one strategy, but not vs Human and Human+AI - see Figure X, PW - cooperation Choices by Round and Adverasry (i.e. ratio of choices), although the Human condition was a finding of statistical interest at (p<0.1)")
 
+a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
+a$id <- NULL
+for (i in Adversary_list){
+  print(b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2))
+  print(chisq.test(b))
+  print(CramerV(b))
+}
+print("RESULT: ")
+
 a<- aggregate(. ~ Adversary+other.decision1+my.decision1+my.decision, data=mem2_df, FUN=sum)
 a$id <- NULL
 for (i in Adversary_list){
-  print(a[a$Adversary==i,])
-  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
-  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+  print(b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2))
+  print(fisher.test(b))
+  print(CramerV(b))
 }
 print("RESULT: Context vs AI was again SIGNIFICANT in memory-two, with Human being p<0.10, and Human+AI being n.s.")
 
 a<- aggregate(. ~ Adversary+other.decision1+other.decision2+my.decision, data=mem1_plus_1_df, FUN=sum)
 a$id <- NULL
 for (i in Adversary_list){
-  print(a[a$Adversary==i,])
-  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
-  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+  print(b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2))
+  print(fisher.test(b))
+  print(CramerV(b))
 }
 print("RESULT: Context vs AI was again SIGNIFICANT in memory-1+1 (last two adversary choices), with Human being p<0.10, and Human+AI being n.s.")
 
@@ -2766,6 +2833,13 @@ print("RESULT: Decisions to use the AI advisor were on average 1 second faster t
 
 #--------------------Multi-Game - Data Analyses-----------------
 print("--------------------Multi-Game Analyses-----------------")
+print("The multi-game analyses should form the bases for the AI-impact index. ")
+print("This index consists of the following sub-indices:")
+print("1. Trust Index - shown as being on one end of a scale which looks at cooperation rate with the AI competitor as well as the rate of use with the AI advisor")
+print("2. Competition Index - showing statistically significant variation BETWEEN COMPETITORS/adversaries in three measures: IPD Round 1, IPD strategy, RPS Choice of Advisor. Examples which do NOT fit this (IPD round 1 = all same, IPD strategy = all same (allD, ALlC, or all mem-zero, or any all same), RPS choice of advisor being all same or no variation")
+print("3. Fragility of Trust Index - IPD round 1 Defect (w/AI) (extra points if Coop w/other competitiors), IPD Memory comparison? (mem 1 defect/cooperate vs mem 1+1 defect/cooperate), RPS switch stay (greater switch w/AI advisor than human advisor/no advisor) ")
+print("4. John Henry Index -IPD round 1 w/HAI different than Human & AI,  IPD less cooperative with Human+AI than expected, IPD memory longer w/HAI than others, ?")
+print("Decision Time Index - RPS decision time shorter vs AI (and HUman+AI?)")
 
 #played "non-strategically"
 a<-as.data.frame(t(colSums(pw_array)))
@@ -2781,36 +2855,41 @@ print(paste0(length(c), " participants (",paste(c, collapse=", "),") played the 
 
 #find the round1 participants who chose differently across adversaries in round 1
 d<- xtabs(~id + Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
-d<- d[,,"Peace"]
+d<- d[,,2]
 d<- rowSums(d)
 d<-names(d[d %in% c(1,2)])
-print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their choice by adversary in Peace-War round 1."))
+print(paste0(length(d), " participant(s) (",paste(d, collapse=", "),") varied their initial cooperate/defect choice between competitors (IPD/Peace-War round 1)."))
 
 
 g <- c("2b574","3z144","6lk32","epb14","h0s22","i5b85","k1o66","n1i23","qs924","p8v34","snd43","s4441","txk36","yyj35","yda14","v6i85","epb14")# "b8g12" -uncertain)
-print(paste0(length(g), " participant(s) (",paste(g, collapse=", "),") varied their strategies by adversary in Peace-War ."))
+print(paste0("CHECK THIS LIST",length(g), " participant(s) (",paste(g, collapse=", "),") varied their IPD strategies between competitors (Peace-War)."))
+
 
 e <- rps_fisher_test[rps_fisher_test$All,]$id
 print(paste0(length(e), " participant(s) (",paste(e, collapse=", "),") varied their choice by adversary in Rock-Paper-Scissors."))
 f<- intersect(d,e)
-print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their choice by adversary in BOTH Peace-War round 1 and in Rock-Paper-Scissors."))
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their IPD round 1  choice by competitor and showed statistical effect of competitor on their choice of Rock-Paper-Scissors advisor."))
 
 
 f<- intersect(g,e)
-print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their strategy by adversary in Peace-War and their decisions by adversary in Rock-Paper-Scissors."))
+print(paste0(length(f), " participant(s) (",paste(f, collapse=", "),") varied their IPD all-round strategy by competitor and showed statistical effect of competitor on their choice of Rock-Paper-Scissors advisor."))
 
 #Trust measurement. compare those who chose peace with the AI vs those who chose the AI Advisor
 n <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=1))
 names(n)[1] <- "id"
 n$id <- pw_ids
-m<-as.data.frame(pw_array[1,1,])
+m<-as.data.frame(pw_array[1,2,])
 m$id <- rownames(m)
-names(m)[1] <- "Peace_w_AI"
+names(m)[1] <- "Coop_w_AI"
 n<- merge(m,n, by="id")
 o <-as.data.frame(colSums(rps_array[,1,]))
 o$id <- rownames(o)
 names(o)[1] <- "AI_Advisor"
 p<- merge(n,o, by="id")
-print(cor.test(p$Peace_w_AI, p$AI_Advisor, method="spearman"))
-print("RESULT: Spearman correlation test (a rank test) (S = 3987.5446, p-value = 0.6441073, rho=-0.09128204218) shows little to no statistical correlation between those who chose Peace with the AI and those who chose the AI Advisor more")
+print(wilcox.test(p$Coop_w_AI, p$AI_Advisor, paired=TRUE))
+print("RESULT: A wilcox test (V = 45.5, p-value = 0.008913) showed a statistically significant relationship between the (within-sample) Cooperativeness against the AI and the (within-sample) likelihood of Choosing the AI advisor")
+# print(cor.test(p$Coop_w_AI, p$AI_Advisor, method="spearman"))
+# print("RESULT: Spearman correlation test (a rank test) (S = 3987.5446, p-value = 0.6441073, rho=-0.09128204218) shows little to no statistical correlation between those who chose Peace with the AI and those who chose the AI Advisor more")
+
+
 
