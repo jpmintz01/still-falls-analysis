@@ -854,17 +854,12 @@ print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw
 print("H1.1.2T - fail to reject no variation")
 print(paste("RESULT: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
 
-# print(friedman.test(my.decision ~ Adversary | id, data = pw_all_data_with_demo[pw_all_data_with_demo$period==1,])) #not significant
-# print("H1.1.3T - fail to reject")
-# print(paste("RESULT: A Friedman test of round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
-
-
-#--------------------PW - Strategic Decisions Data Analysis (H1.2.1)-----------------
-print("-------------------IPD: Strategic Decision-making Analyses (H1.2.1)------------------")
+#--------------------PW - Strategic Decisions Data Analysis (H1.2)-----------------
+print("-------------------IPD: Strategic Decision-making Analyses (H1.2)------------------")
 print("       ----IPD: Strategic (All round) Choices (aggregate) - insert as table----")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
 
-print("       ----IPD: Sample Distribution comparison (H1.2.1T)----")
+print("       ----IPD: Sample Distribution Characterization----")
 p<- ggplot(pw_df_1, aes(x=Freq))+
   geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
   geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
@@ -889,10 +884,7 @@ print("how to automatically insert/save cullen & freq graph of AI data")
 print("how to plus these three on the same graph?")
 print("RESULT: Cullen & Frey plot indicates a slight departure from normal distributon in the AI condition.")
 
-
-print("H1.2.1T - fail to reject the null (all distributions are statistically normal), but more data is needed...")
-
-print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.2T)----")
+print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.1T)----")
 print("from analysis of the aggregate means, they are in the expected order - most cooperative with the Human+AI and least cooperative with the AI")
 rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
 
@@ -919,41 +911,18 @@ print("NOT expected, the HUman and Human+AI sign-rank comparison indicates a n.s
 print("H1.2.1T - reject the null (which states there will be a difference) due to Human-HAI n.s.")
 
 
-print("       ----IPD: Sample coop-competitor (H1.2.2T)----")
+print("       ----IPD: Aggreagate chisq coop-competitor statistical analysis (H1.2.2T)----")
 print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of cooperation Choices) are statistically dependent at p <.01.")
-print("--post-hoc tests")
+print("H1.2.2T - fail to reject the null (of a significant relations between competitor & cooperation rate)")
+print("       ----IPD: pairwise chisq - coop-competitor statistical analysis (H1.2.2T)----")
 print(chisq.test(pw_sum[-3,]))
 print(chisq.test(pw_sum[-1,]))
 print("RESULT: pairwise chisq.test of all-round cooperation sums shows expected (p<0.05) in Human-AI pair, but n.s. difference in Human-HAI pair, despite differences in adversary gameplay")
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
-print ("H1.2.2T - fail to reject the null because of n.s. difference between Human and HAI conditions...")
-# print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice==1,]))
-# a <- xtabs(~Adversary+period+my.decision, data=pw_all_data_with_demo)[,,2]
-# print(friedman.test(Freq~Adversary|period,data=a)) 
-# print("RESULT: A Friedman test shows the relationship between variation on the DV (all-round cooperation) and variation on the IV (competitor) is statistically significant at p <.01 (.05). (blocked by ID)")
-#print("RESULT: a friedman test shows a n.s. but statistically interesting (0.05 < p < 0.10) in by-round variation by competitor (blocked by round)")
+print ("H1.2.2T - reject the null because of n.s. difference between Human and HAI conditions...")
 
-
-# print("    --PW: All Rounds: Individual Fisher test p-values: ")
-print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary...")
-print("CUT individual fisher/chisq tests...")
-# print("fisher test p-values: ")
-# pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
-# for (i in pw_ids){
-#   print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
-# }
-# print("RESULT: A fisher test showed only 3 participants showed a statistically significant difference in gameplay ")
-# for (i in pw_ids){
-#   print(paste(i, as.character(fisher.test(pw_array[-3,,i])["p.value"])))
-# }
-# for (i in pw_ids){
-#   print(paste(i, as.character(fisher.test(pw_array[-1,,i])["p.value"])))
-# }
-# print("RESULT: Post-hoc pairwise fisher tests showed only one player with statistically significant differences in gameplay and that was in the Human-AI pairwise comparison. This is interesting because one would expect a difference between the Human and Human+AI condition")
-
-
-print("       ----IPD: Participant coop-competitor - pairwise RMLR (H1.2.3T)----")
+print("       ----IPD: pairwise RMLR - Participant coop-competitor - pairwise RMLR (H1.2.2T)----")
 a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="AI",]
 a$Adversary <- as.numeric(a$Adversary)
 a$Adversary <- as.factor(a$Adversary)
@@ -967,14 +936,14 @@ m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (l
 print("Human-AI comparison:")
 print(Anova(m, type="3"))
 print("RESULT:Pairwise (Human-AI) Repeated Measures Logistic Regressions show the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p < .001 (.05), but the Human-HAI comparison is not")
-print("H1.2.3T - fail to reject the null since H-HAI comparison is n.s. but Human-AI is p<0.05")
+print("H1.2.3T - reject the null since H-HAI comparison is n.s. but Human-AI is p<0.05")
 print("")
-print("LIMTATION: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
+print("LIMTATION/FINDING: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
 
 
 
-#--------------------IPD - Strat Decisions Same Count Analysis (One-off & informs strat match) -------------
+#--------------------IPD - Strategy Inference Analysis (H1.3.1-2T) (includes same count)-----------------
 q <- pw_all_data_with_demo
 a <- matrix(NA, nrow=length(pw_ids), ncol=4)
 colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
@@ -993,12 +962,12 @@ pw_same_count_df <- a
 
 
 
-print(pw_same_count_df)
-print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
+# print(pw_same_count_df)
+# print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
 
 
 
-print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors. "))
+print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors in all ten rounds. "))
 
 # nrow(pw_same_count_df[pw_same_count_df$sum >24.5 | pw_same_count_df$sum <19.4,])
 
@@ -1044,7 +1013,7 @@ ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 print(paste0("On average, ",round(mean(e[e$type=="players",]$mean)*100,1), "% of choices were the same across adversaries. In contrast, a TFT strategy against each of the competitors yields only ",round(mean(e[e$type=="TFT",]$mean)*100, 1),"% of the same choices across competitors in each round."))
 
-#--------------------IPD - Strategy Inference Analysis (H1.3.1-2T)-----------------
+
 #Axelrod fingerprint function
 axelrod_fp <- function(player_vec, strat_actions) {
   if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
@@ -2228,29 +2197,26 @@ print("RESULT:Chisq on AI EXPERIENCE  was related to cooperativeness in general 
 print("---------------------------------RPS analysis----------------------------------")
 print(rps_sum <- xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
 print(rps_prop <- round(prop.table(rps_sum)*100, 1))
-#--------------------RPS - Initial Data characterization-----------------
+#--------------------RPS - Data characterization-----------------
 
 
 print("--RPS: Normality tests (by advisor type)--")
 
 rps_df_1<- as.data.frame(xtabs(~Choice_of_Advisor + Adversary+id, data=rps_all_data_with_demo))
 # rps_df_1$pois <- rpois(nrow(rps_df_1), lambda=mean(rps_df_1$Freq))
-p<-ggplot(data=rps_df_1,aes(x=Freq, group=Choice_of_Advisor, color=Choice_of_Advisor,fill=Choice_of_Advisor)) + 
-  #geom_bar(aes(y = ..count../sum(..count..)), alpha = 0.5) +
-  geom_density(alpha=0.5)+#, stat="count")+#how to stop the exponential at zero?
-  #+ geom_line(aes(y=rps_df_1$pois))
-  labs(title="RPS - Choice Frequency Density Plot", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
+# # p<-ggplot(data=rps_df_1,aes(x=Freq, group=Choice_of_Advisor, color=Choice_of_Advisor,fill=Choice_of_Advisor)) + 
+#   #geom_bar(aes(y = ..count../sum(..count..), group=Choice_of_Advisor), alpha = 0.5) +
+#   geom_density(alpha=0.5)+#, stat="count")+#how to stop the exponential at zero?
+#   #+ geom_line(aes(y=rps_df_1$pois))
+#   labs(title="RPS - Choice Frequency Density Plot", x="Frequency", y = "Density of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
+p<- ggplot(data=rps_df_1) + geom_bar(aes(x = Freq, color=Choice_of_Advisor, fill=Choice_of_Advisor)) + facet_wrap(~Choice_of_Advisor)+labs(title="RPS - Advisor Histogram Plot", x="Frequency", y = "Count of Choices", color = "Choice_of_Advisor") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("RESULT: See PLOT: What kind of distributions are these?")
 
 print(shapiro.test(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq)) #not normal
 print(shapiro.test(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq))  #not normal
 print(shapiro.test(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq)) #not normal
-
-
-
 
 # p<- ggplot(rps_df_1[rps_df_1$Adversary=="Human",], aes(Freq, fill=Choice_of_Advisor))+
 #   geom_density(alpha=0.4)+
@@ -2267,12 +2233,17 @@ print(shapiro.test(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq)) #not nor
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 # print("RESULT: See PLOTs: What kind of distribution are these?")
+descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, discrete = TRUE)
+plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, "nbinom"))
+# plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, "pois"))
+descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, discrete = FALSE)
+plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, "nbinom"))
+descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, discrete = FALSE)
+plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, "norm"))
 #--------------------RPS - Aggregation of Choice of Advisor (all) - Data Analysis-------------
 print("---RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 n<- xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo)
 print(n)
-print("This summary show that participants, in aggregate, chose AI advice over human advice, but chose 'no advice' over any advice.")
-
 m<- as.data.frame(n)
 m$Freq <- (m$Freq/sum(m$Freq))*100
 p<- ggplot(m, aes("Choice of Advisor", y=Freq, fill = Choice_of_Advisor)) +
@@ -2291,60 +2262,23 @@ p<- ggplot(m, aes("Choice of Advisor", y=Freq, fill = Choice_of_Advisor)) +
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+a<- as.data.frame(xtabs(~Choice_of_Advisor+id, data=rps_all_data_with_demo))
+print(friedman.test(Freq~Choice_of_Advisor|id, data=a))
+print("RESULT: Friedman test shows participants showed a significant difference in advisor choice")
+# print(chisq.test(n))
+# print("RESULT: Chisq test showed significant difference a p < .001 [p <.05]")
+# print(multinomial.test(as.vector(n)))
+# print("RESULT: Multinomial test showed significant difference a p < .001 [p <.05]")
 
-print(chisq.test(n))
-print("RESULT: Chisq test showed significant difference a p < .001 [p <.05]")
-print(multinomial.test(as.vector(n)))
-print("RESULT: Multinomial test showed significant difference a p < .001 [p <.05]")
-print("IMPLICATION: Participants chose advice significantly differently advice ")
-descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, discrete = TRUE)
-plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, "nbinom"))
-plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="human",]$Freq, "pois"))
-descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, discrete = FALSE)
-plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, "nbinom"))
-descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, discrete = FALSE)
-plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, "norm"))
 
-#--------------------RPS - Aggregation of Choice of Advisor by Adversary - Data Analysis-------------
+
+#--------------------RPS - Choice of Advisor by Adversary - Data Analysis-------------
 #video #9 (tests of proportions)
 print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
-# ggplot(as.data.frame(xtabs(~id + Adversary + Choice_of_Advisor, data = rps_all_data_with_demo)), aes(x=Adversary, y=Freq, color=Choice_of_Advisor)) +
-#   geom_boxplot()
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
-# GTest(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo)) #more accurate than Chisq?
-# fisher.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))#is exact test more appropriate than chisq.test here
 print("RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
 
-
-
-# print("RPS: All: Friedman test of variance in choice of advisor by adversary")
-# rps_long_by_id <- as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
-# print(rps_sum)
-# print(friedman.test(rps_sum)) # need to check if this needs to be transposed (t(rps_sum))
-# 
-# friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="none",])
-# # am I doing this right? or should it be like this: friedman.test(Freq ~ Choice_of_Advisor|id, data=rps_long_by_id[rps_long_by_id$Adversary=="AI",])
-# friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="AI",])
-# friedman.test(Freq ~ Adversary|id, data=rps_long_by_id[rps_long_by_id$Choice_of_Advisor=="human",])
-# print("RESULT: A 3-factor Friedman Test showed no statistically significant variation on the summed Frequency of choices caused by differences in adversary, at p < .05")
-
-
-
-# "Chi Squared for individual participants -- not valid because some expected values are < 5"
-#using fisher test instead)
-# print ("RPS: Indidividual ID's which showed difference in choices by Adversary using Fisher Test: (since Chisq invalid with some expected value cells=0?")
-# rps_ids <- unique(rps_all_data_with_demo$id)
-# rps_chi_test <- data.frame("id"=rps_ids,"All"=NA)
-# #"fisher test p-values
-# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-# for (i in rps_ids){
-#   rps_chi_test[rps_chi_test$id==i,"All"] <- chisq.test(rps_array[,,i])["p.value"]<0.05
-# }
-# d <- rps_chi_test
-# d[is.na(d$All),]$All <- FALSE
-# d<- d[d$All=="TRUE",]$id
-# print(paste0("RESULT: Chisq tests on individual sum choices (across rounds) showed ", length(d), " participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
@@ -2354,34 +2288,9 @@ for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-print(paste0("RESULT: A Fisher test of individual sum choices (across rounds) showed ", round(100*length(d)/length(rps_ids),1), "% of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+print(paste0("RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
-# print ("RPS ID's which showed difference in choices by Adversary using G-Test")
-# rps_ids <- unique(rps_all_data_with_demo$id)
-# rps_G_test <- data.frame("id"=rps_ids,"All"=NA)
-# #"fisher test p-values
-# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-# for (i in rps_ids){
-#   rps_G_test[rps_G_test$id==i,"All"] <- GTest(rps_array[,,i])["p.value"]<0.05
-# }
-# f<-rps_G_test[rps_G_test$All=="TRUE",]$id
-# print(paste0("RESULT: A G-test of individual sum choices (across rounds) showed ", length(f), " participant(s) (",paste(f, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
-# intersect(d,f)
-# 
-# print ("RPS ID's which showed difference in choices by Adversary using Friedman Test")
-# rps_ids <- unique(rps_all_data_with_demo$id)
-# rps_friedman_test <- data.frame("id"=rps_ids,"All"=NA)
-# #"fisher test p-values
-# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-# for (i in rps_ids){
-#   rps_friedman_test[rps_friedman_test$id==i,"All"] <- friedman.test(t(rps_array[,,i]))["p.value"]<0.05
-#   # print(paste(i,friedman.test(t(rps_array[,,i]))["p.value"]))
-# }
-# e<-rps_friedman_test[rps_friedman_test$All=="TRUE",]$id
-# print(paste0("RESULT: A Friedman test of individual sum choices (across rounds) showed ", length(e), " participant(s) (",paste(e, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
-# 
-# print("HELP: It seems odd that the fisher test showed 7 participants, the friedman test showed 9, and none of the participants are the same. Why are these results mutually exclusive?")
-# intersect(d,e)
+
 
 #--------------------RPS - Decisions by Round - Data Analysis-----------------
 
@@ -2389,9 +2298,17 @@ print("RPS: Choice of Advisor by round (all Adversaries)")
 df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
 p<- ggplot(data=df, aes(x=Round, y=Freq, group=Choice_of_Advisor))+  
   geom_line(aes(color=Choice_of_Advisor))+  
+  # geom_bar(position=position_dodge())+
   geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor)) + 
   labs(title="RPS - Choice of Advisor by Round (all Adversaries)",x="Round", y = "# of Choices", color = "Advisor")+
   geom_smooth(method='glm',formula=y~x, aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+print(p)
+p<- ggplot(data=df) + 
+  geom_bar(aes(x = Round, y=Freq, color=Choice_of_Advisor, fill=Choice_of_Advisor)) + 
+  facet_wrap(~Choice_of_Advisor)+
+  labs(title="RPS - Advisor Histogram Plot", x="Frequency", y = "Count of Choices", color = "Choice_of_Advisor") +
+  scale_x_discrete(limits=c(0:10))+ 
+  theme(plot.title = element_text(size=12))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
