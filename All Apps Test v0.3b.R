@@ -856,11 +856,11 @@ print(paste("RESULT: A Friedman test of round 1 choices shows IV (Adversary) and
 
 
 #--------------------PW - Strategic Decisions Data Analysis (H1.2.1)-----------------
-print("-------------------PW: Strategic Decision-making Analyses (H1.2.1)------------------")
-print("       ----PW: Strategic (All round) Choices (aggregate)----")
+print("-------------------IPD: Strategic Decision-making Analyses (H1.2.1)------------------")
+print("       ----IPD: Strategic (All round) Choices (aggregate) - insert as table----")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
 
-print("       ----PW: Distribution comparison of Strategic Choices by Adversary (H1.2.1T)----")
+print("       ----IPD: Sample Distribution comparison (H1.2.1T)----")
 p<- ggplot(pw_df_1, aes(x=Freq))+
   geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
   geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
@@ -885,25 +885,39 @@ print("how to automatically insert/save cullen & freq graph of AI data")
 print("how to plus these three on the same graph?")
 print("RESULT: Cullen & Frey plot indicates a slight departure from normal distributon in the AI condition.")
 
+
 print("H1.2.1T - fail to reject the null (all distributions are statistically normal), but more data is needed...")
 
+print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.2T)----")
+print("from analysis of the aggregate means, they are in the expected order - most cooperative with the Human+AI and least cooperative with the AI")
+rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
+
+for (i in pw_ids) {
+  rank_matrix[,i] <- rank(pw_array[,2,i])
+}
+
+length(which(rank_matrix[1,]==1))/length(pw_ids) # ratio that were least cooperative against the AI (no ties allowed)
+print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]==1))/length(pw_ids),1),"% of the participants were least cooperative with the AI (no ties)"))
+
+print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]<2))/length(pw_ids),1),"% of the participants were least cooperative with the AI"))
+
+length(which(rank_matrix[3,]==3))/length(pw_ids) #ratio that was most cooperative with the Human+AI (no ties allowed)
+print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[3,]==3))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI (no ties)"))
+
+print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]>2))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI"))
+
+print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*5/length(pw_ids),1),"% of the participants demonstrated the expected order."))
 
 
-print("       ----PW: Strategic Tests (H1.2.xT)----")
+print("       ----IPD: Sample coop-competitor (H1.2.3T)----")
 print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of cooperation Choices) are statistically dependent at p <.01.")
 print("--post-hoc tests")
-# print(fisher.test(pw_sum[-3,]))
 print(chisq.test(pw_sum[-3,]))
-
-print("RESULT: chisq.test of the all-round sums comparing HUman and AI show difference at p <. 01")
-# print(fisher.test(pw_sum[-1,]))
 print(chisq.test(pw_sum[-1,]))
-# print(wilcox.test(n[n$Adversary=="Human",]$Freq, n[n$Adversary=="Human+AI",]$Freq, paired=TRUE))
-print("RESULT: chisq.test of the all-round sums comparing HUman and Human+AI show NO difference at p <. 05, despite difference in adversary gameplay")
-
+print("RESULT: pairwise chisq.test of all-round cooperation sums shows expected (p<0.05) in Human-AI pair, but n.s. difference in Human-HAI pair, despite differences in adversary gameplay")
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
-print ("H1.2.2T - fail to reject the null")
+print ("H1.2.3T - fail to reject the null because of n.s. difference between Human and HAI conditions...")
 # print(friedman.test(Freq~Adversary|id,data=pw_cols_by_id[pw_cols_by_id$Choice==1,]))
 # a <- xtabs(~Adversary+period+my.decision, data=pw_all_data_with_demo)[,,2]
 # print(friedman.test(Freq~Adversary|period,data=a)) 
@@ -912,23 +926,24 @@ print ("H1.2.2T - fail to reject the null")
 
 
 # print("    --PW: All Rounds: Individual Fisher test p-values: ")
-print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary, despite the following results...")
-print("fisher test p-values: ")
-pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
-for (i in pw_ids){
-  print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
-}
-print("RESULT: A fisher test showed only 3 participants showed a statistically significant difference in gameplay ")
-for (i in pw_ids){
-  print(paste(i, as.character(fisher.test(pw_array[-3,,i])["p.value"])))
-}
-for (i in pw_ids){
-  print(paste(i, as.character(fisher.test(pw_array[-1,,i])["p.value"])))
-}
-print("RESULT: Post-hoc pairwise fisher tests showed only one player with statistically significant differences in gameplay and that was in the Human-AI pairwise comparison. This is interesting because one would expect a difference between the Human and Human+AI condition")
+print("METHOD NOTE: Analyses of individual participants using only direct tests of proportions are not practically informative for the strategic gameplay part of this experiment.  For example, Chisq and Fisher tests on individual participant's game choices only yield 3 participants who showed a statistically significant difference by adversary...")
+print("CUT individual fisher/chisq tests...")
+# print("fisher test p-values: ")
+# pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
+# for (i in pw_ids){
+#   print(paste(i, as.character(fisher.test(pw_array[,,i])["p.value"])))
+# }
+# print("RESULT: A fisher test showed only 3 participants showed a statistically significant difference in gameplay ")
+# for (i in pw_ids){
+#   print(paste(i, as.character(fisher.test(pw_array[-3,,i])["p.value"])))
+# }
+# for (i in pw_ids){
+#   print(paste(i, as.character(fisher.test(pw_array[-1,,i])["p.value"])))
+# }
+# print("RESULT: Post-hoc pairwise fisher tests showed only one player with statistically significant differences in gameplay and that was in the Human-AI pairwise comparison. This is interesting because one would expect a difference between the Human and Human+AI condition")
 
 
-
+print("       ----IPD: Participant coop-competitor - pairwise RMLR (H1.2.3T)----")
 a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="AI",]
 a$Adversary <- as.numeric(a$Adversary)
 a$Adversary <- as.factor(a$Adversary)
@@ -942,21 +957,84 @@ m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (l
 print("Human-AI comparison:")
 print(Anova(m, type="3"))
 print("RESULT:Pairwise (Human-AI) Repeated Measures Logistic Regressions show the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p < .001 (.05), but the Human-HAI comparison is not")
-
-# a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="AI",]
-# a$Adversary <- as.numeric(a$Adversary)
-# a$Adversary <- as.factor(a$Adversary)
-# m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (link="logit"))
-# m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=pw_all_data_with_demo, family=binomial (link="logit"))
-# # print(summary(m))
-# print(Anova(m, type="3"))
-# print("RESULT: NOT A VALID TEST BECAUSE IT'S BINOMIAL (NOT TRI-WISE) Repeated Measures Logistic Regression shows the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p < .001 (.05).")
-print("IMPLICATION: Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
+print("H1.2.3T - fail to reject the null since H-HAI comparison is n.s. but Human-AI is p<0.05")
 print("")
-print("LIMITATION: Differences in Adversary gameplay are a possible confounding factor.")
+print("LIMTATION: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
 
-print("REMOVE THIS SECTION       ---PW: Strategic Gameplay BY ROUND and adversary---")
+
+
+#--------------------IPD - Strat Decisions Same Count Analysis (H.1.2.4T) -------------
+q <- pw_all_data_with_demo
+a <- matrix(NA, nrow=length(pw_ids), ncol=4)
+colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
+a<- as.data.frame(a)
+a$id <- pw_ids
+
+
+for (i in pw_ids){
+  a[a$id==i,2] = length(which(q[q$id==i & q$Adversary=="Human",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
+  a[a$id==i,3] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
+  a[a$id==i,4] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="Human",]$my.decision))
+}
+a$sum <- rowSums(a[,2:4])
+
+pw_same_count_df <- a
+
+
+
+print(pw_same_count_df)
+print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
+
+
+
+print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors. "))
+
+# nrow(pw_same_count_df[pw_same_count_df$sum >24.5 | pw_same_count_df$sum <19.4,])
+
+a<- xtabs(~period+id+TFT, data=pw_all_data_with_demo)[,,"Peace"]
+a[a==0|a==3] <- 3
+a[a==1|a==2] <- 1
+a[a==1] <- 0
+a[a==3] <- 1
+f<- data.frame(rowMeans(a))
+f$period <- c(1:10)
+names(f)[1] <- "mean"
+f$type <- "TFT"
+
+a<- xtabs(~period+id+my.decision, data=pw_all_data_with_demo)[,,2]
+a[a==0|a==3] <- 3
+a[a==1|a==2] <- 1
+a[a==1] <- 0
+a[a==3] <- 1
+b<- data.frame(rowMeans(a))
+b$period <- c(1:10)
+names(b)[1] <- "mean"
+b$type <- "players"
+c<- xtabs(~period+id+other.decision1, data=pw_all_data_with_demo)[,,2]
+c[c==0|c==3] <- 3
+c[c==1|c==2] <- 1
+c[c==1] <- 0
+c[c==3] <- 1
+d<- data.frame(rowMeans(c))
+d$period <- c(1:9)
+names(d)[1] <- "mean"
+d$type <-"adv"
+e<- rbind(d,b,f)
+p<- ggplot(data=e[e$type=="players",], aes(x=period, y=mean))+
+  #geom_smooth(method='auto',formula=y~x)+ 
+  geom_line()+ 
+  # geom_point(data=e[e$type=="adv",])+
+  labs(title="PW - Ratio of all 3-same Choice by Round",x="Round", y = "Ratio of all 3 same choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+ylim(0,1)#or use method="lm"
+
+print(p)
+print("need to fix y labels and cooperative play by adversaries?")
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+print(paste0("On average, ",round(mean(e[e$type=="players",]$mean)*100,1), "% of choices were the same across adversaries. In contrast, a TFT strategy against each of the competitors yields only ",round(mean(e[e$type=="TFT",]$mean)*100, 1),"% of the same choices across competitors in each round."))
+#--------------------IPD - Memory Probability Analysis---------------
+print(" ---IPD: Cooperation BY ROUND and competitor---")
 
 pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
 pw_df <- pw_df[pw_df$my.decision==1,]
@@ -978,169 +1056,20 @@ pw_df[pw_df$Adversary=="Agg",]$Adv_delta <- NA
 
 p<- ggplot(data=pw_df, aes(x=period, y=ratio, group="Adversary"))+  geom_point(aes(color=Adversary)) +
   #geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  geom_line(aes(group=Adversary, color=Adversary))+ 
-  labs(title="PW - Cooperation Choices by Round and Aversary",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
+  geom_line(aes(group=Adversary, color=Adversary, size=Adversary))+ 
+  scale_size_manual(values = c(0.5, 0.5, 0.5, 1))+
+  scale_color_manual(values = c("red","green","blue","black"))+
+  labs(title="IPD - Cooperation Choices by Round and Competitor",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
   geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary, alpha=0.5),
                arrow = arrow(length = unit(0.1,"cm")))
-#or use method="lm"
+
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("need to make aggregate a bold black line")
 print("RESULT: INTERESTING - It appears the AI responses mostly (all but 1) followed the adv's previous round's coop/defect (i.e. the aggregate memory is mem-1 and akin to TFT), but for BOTH the human and human+AI, the responses mostly differed or ignored (5/10 or 5/9) the adv's previous round coop/defect decision ")
 
-print("NOTE-opportunity for more here... - see pw_prob analysis")
 print("")
-
-# print("REMOVE THIS SECTION       ---PW: Strategic Gameplay Compared to TFT---")
-# perc_TFT_eq_actual <- length(which(pw_all_data_with_demo$TFT == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-# print(paste0("       Percent TFT Predicted choices == Observed: ", round(perc_TFT_eq_actual*100, 2),"%."))
-# AI_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="AI",]
-# Human_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human",]
-# HAI_df <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human+AI",]
-# print(paste0("       Percent TFT Predicted choices vs AI == Observed: ", round(length(which(AI_df$TFT == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
-# print(paste0("       Percent TFT Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$TFT == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
-# print(paste0("       Percent TFT Predicted choices vs Human == Observed: ", round(length(which(Human_df$TFT == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
-# boxplot((colSums(pw_array)[1,]-colSums(xtabs(~Adversary+TFT+id, data=pw_all_data_with_demo))[1,])/30)
-# print("visualize the error/accuracy of TFT")
-# print("")
-# print("REMOVE THIS SECTION     ---PW-TFT Test of Proportions---")
-# print(TFT_obs_actual <- pw_sum)
-# print(TFT_sum <- xtabs(~Adversary + TFT, data=pw_all_data_with_demo))
-# TFT_obs_actual[,2] <- TFT_sum[,1]
-# TFT_obs_actual<- cbind(TFT_obs_actual, TFT_obs_actual[,2]-TFT_obs_actual[,1])
-# TFT_obs_actual<- cbind(TFT_obs_actual, round((100*TFT_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
-# colnames(TFT_obs_actual) <- c("Obs","TFT","TFTvObs","Perc Diff")
-# print(TFT_obs_actual)
-# 
-# print(chisq.test(TFT_obs_actual[,-c(3:4)]))
-# print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs Actual) on the IV (Adversary) was statistically significant at p < .05.")
-# print("IMPLICATION: This indicates participants LIKELY used different strategies for each of the adversaries.")
-# pw_df_tft <- as.data.frame(xtabs(~period + TFT +Adversary, data=pw_all_data_with_demo))
-# pw_df_tft <- pw_df_tft[pw_df_tft$TFT=="Peace",]
-# pw_df_tft$period <- as.numeric(pw_df_tft$period)
-# p<- ggplot(data=pw_df_tft, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
-#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-#   labs(title="PW- tft Predicted Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
-# print(p)
-# print(paste0("Insert ", p$labels$title," Plot"))
-# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-
-# print("REMOVE unless relevant to the fingerprint match        ---PW: Strategic Gameplay Compared to Nay and Vorobeychik's GLM Model---")
-# print(pw_pred_actual_sum[,-2])
-# perc_GLM_eq_actual <- length(which(pw_all_data_with_demo$GLM == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-# print(paste0("       Percent GLM Predicted choices == Observed: ", round(perc_GLM_eq_actual*100, 2),"%."))
-# print(paste0("       Percent GLM Predicted choices vs AI == Observed: ", round(length(which(AI_df$GLM == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
-# print(paste0("       Percent GLM Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$GLM == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
-# print(paste0("       Percent GLM Predicted choices vs Human == Observed: ", round(length(which(Human_df$GLM == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
-# GLM_obs_actual <- pw_pred_actual_sum[,-2]
-# GLM_obs_actual<- cbind(GLM_obs_actual, GLM_obs_actual[,2]-GLM_obs_actual[,1])
-# GLM_obs_actual<- cbind(GLM_obs_actual, round((100*GLM_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
-# colnames(GLM_obs_actual) <- c("Obs","GLM","GLMvObs","Perc Diff")
-# print(GLM_obs_actual)
-# print("RESULT: It appears the GLM has ~5% error for the Human (as expected) but 10% for the AI and 6% for the HAI. Like the TFT analysis, these differences also indicate some difference in strategic gameplay between adversaries.")
-# print(chisq.test(GLM_obs_actual[,-c(3:4)]))
-# print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs GLM) on the IV (Adversary) was NOT statistically significant at p < .05.")
-# print("IMPLICATION:")
-# print("")
-# print("HELP: Maybe use three separate residuals tests (by adversary) to see the distribution of error?")
-
-
-# print("REMOVE unless relevant to the fingerprint match       ---PW: Strategic Gameplay Compared to NNET Model---")
-# 
-# perc_nnet_eq_actual <- length(which(pw_all_data_with_demo$nnet == pw_all_data_with_demo$my.decision))/nrow(pw_all_data_with_demo)
-# print(paste0("       Percent NNET Predicted choices == Observed: ", round(perc_nnet_eq_actual*100, 2),"%."))
-# print(paste0("       Percent nnet Predicted choices vs AI == Observed: ", round(length(which(AI_df$nnet == AI_df$my.decision))/nrow(AI_df)*100, 2),"%."))
-# print(paste0("       Percent nnet Predicted choices vs Human+AI == Observed: ", round(length(which(HAI_df$nnet == HAI_df$my.decision))/nrow(HAI_df)*100, 2),"%."))
-# print(paste0("       Percent nnet Predicted choices vs Human == Observed: ", round(length(which(Human_df$nnet == Human_df$my.decision))/nrow(Human_df)*100, 2),"%."))
-# NNET_obs_actual <- pw_pred_actual_sum[,-3]
-# NNET_obs_actual<- cbind(NNET_obs_actual, NNET_obs_actual[,2]-NNET_obs_actual[,1])
-# NNET_obs_actual<- cbind(NNET_obs_actual, round((100*NNET_obs_actual[,3])/(rowSums(pw_sum)[1]),1))
-# colnames(NNET_obs_actual) <- c("Obs","NNET","NNETvObs","Perc Diff")
-# print(NNET_obs_actual)
-# print("RESULT: It appears the neural net has 1.4% error for the Human (as expected) but 10% for the AI and -2.5% for the HAI. This also indicates some difference in strategic gameplay.")
-# print(chisq.test(NNET_obs_actual[,-c(3:4)]))
-# print("RESULT: A Chisq test analyzing dependence of the DV (Obs vs NNET) on the IV (Adversary) was NOT statistically significant at p < .05.")
-# print("HELP: Is this the right test to compare observed and actual?")
-# pw_df_nnet <- as.data.frame(xtabs(~period + nnet +Adversary, data=pw_all_data_with_demo))
-# pw_df_nnet <- pw_df_nnet[pw_df_nnet$nnet=="Peace",]
-# pw_df_nnet$period <- as.numeric(pw_df_nnet$period)
-# p<- ggplot(data=pw_df_nnet, aes(x=period, y=Freq, group="Adversary"))+  geom_point(aes(color=Adversary)) +
-#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-#   labs(title="PW- Neural Net Predicted Peace Choices by Round and Aversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm"
-# print(p)
-# print(paste0("Insert ", p$labels$title," Plot"))
-# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-#--------------------PW - Strategic Decisions Rank Analysis----------
-rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
-
-for (i in pw_ids) {
-  rank_matrix[,i] <- rank(pw_array[,2,i])
-}
-
-length(which(rank_matrix[1,]==1))/length(pw_ids) # ratio that were least cooperative against the AI (no ties allowed)
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]==1))/length(pw_ids),1),"% of the participants were least cooperative with the AI (no ties)"))
-
-print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]<2))/length(pw_ids),1),"% of the participants were least cooperative with the AI"))
-
-length(which(rank_matrix[3,]==3))/length(pw_ids) #ratio that was most cooperative with the Human+AI (no ties allowed)
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[3,]==3))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI (no ties)"))
-
-print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]>2))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI"))
-
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*5/length(pw_ids),1),"% of the participants demonstrated the expected order."))
-
-#--------------------PW - Strat Decisions Same Count Analysis -------------
-q <- pw_all_data_with_demo
-a <- matrix(NA, nrow=length(pw_ids), ncol=4)
-colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
-a<- as.data.frame(a)
-a$id <- pw_ids
-
-
-for (i in pw_ids){
-  a[a$id==i,2] = length(which(q[q$id==i & q$Adversary=="Human",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
-  a[a$id==i,3] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
-  a[a$id==i,4] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="Human",]$my.decision))
-}
-a$sum <- rowSums(a[,2:4])
-pw_same_count_df <- a
-print(pw_same_count_df)
-print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
-
-print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors"))
-# nrow(pw_same_count_df[pw_same_count_df$sum >24.5 | pw_same_count_df$sum <19.4,])
-
-a<- xtabs(~period+id+my.decision, data=pw_all_data_with_demo)[,,2]
-a[a==0|a==3] <- 3
-a[a==1|a==2] <- 1
-a[a==1] <- 0
-a[a==3] <- 1
-b<- data.frame(rowMeans(a))
-b$period <- c(1:10)
-names(b)[1] <- "mean"
-b$type <- "players"
-c<- xtabs(~period+id+other.decision1, data=pw_all_data_with_demo)[,,2]
-c[c==0|c==3] <- 3
-c[c==1|c==2] <- 1
-c[c==1] <- 0
-c[c==3] <- 1
-d<- data.frame(rowMeans(c))
-d$period <- c(1:9)
-names(d)[1] <- "mean"
-d$type <-"adv"
-e<- rbind(d,b)
-p<- ggplot(data=e[e$type=="players",], aes(x=period, y=mean))+
-  #geom_smooth(method='auto',formula=y~x)+ 
-  geom_line()+ 
-  geom_point(data=e[e$type=="adv",])+
-  labs(title="PW - Ratio of all3-same Choice by Round",x="Round", y = "Ratio of all 3 same choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+ylim(0,1)#or use method="lm"
-
-print(p)
-print("need to fix y labels and cooperative play by adversaries?")
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-#--------------------PW - Strat Probability Analysis---------------
 # a context is a condition.  Memory is how many previous turns
 #mem0
 mem0_df <- as.data.frame(xtabs(~Adversary+id+my.decision, data=pw_all_data_with_demo))
@@ -1153,6 +1082,12 @@ mem1_df <- as.data.frame(xtabs(~Adversary+id+other.decision1+my.decision, data=p
 a<- aggregate(Freq~Adversary+id+other.decision1, data=mem1_df, FUN=sum)
 names(a)[4] <- "context"
 mem1_df <- merge(a, mem1_df)
+
+#mem0+1 (only participant's previous choice - should catch ALLD, AllC)
+mem0plus1_df <- as.data.frame(xtabs(~Adversary+id+my.decision1+my.decision, data=pw_all_data_with_demo))
+a<- aggregate(Freq~Adversary+id+my.decision1, data=mem0plus1_df, FUN=sum)
+names(a)[4] <- "context"
+mem0plus1_df <- merge(a, mem0plus1_df)
 
 #mem2 
 mem2_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+my.decision, data=pw_all_data_with_demo))
@@ -1187,7 +1122,9 @@ for (i in pw_ids) {
   mem_df[mem_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
 }
 mem_df$mem0 <- NA
+mem_df$mem0plus1
 mem_df$mem1 <- NA
+mem_df$mem1plus1
 mem_df$mem2 <- NA
 mem_df$mem3 <- NA
 mem_df$mem4 <- NA
@@ -1232,6 +1169,7 @@ for (i in pw_ids) {
   mem_df_1[mem_df_1$id==i,]$Adversary <- c("Human","AI","Human+AI")
 }
 mem_df_1$mem0 <- NA
+mem_df_1$mem0plus1 <- NA
 mem_df_1$mem1 <- NA
 mem_df_1$mem2 <- NA
 mem_df_1$mem1plus1 <- NA
@@ -1248,6 +1186,10 @@ for (i in pw_ids) {
     l<- matrix(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq, nrow=length(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq)/2)
     q <- fisher.test(l)
     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1 <- q$p.value
+    
+    l<- matrix(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq, nrow=length(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq)/2)
+    q <- fisher.test(l)
+    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0plus1 <- q$p.value
     
     l<- matrix(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq, nrow=length(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq)/2)
     q <- fisher.test(l)
