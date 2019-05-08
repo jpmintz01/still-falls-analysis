@@ -122,6 +122,8 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 #filepath <- file.choose()
 exp_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_apps_wide_2019-01-21.csv"
 datafile <- read.csv(exp_data_file_path, header = TRUE, stringsAsFactors = FALSE)
+datafile<- datafile[!(datafile$participant.label %in% c("gdg26","s4441","7ic14","oez14")),] #strip non-believers
+
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
 good_data <- stripFails(datafile) #strip the fails off the man datafile
 # good_data <- stripBadCols(datafile)
@@ -585,6 +587,7 @@ names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(r
 
 rps_cols[,names(rps_cols)[grepl('^(.*)([3][1-9]|[4-6][0-9])[.](.*)$', names(rps_cols))]] <- NULL #strip unused columns
 
+
 a <- rps_cols
 
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
@@ -619,6 +622,7 @@ df_types = melt(a, id="id", measure=list_of_type_cols)
 names(df_types)[2] <- "Round"
 names(df_types)[3] <- "Adversary"
 df_decs = melt(a, id="id", measure=list_of_decision_cols)
+
 names(df_decs)[3] <- "Choice_of_Advisor"
 df_decs$variable = NULL
 df_payoffs = melt(a, id="id", measure=list_of_payoff_cols)
@@ -2455,36 +2459,27 @@ for (i in rps_ids) {
 }
 names(rps_switch_df)[1] <- "prev_adversary"
 names(rps_switch_df)[2] <- "prev_choice"
-switchnames <- c("Win_Stay","Win_Switch","Loss_Stay","Loss_Switch","Draw_Stay","Draw_Switch")
-rps_switch_df_melt <- melt(rps_switch_df, id=c("prev_adversary","prev_choice","id"))
-rps_switch_df_melt_sum <- melt(rps_switch_df, c("prev_adversary","prev_choice",switchnames))
-# rps_switch_df_sum <- as.data.frame(rps_switch_df_melt_sum %>%
-#   group_by(prev_adversary, prev_choice) %>%
-#   summarise (sum(value))) 
-# names(rps_switch_df_sum)[3] <- "value"
-
 
 rps_switch_array <- array(NA, dim=c(3,3,6), dimnames=list(c("AI","Human","Human+AI"),c("AI","human","none"),switchnames))
-rps_switch_table_adv <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","human","none"),switchnames))
-rps_switch_table_adversary <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","Human","Human+AI"),switchnames))
 for (i in switchnames) {
-  
   f <- as.formula(paste0(i, "~prev_adversary+prev_choice"))
   rps_switch_array[,,i] <-xtabs(f, data= rps_switch_df)
-  f1 <- as.formula(paste0(i, "~prev_choice"))
-  rps_switch_table_adv[,i] <- xtabs(f1, data= rps_switch_df)
-  f2 <- as.formula(paste0(i, "~prev_adversary"))
-  rps_switch_table_adversary[,i] <- xtabs(f2, data= rps_switch_df)
 }
-rps_switch_table <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","human","none"),c("Stay","Switch")))
 
-print(rps_switch_table_adv)
-print(chisq.test(rps_switch_table_adv))
+rps_switch_table_by_advisor <- aggregate(. ~prev_choice, data=rps_switch_df, FUN=sum)
+rps_switch_table_by_adversary <- aggregate(. ~prev_adversary, data=rps_switch_df, FUN=sum)
+
+rps_switch_table <- aggregate(. ~prev_adversary+prev_choice, data=rps_switch_df, FUN=sum)[,-c(3,4)]
+rps_switch_df_1 <- melt(rps_switch_table)
+
+print(rps_switch_table_by_advisor[,-c(2:4)])
+print(chisq.test(rps_switch_table_by_advisor[,c(5:10)]))
+
 
 print("RESULT: A Chisq.test (X-squared = 31.319552, df = 10, p-value = 0.0005194981) showed a statistically significant difference in whether participants stayed or switched, ")
 for (i in seq(1,5,by=2)){
   print(rps_switch_table_adv[,c(i,i+1)])
-  print(chisq.test(rps_switch_table_adv[,c(i,i+1)]))#["p.value"])
+  print(chisq.test(rps_switch_table_by_advisor[,c(i,i+1)]))#["p.value"])
 
 }
 print("REWRITE this section to be more similar to pw_probinference section for fisher test with 'contexts' being # of losses, # of wins, etc, then compare it like this: win-stay count, win context")

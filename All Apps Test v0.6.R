@@ -122,6 +122,8 @@ pwChangeColNames <- function (data, num_rounds) { #inputs pw columns and changes
 #filepath <- file.choose()
 exp_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_apps_wide_2019-01-21.csv"
 datafile <- read.csv(exp_data_file_path, header = TRUE, stringsAsFactors = FALSE)
+datafile<- datafile[!(datafile$participant.label %in% c("gdg26","s4441","7ic14","oez14")),] #strip non-believers
+
 fail_data <- saveFails(datafile) #save the fails to another file for researcher review
 good_data <- stripFails(datafile) #strip the fails off the man datafile
 # good_data <- stripBadCols(datafile)
@@ -585,6 +587,7 @@ names(rps_cols)[grepl('^[1-9][.](.*)$', names(rps_cols))] <- paste0("0", names(r
 
 rps_cols[,names(rps_cols)[grepl('^(.*)([3][1-9]|[4-6][0-9])[.](.*)$', names(rps_cols))]] <- NULL #strip unused columns
 
+
 a <- rps_cols
 
 rps_cols <- rps_cols[,order(colnames(rps_cols))] #sorts columns by round number (two vars each)
@@ -619,6 +622,7 @@ df_types = melt(a, id="id", measure=list_of_type_cols)
 names(df_types)[2] <- "Round"
 names(df_types)[3] <- "Adversary"
 df_decs = melt(a, id="id", measure=list_of_decision_cols)
+
 names(df_decs)[3] <- "Choice_of_Advisor"
 df_decs$variable = NULL
 df_payoffs = melt(a, id="id", measure=list_of_payoff_cols)
@@ -1649,7 +1653,7 @@ p<- ggplot(data=pw_df, aes(x=period, y=ratio, group="Adversary"))+  geom_point(a
   scale_size_manual(values = c(0.5, 0.5, 0.5, 1))+
   scale_color_manual(values = c("red","green","blue","black"))+
   labs(title="IPD - Cooperation Choices by Round and Competitor",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
-  geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary, alpha=0.5),
+  geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary), alpha=0.5,
                arrow = arrow(length = unit(0.1,"cm")))
 
 print(p)
@@ -2420,156 +2424,87 @@ print("HELP: How do I do a multinomial version of this (see code) - it keeps exc
 # print("---code above here RMLR needs to be moved lower...---")
 #--------------------RPS - Switch-Loss Analysis----------------
 switch_array <- rps_array
-rps_switch_df <- as.data.frame(rps_array)
 
-rps_switch_df$Win_Stay <- 0
-rps_switch_df$Win_Switch <- 0
-rps_switch_df$Loss_Stay <- 0
-rps_switch_df$Loss_Switch <- 0
-rps_switch_df$Draw_Stay <- 0
-rps_switch_df$Draw_Switch <- 0
+rps_switch_df<-rps_long_ten_rounds
+rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
+levels(rps_switch_df$Payoff) <- c("Lose","Draw","Win")
+rps_switch_df$switch <- as.factor("Stay")
+levels(rps_switch_df$switch) <- c("Switch","Stay")
+rps_switch_df$prev_choice <- as.factor("none")
+levels(rps_switch_df$prev_choice) <- Advisor_list
+rps_switch_df$prev_outcome <- as.factor("Win")
+levels(rps_switch_df$prev_outcome) <- c("Lose","Draw","Win")
+rps_switch_df$prev_adversary <- as.factor("Human")
+levels(rps_switch_df$prev_adversary) <- Adversary_list
 
-for (i in rps_ids) {
-  for (j in list("Human","AI","Human+AI")) {
-    for (k in c(2:10)){
-      prev_choice <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j& rps_long_ten_rounds$Round==(k-1),]$Choice_of_Advisor
-      current_choice <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j& rps_long_ten_rounds$Round==k,]$Choice_of_Advisor
-      prev_payoff <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j&rps_long_ten_rounds$Round==(k-1),]$Payoff
-      prev_adv <- rps_long_ten_rounds[rps_long_ten_rounds$id==i & rps_long_ten_rounds$Adversary==j&rps_long_ten_rounds$Round==(k-1),]$Adversary
-      # rps_switch_df$prev_choice <- prev_choice
-      if ((prev_choice != current_choice) & (prev_payoff==-1)){ #if previous round's choice and current round's choice are different, and previous payoff is -1
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Switch  #log a counter as a "switch"
-      } else if ((prev_choice != current_choice) & (prev_payoff==0)){
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Switch
-      } else if ((prev_choice != current_choice) & (prev_payoff==1)){
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Switch <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Switch
-      } else if ((prev_choice == current_choice) & (prev_payoff==-1)) {
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Loss_Stay
-      } else if ((prev_choice == current_choice) & (prev_payoff==0)){
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Draw_Stay
-      } else if ((prev_choice == current_choice) & (prev_payoff==1)){
-        rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Stay <- 1 + rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==prev_adv & rps_switch_df$Choice_of_Advisor==prev_choice,]$Win_Stay
-      }
-    }
+
+for (i in rps_ids){
+  print(i)
+  for (j in Adversary_list){
+    print(j)
+    print(a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1))
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
+    print(b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1))
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
+    c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
   }
 }
-names(rps_switch_df)[1] <- "prev_adversary"
-names(rps_switch_df)[2] <- "prev_choice"
-switchnames <- c("Win_Stay","Win_Switch","Loss_Stay","Loss_Switch","Draw_Stay","Draw_Switch")
-rps_switch_df_melt <- melt(rps_switch_df, id=c("prev_adversary","prev_choice","id"))
-rps_switch_df_melt_sum <- melt(rps_switch_df, c("prev_adversary","prev_choice",switchnames))
-# rps_switch_df_sum <- as.data.frame(rps_switch_df_melt_sum %>%
-#   group_by(prev_adversary, prev_choice) %>%
-#   summarise (sum(value))) 
-# names(rps_switch_df_sum)[3] <- "value"
+rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
+rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
 
 
-rps_switch_array <- array(NA, dim=c(3,3,6), dimnames=list(c("AI","Human","Human+AI"),c("AI","human","none"),switchnames))
-rps_switch_table_adv <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","human","none"),switchnames))
-rps_switch_table_adversary <- matrix(NA, nrow=3, ncol=length(switchnames), dimnames=list(c("AI","Human","Human+AI"),switchnames))
-for (i in switchnames) {
-  
-  f <- as.formula(paste0(i, "~prev_adversary+prev_choice"))
-  rps_switch_array[,,i] <-xtabs(f, data= rps_switch_df)
-  f1 <- as.formula(paste0(i, "~prev_choice"))
-  rps_switch_table_adv[,i] <- xtabs(f1, data= rps_switch_df)
-  f2 <- as.formula(paste0(i, "~prev_adversary"))
-  rps_switch_table_adversary[,i] <- xtabs(f2, data= rps_switch_df)
-}
-rps_switch_table <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","human","none"),c("Stay","Switch")))
-
-print(rps_switch_table_adv)
-print(chisq.test(rps_switch_table_adv))
-
-print("RESULT: A Chisq.test (X-squared = 31.319552, df = 10, p-value = 0.0005194981) showed a statistically significant difference in whether participants stayed or switched, ")
-for (i in seq(1,5,by=2)){
-  print(rps_switch_table_adv[,c(i,i+1)])
-  print(chisq.test(rps_switch_table_adv[,c(i,i+1)]))#["p.value"])
-
-}
-print("REWRITE this section to be more similar to pw_probinference section for fisher test with 'contexts' being # of losses, # of wins, etc, then compare it like this: win-stay count, win context")
-a<- rbind(rps_switch_table_adv[,c(1:2)], rps_switch_table_adv[,c(3:4)], rps_switch_table_adv[,c(5:6)])
-a[,2] <- a[,1]+a[,2]
-fisher.test(a[c(1:3),]) #ns
-fisher.test(a[c(4:6),]) #ns
-fisher.test(a[c(7:9),]) #ns
-
-
-for (i in c(1:2)){
-rps_switch_table[,i] <- rps_switch_table_adv[,i]+rps_switch_table_adv[,i+2]+rps_switch_table_adv[,i+4]
-}
-print(rps_switch_table)
-print(chisq.test(rps_switch_table))
-print("RESULT: chisq test (X-squared = 23.48782, df = 2, p-value = 0.000007937518) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their previous choice of advisor, regardless of a win or loss")
-
-
-for (i in (1:3)) {
-  print(rps_switch_table[-i,])
-  print(chisq.test(rps_switch_table[-i,]))#["p.value"])
-}
-print("post-hoc tests also showed that all previous choices of advisor had an effect on whether the participant switched or stayed.")
-
-for (j in seq(1,5,by=2)){
-
-    print(rps_switch_table_adv[,c(j,j+1)])
-  print(chisq.test(rps_switch_table_adv[,c(j,j+1)]))#["p.value"])
-}
-print("RESULT: post hoc tests show the differences in switching and staying are primarily in the win and loss frames, but that when a participant has a draw, their previous choice of advisor doesn't affect whether they switch or stay.")
-
-for (j in seq(1,5,by=2)){
-  for (i in (1:3)) {
-    print(rps_switch_table_adv[-i,c(j,j+1)])
-    print(chisq.test(rps_switch_table_adv[-i,c(j,j+1)]))#["p.value"])
-  }
-}
-cat("Specifically, post-hoc tests showed: \n-Win Frame:\n--Human-none (X-squared = 9.1331159, df = 1, p-value = 0.002510238)\n--Human-AI (X-squared = 4.2615712, df = 1, p-value = 0.03898385) \n--(but not AI-none) \n-Loss Frame:\n--Human-none (X-squared = 12.650194, df = 1, p-value = 0.0003755267)\n--Human-AI (X-squared = 5.859798, df = 1, p-value = 0.01549057)\n--(but not AI-none)\n-Draw Frame:\n--no relationship.")
-
-
-#now by adversary
-rps_switch_table_advers <- matrix(NA, nrow=3, ncol=2, dimnames=list(c("AI","Human","Human+AI"),c("Stay","Switch")))
-for (i in c(1:2)){
-  rps_switch_table_advers[,i] <- rps_switch_table_adversary[,i]+rps_switch_table_adversary[,i+2]+rps_switch_table_adversary[,i+4]
-}
-print(rps_switch_table_advers)
-print(chisq.test(rps_switch_table_advers))
-print("RESULT: chisq test (X-squared = 7.6698859, df = 2, p-value = 0.02160257) showed a statistically signifciant relationship between whether a participant switched or stayed based on their adversary")
-for (i in (1:3)) {
-  print(rps_switch_table_advers[-i,])
-  print(chisq.test(rps_switch_table_advers[-i,]))#["p.value"])
-}
-print("RESULT: Post-hoc chisq test (X-squared = 6.3197118, df = 1, p-value = 0.0119403) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their adversary (Human vs Human+AI), and a finding of statistical interest (X-squared = 3.317602, df = 1, p-value = 0.06854174) between AI & Human+AI), but no statistically significant relationship between staying and switching between (Human and AI)")
-
-print(rps_switch_table_adversary)
-print(chisq.test(rps_switch_table_adversary))
-print("RESULT: chisq test (X-squared = 10.295055, df = 10, p-value = 0.4149997) showed NO statistically signifciant relationship between whether a participant switched or stayed based on their adversary across ")
-
-for (i in seq(1,5,by=2)){
-  print(rps_switch_table_adversary[,c(i,i+1)])
-  print(chisq.test(rps_switch_table_adversary[,c(i,i+1)]))#["p.value"])
-  
-}
-print("RESULT: Chisq tests by Win, Lose, or Draw do not show that adversary statistically affects switching, but the loss frame shows a finding of stastical interest: (X-squared = 4.6976168, df = 2, p-value = 0.09548287) ")
-
-for (j in seq(1,5,by=2)){
-for (i in (1:3)) {
-  print(rps_switch_table_adversary[-i,c(j,j+1)])
-  print(chisq.test(rps_switch_table_adversary[-i,c(j,j+1)]))#["p.value"])
-}
-}
-print("post-hoc tests also showed non-statistically significant relationship between win/lost/draw switch and stay by adversary, but Human-HAI (Loss frame -> X-squared = 3.8131779, df = 1, p-value = 0.05085088) and the Human-HAI (Win frame -> X-squared = 2.9844016, df = 1, p-value = 0.08407036) were findings of statistical interest.")
-
-#win-loss-draw analyses
-a <- as.data.frame(matrix(colSums(rps_switch_table_adv), nrow=3, ncol=2, byrow=TRUE))
-colnames(a)  <- c("Stay","Switch")
-rownames(a) <- c("Win","Loss","Draw")
-print(a)
+print(a<- xtabs(~prev_outcome+switch, data=rps_switch_df))
 print(chisq.test(a))
-print("RESULT: Chisq test shows no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
-#post-hoc
-print(chisq.test(a[-3,]))
-print(chisq.test(a[-2,]))
-print(chisq.test(a[-1,]))
-print("RESULT: POst-hoc tests confirm no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
+print("RESULT (characterization, not hypothesis): Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw.")
+
+print(a<- xtabs(~prev_adversary+switch, data=rps_switch_df))
+print(chisq.test(a))
+print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their previous adversary.")
+print(paste("Human-AI",chisq.test(a[-3,])["p.value"]))
+print(paste("HAI-AI",chisq.test(a[-2,])["p.value"]))
+print(paste("Human-HAI",chisq.test(a[-1,])["p.value"]))
+print("post-hoc tests show the significant relationship is driven primarily by the Human+AI treatment")
+
+print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
+print(chisq.test(a))
+print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor")
+a<- xtabs(~prev_choice+switch+prev_outcome, data=rps_switch_df)
+print("Loss frame only:")
+print(a[,,1])
+print(chisq.test(a[,,1]))
+print("RESULT: in the loss frame, there is significant relationship (X-squared = 18.282, df = 2, p-value = 0.0001072) between variation in the stay/switch decisions and the previous advisor type")
+print("METHOD - remove the human advisor since the counts are so low as to affect the result:")
+print(a[-2,,1])
+print(chisq.test(a[-2,,1]))
+print("RESULT: comparing the AI advisor to the 'no-advice' condition, there is still a significant relationship (X-squared = 6.4736, df = 1, p-value = 0.01095). ")
+print(a[-2,2,1]/rowSums(a[-2,,1]))
+print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
+
+
+print(a[-2,2,3]/rowSums(a[-2,,3]))
+print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor"))
+
+print(a[-2,2,2]/rowSums(a[-2,,2]))
+print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
+
+b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
+print("Participant switched x percent of the time:")
+print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
+friedman.test(t(l))
+friedman.test(l)
+print("RESULT: there was not a statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome")
+
+print("Fix: chisq test (X-squared = 23.48782, df = 2, p-value = 0.000007937518) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their previous choice of advisor, regardless of a win or loss")
+print("Fix: post-hoc tests also showed that all previous choices of advisor had an effect on whether the participant switched or stayed.")
+print("Fix: post hoc tests show the differences in switching and staying are primarily in the win and loss frames, but that when a participant has a draw, their previous choice of advisor doesn't affect whether they switch or stay.")
+print("Fix: chisq test (X-squared = 7.6698859, df = 2, p-value = 0.02160257) showed a statistically signifciant relationship between whether a participant switched or stayed based on their adversary")
+print("Fix: Post-hoc chisq test (X-squared = 6.3197118, df = 1, p-value = 0.0119403) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their adversary (Human vs Human+AI), and a finding of statistical interest (X-squared = 3.317602, df = 1, p-value = 0.06854174) between AI & Human+AI), but no statistically significant relationship between staying and switching between (Human and AI)")
+print("Fix: chisq test (X-squared = 10.295055, df = 10, p-value = 0.4149997) showed NO statistically signifciant relationship between whether a participant switched or stayed based on their adversary across ")
+print("Fix: Chisq tests by Win, Lose, or Draw do not show that adversary statistically affects switching, but the loss frame shows a finding of stastical interest: (X-squared = 4.6976168, df = 2, p-value = 0.09548287) ")
+print("Fix: post-hoc tests also showed non-statistically significant relationship between win/lost/draw switch and stay by adversary, but Human-HAI (Loss frame -> X-squared = 3.8131779, df = 1, p-value = 0.05085088) and the Human-HAI (Win frame -> X-squared = 2.9844016, df = 1, p-value = 0.08407036) were findings of statistical interest.")
+print("Fix: Chisq test shows no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
+print("Fix: POst-hoc tests confirm no statistically significant relationship between (IV) win/loss/draw and (DV) stay or switch")
 
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
 #check for correlation with counterbalancing
