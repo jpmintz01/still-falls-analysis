@@ -2245,8 +2245,8 @@ descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, discrete = FALSE)
 plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, "nbinom"))
 descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, discrete = FALSE)
 plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, "norm"))
-#--------------------RPS - Aggregation of Choice of Advisor (all) - Data Analysis-------------
-print("---RPS: Choice of Advisor (regardless of Adversary)") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
+#--------------------RPS - Aggregation of Choice of Advisor (all) (H2.1.1)-------------
+print("---RPS: Choice of Advisor (regardless of Adversary) (H2.1.1T") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 n<- xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo)
 print(n)
 m<- as.data.frame(n)
@@ -2277,12 +2277,12 @@ print("RESULT: Friedman test shows participants showed a significant difference 
 
 
 
-#--------------------RPS - Choice of Advisor by Adversary - Data Analysis-------------
+#--------------------RPS - Choice of Advisor by Adversary(H2.2)-------------
 #video #9 (tests of proportions)
 print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
-print("RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
+print("H2.2.1T - RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
 
 
 rps_ids <- unique(rps_all_data_with_demo$id)
@@ -2293,11 +2293,14 @@ for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-print(paste0("RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+print(paste0("H2.2.2T - RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
 
 
-#--------------------RPS - Decisions by Round - Data Analysis-----------------
+#--------------------RPS - Decisions by Round - Data Analysis (H2.3)-----------------
+
+
+  
 
 print("RPS: Choice of Advisor by round (all Adversaries)")
 df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
@@ -2306,7 +2309,8 @@ p<- ggplot(data = df,
            y= Freq, 
            fill=Choice_of_Advisor)) +
   geom_bar(position="dodge", stat = "identity", alpha=0.4) +
-  geom_line(aes(x = as.numeric(Round), y = Freq, color=Choice_of_Advisor), show.legend = FALSE)+
+  geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor), size=0.5, se=FALSE, show.legend=FALSE)+
+  # geom_line(aes(x = as.numeric(Round), y = Freq, color=Choice_of_Advisor), show.legend = FALSE)+
   labs(x = NULL, y = NULL, fill = NULL, 
        title = "RPS-Aggregate Choice of Advisor by Round")
 print(p)
@@ -2319,10 +2323,13 @@ print(chisq.test(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_dem
 print("RESULT: Chisq test showed variation in choice of advisor by round")
 a<-as.data.frame(xtabs(~ Round + Choice_of_Advisor, data = rps_all_data_with_demo))
 a$Round <- as.numeric(as.character(a$Round))
-b<- lm(Freq ~ Round, data=a[a$Choice_of_Advisor=="human",])
+b<-lm(Freq ~ Round, data=a[a$Choice_of_Advisor=="human",])
+Anova(b)
 c<-lm(Freq ~ Round, data=a[a$Choice_of_Advisor=="AI",])
+Anova(c)
 d<-lm(Freq ~ Round, data=a[a$Choice_of_Advisor=="none",])
-print("Linear regression of Aggregate choice of advisor by round shows delegation to AI and human advisor increased over time, and 'no advice' decreased")
+Anova(d)
+print("Linear regression of Aggregate choice of advisor by round shows delegation to human advisor increased (y=ax+b, a=.95) significantly (p < 0.001) over time, and 'no advice' decreased (y=ax+b, a= -1.5) significantly (p < 0.01) over time, and delegation to AI advisor increased (y=ax+b, a=.59), but not significantly (p > 0.05) ")
 #--------------------CUT...RPS - Choice of Advisor by adversary and round---------
 
 print("   -------RPS: Choice of Advisor by adversary and round")
@@ -2331,13 +2338,22 @@ print("   -------RPS: Choice of Advisor by adversary and round")
 
 
 
+p<- ggplot(data=rps_df_1) + 
+  geom_bar(aes(x = Freq, color=Choice_of_Advisor, fill=Choice_of_Advisor)) + 
+  facet_wrap(~Choice_of_Advisor)
+
 df_1 <- as.data.frame(xtabs(~Round + Choice_of_Advisor+Adversary, data=rps_all_data_with_demo))
-p<- ggplot(data=df_1[df_1$Adversary=="Human",], aes(x=Round, y=Freq, group=Choice_of_Advisor))+  
-  geom_line(aes(color=Choice_of_Advisor))+  
-  geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ 
-  labs(title="RPS- vs Human - Choices by Round",x="Round", y = "# of Choices", color = "Advisor")+
-  geom_smooth(method='glm',formula=y~x,aes(group=Choice_of_Advisor, color=Choice_of_Advisor))
+
+p<- ggplot(data=df_1, aes(x=Round))+
+  #geom_line(aes(y=Freq,color=Choice_of_Advisor))+ 
+  geom_bar(group=Choice_of_Advisor)+
+  facet_wrap(~Adversary)+
+  # geom_point(aes(group=Choice_of_Advisor, color=Choice_of_Advisor))+ 
+  # labs(title="RPS- Choices by Round",x="Round", y = "# of Choices", color = "Advisor")+
+  geom_smooth(method='glm',formula=y~x,aes(x=Round,y=Freq,group=Choice_of_Advisor, color=Choice_of_Advisor), se=FALSE)
+
 print(p)
+
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: See PLOT: Against the Human, human Advice-taking stayed approximately stable, but self-reliance('none') advice declined and was replaced by AI advisor.")
