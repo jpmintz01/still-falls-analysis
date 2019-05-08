@@ -2440,7 +2440,7 @@ b<- aggregate(.~id, data=a, FUN=max)
 c<- a[ifelse((a$Freq==b$Freq & a$id==b$id),TRUE, FALSE),]
 names(c)[2] <- "topChoice"
 c[,3] <- NULL
-#rps_all_data_with_demo <- merge(rps_all_data_with_demo, c, by="id")
+rps_all_data_with_demo <- merge(rps_all_data_with_demo, c, by="id")
 print(fisher.test(xtabs(~topChoice + pw_order, data=rps_all_data_with_demo)/30))
 print(fisher.test(xtabs(~topChoice + rps_order, data=rps_all_data_with_demo)/30))
 print("RESULT: Fisher test of both pw_order (p-value = 0.3572) and rps_order (p-value = 0.9743) did not affect top Advisor choice of participatnts ")
