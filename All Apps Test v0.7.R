@@ -890,6 +890,7 @@ print("RESULT: Cullen & Frey plot indicates a slight departure from normal distr
 
 print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.1T)----")
 print("from analysis of the aggregate means, they are in the expected order - most cooperative with the Human+AI and least cooperative with the AI")
+pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
 rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
 
 for (i in pw_ids) {
@@ -2278,6 +2279,7 @@ print("RESULT: Friedman test shows participants showed a significant difference 
 
 
 #--------------------RPS - Choice of Advisor by Adversary(H2.2)-------------
+
 #video #9 (tests of proportions)
 print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
@@ -2349,8 +2351,8 @@ print("RESULT: A CMH test showed a statistically significant dependence between 
 
 print("HELP: How do I code to determine whether Choice_of_Advisor varied across rounds, by Adversary? (i.e.compare (the slope of change across rounds) across adversaries")
 
-#--------------------RPS - Switch-Loss Analysis----------------
-switch_array <- rps_array
+#--------------------RPS - Switch-Loss Analysis (H2.4)----------------
+# switch_array <- rps_array
 
 rps_switch_df<-rps_long_ten_rounds
 rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
@@ -2366,34 +2368,39 @@ levels(rps_switch_df$prev_adversary) <- Adversary_list
 
 
 for (i in rps_ids){
-  print(i)
+
   for (j in Adversary_list){
-    print(j)
-    print(a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1))
+
+    a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1)
     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
-    print(b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1))
+    b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1)
     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
     c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
   }
 }
 rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
-# rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
+rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
 
 
+print("Switch-stay vs win/loss/draw")
+a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
+p <- ggplot(a, aes(x=Round, y=Freq))+
+  geom_col(position="dodge", aes(fill=switch))+
+  facet_grid(vars(prev_choice),vars(prev_outcome))
+print(p)
 print(a<- xtabs(~prev_outcome+switch, data=rps_switch_df))
 print(chisq.test(a))
-print("RESULT (characterization, not hypothesis): Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant relationship between participants' likelihood of switching advisor or staying with the same one based on their previous round outcome(loss, win, or draw) - which begs the further question: why did they switch?.")
+print("RESULT (characterization, not hypothesis): Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw. which begs the question: why did they switch?")
 
-# deleted because not interesing)
+# removed because not relevant
 # print(a<- xtabs(~prev_adversary+switch, data=rps_switch_df))
 # print(chisq.test(a))
-# print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their previous adversary.")
+# print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their  adversary.")
 # print(paste("Human-AI",chisq.test(a[-3,])["p.value"]))
 # print(paste("HAI-AI",chisq.test(a[-2,])["p.value"]))
 # print(paste("Human-HAI",chisq.test(a[-1,])["p.value"]))
 # print("post-hoc tests show the significant relationship is driven primarily by the Human+AI treatment")
-
 
 
 a<- xtabs(~prev_choice+switch+prev_outcome, data=rps_switch_df)
@@ -2401,81 +2408,70 @@ print("Loss frame only:")
 print(a[,,1])
 print(chisq.test(a[,,1]))
 print("RESULT: in the loss frame, there is significant relationship (X-squared = 18.282, df = 2, p-value = 0.0001072) between variation in the stay/switch decisions and the previous advisor type")
-print("METHOD - remove the human advisor since the counts are so low as to affect the result:")
+print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
 print(a[-2,,1])
 print(chisq.test(a[-2,,1]))
-print("RESULT: comparing the AI advisor to the 'no-advice' condition, there is still a significant relationship (X-squared = 6.4736, df = 1, p-value = 0.01095). ")
+print("RESULT:In the post-hoc pairwise comparison between the AI advisor and the 'no-advice' condition, there is still a significant relationship (X-squared = 6.4736, df = 1, p-value = 0.01095). ")
 print(a[-2,2,1]/rowSums(a[-2,,1]))
 print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
-print("BUT AMPLIFYING INFO WARRANTING MORE RESEARCH:")
+
+print("Although similar results exist in the win and draw frames:")
 print(a[-2,2,3]/rowSums(a[-2,,3]))
 print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor"))
 print(a[-2,2,2]/rowSums(a[-2,,2]))
 print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
-print("AND INDEED:")
-print(a<- xtabs(~prev_choice+switch, data=rps_switch_df)) #move this lower?
+print("and indeed previous choice seemed to matter more than previous outcome:")
+print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
 print(chisq.test(a))
-print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor")
+print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor, but:") #follow with friedman test
 
 b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
 print("Participant switched x percent of the time:")
 print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
 friedman.test(t(l))
 friedman.test(l)
-print("RESULT: there was not a statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome")
-
-print("Fix: chisq test (X-squared = 23.48782, df = 2, p-value = 0.000007937518) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their previous choice of advisor, regardless of a win or loss")
-print("Fix: post-hoc tests also showed that all previous choices of advisor had an effect on whether the participant switched or stayed.")
-print("Fix: post hoc tests show the differences in switching and staying are primarily in the win and loss frames, but that when a participant has a draw, their previous choice of advisor doesn't affect whether they switch or stay.")
-print("Fix: chisq test (X-squared = 7.6698859, df = 2, p-value = 0.02160257) showed a statistically signifciant relationship between whether a participant switched or stayed based on their adversary")
-print("Fix: Post-hoc chisq test (X-squared = 6.3197118, df = 1, p-value = 0.0119403) showed a statistically signifciant relationship between whether a participant sitched or stayed based on their adversary (Human vs Human+AI), and a finding of statistical interest (X-squared = 3.317602, df = 1, p-value = 0.06854174) between AI & Human+AI), but no statistically significant relationship between staying and switching between (Human and AI)")
-print("Fix: chisq test (X-squared = 10.295055, df = 10, p-value = 0.4149997) showed NO statistically signifciant relationship between whether a participant switched or stayed based on their adversary across ")
-print("Fix: Chisq tests by Win, Lose, or Draw do not show that adversary statistically affects switching, but the loss frame shows a finding of stastical interest: (X-squared = 4.6976168, df = 2, p-value = 0.09548287) ")
-print("Fix: post-hoc tests also showed non-statistically significant relationship between win/lost/draw switch and stay by adversary, but Human-HAI (Loss frame -> X-squared = 3.8131779, df = 1, p-value = 0.05085088) and the Human-HAI (Win frame -> X-squared = 2.9844016, df = 1, p-value = 0.08407036) were findings of statistical interest.")
-
-
+print("RESULT: there was NO statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome, and as shown before, it wasn't based on outcome alone...")
+print("This begs the quesiton: if it's not outcome, why did they switch? - future research!")
 
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
-#check for correlation with counterbalancing
+#move this higher because it adds the "top choice of advisor" to each row
+a<-as.data.frame(xtabs(~id+Choice_of_Advisor, data=rps_all_data_with_demo))
+b<- aggregate(.~id, data=a, FUN=max)
+c<- a[ifelse((a$Freq==b$Freq & a$id==b$id),TRUE, FALSE),]
+names(c)[2] <- "topChoice"
+c[,3] <- NULL
+#rps_all_data_with_demo <- merge(rps_all_data_with_demo, c, by="id")
+print(fisher.test(xtabs(~topChoice + pw_order, data=rps_all_data_with_demo)/30))
+print(fisher.test(xtabs(~topChoice + rps_order, data=rps_all_data_with_demo)/30))
+print("RESULT: Fisher test of both pw_order (p-value = 0.3572) and rps_order (p-value = 0.9743) did not affect top Advisor choice of participatnts ")
 
+#check for correlation with counterbalancing
+print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+pw_order, data = rps_all_data_with_demo)))
+print("RESULT: A CMH/Mantelhaen test on aggregate shows GAME ORDER counterbalancing (pw_order) DID NOT affect decision-making by adversary at p < .05")
+print("IS THIS CORRECT WAY OF DOING THIS?")
+
+
+
+print("usijng individual fisher tests for signficant variation (i.e. true or false) compared with variation in pw_order")
 rps_fisher_test$pw_order <- NA
 rps_fisher_test$rps_order <- NA
 for (i in rps_ids) {
     rps_fisher_test[rps_fisher_test$id==i,"pw_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$pw_order)
     rps_fisher_test[rps_fisher_test$id==i,"rps_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$rps_order)
 }
+print(fisher.test(xtabs(~All + pw_order, rps_fisher_test)))
+print("RESULT: A fisher test on the participants' pw_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
 
-
-# print(n<-xtabs(~  pw_order+Choice_of_Advisor , data = rps_all_data_with_demo))
-# print(l<-chisq.test(n))
-# print("Chi-sq test on aggregate shows GAME PLAY ORDER (pw_order) was correlated to differences in aggregate propensities for advisor choice in general, p < .01")
-# contrib <- 100*l$residuals^2/l$statistic
-# round(contrib, 0)
-# corrplot(contrib, is.cor=FALSE)
-# print("FURTHERMORE, the chi-sq test shows significance in GAME PLAY ORDER (pw_order) was primarly correlated to choices of AI, where people who played RPS second were significantly MORE LIKELY TO CHOOSE THE AI advisor than those who played it first, at p < .001, but...")
-# #mantelhaen only for binary predictor?
-print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+pw_order, data = rps_all_data_with_demo)))
-print("RESULT: A CMH/Mantelhaen test on aggregate shows GAME ORDER counterbalancing (pw_order) DID NOT affect decision-making by adversary at p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
-# print(fisher.test(xtabs(~All + pw_order, rps_fisher_test)))
-# print("RESULT: A fisher test on the participants' pw_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
-
-# print(n<-xtabs(~  rps_order+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(n<-xtabs(~  rps_order+Choice_of_Advisor , data = rps_all_data_with_demo))
+print(friedman.test(t(n)))
+print("Friedman test of RPS order (Friedman chi-squared = 3.301, df = 5, p-value = 0.6537) also showed no statistically significant difference")
 # print(l<-chisq.test(n))
 # print("Chi-sq test on aggregate shows RPS counterbalancing (rps_order) did affect decision-making IN GENERAL, p < .001, but")
-print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+rps_order, data = rps_all_data_with_demo)))
-print("A CMH/Mantelhaen test on aggregate shows RPS counterbalancing (rps_order) DID NOT affect decision-making by adversary at p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+rps_order, data = rps_all_data_with_demo)))
+# print("A CMH/Mantelhaen test on aggregate shows RPS counterbalancing (rps_order) DID NOT affect decision-making by adversary at p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 # print(fisher.test(xtabs(~All + rps_order, rps_fisher_test)))
 # print("RESULT: A fisher test on the participants' rps_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
-
-
-m <- glmer(Choice_of_Advisor ~ pw_order + rps_order + (1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
-print(Anova(m))
-print("RESULT: A generalized linear model shows no statistically significant effect of pw order or rps_order on choice of advisor")
-print("IS THIS CORRECT WAY OF DOING THIS?")
-
-
 
 #--------------------RPS - Demographics <-> Choices - Data Analysis-----------------
 # n <- demo_relevant_data
@@ -2486,77 +2482,113 @@ print("IS THIS CORRECT WAY OF DOING THIS?")
 # f2 <- paste0(colnames(n)[!colnames(n) %in% colnames(n[,c("id","All")])], collapse="+")
 # f <- as.formula(paste0(f1, f2, "+(1|id)"))
 # m <- glmer(f, data=n, family="binomial")
-m <- glmer(Choice_of_Advisor ~ machine_learning_experience + game_theory_experience +(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
-print(Anova(m))
-print("RESULT: A generalized linear model shows no statistically significant effect of machine_learning_experience + game_theory_experience on choice of advisor")
-print("IS THIS CORRECT WAY OF DOING THIS?")
-m <- glmer(Choice_of_Advisor ~gender+service+(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
-print(Anova(m))
-print("RESULT: A generalized linear model shows no statistically significant effect of gender+service on choice of advisor")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# m <- glmer(Choice_of_Advisor ~ machine_learning_experience + game_theory_experience +(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
+# print(Anova(m))
+# print("RESULT: A generalized linear model shows no statistically significant effect of machine_learning_experience + game_theory_experience on choice of advisor")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
+# m <- glmer(Choice_of_Advisor ~gender+service+(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
+# print(Anova(m))
+# print("RESULT: A generalized linear model shows no statistically significant effect of gender+service on choice of advisor")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 
-m <- glmer(Choice_of_Advisor ~years_military_experience+age+rank+school+(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
-print(Anova(m))
-print("RESULT: A generalized linear model shows no statistically significant effect of years_military_experience+age+rank+school+on choice of advisor")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# m <- glmer(Choice_of_Advisor ~years_military_experience+age+rank+school+(1|id), data=rps_all_data_with_demo, family=binomial(link="logit"))
+# print(Anova(m))
+# print("RESULT: A generalized linear model shows no statistically significant effect of years_military_experience+age+rank+school+on choice of advisor")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 
+print(n<-xtabs(~machine_learning_experience+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows self-reported AI EXPERIENCE was not correlated to choice of advisor at p < .05")
 
-# print(n<-xtabs(~  machine_learning_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
-# print(l<-chisq.test(n))
-# print("Chi-sq test on aggregate shows self-reported AI EXPERIENCE was correlated to decision-making, in general, p < .001")
-print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+machine_learning_experience, data = rps_all_data_with_demo)))
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# # print(n<-xtabs(~machine_learning_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
+# # print(l<-chisq.test(n))
+# # print("Chi-sq test on aggregate shows self-reported AI EXPERIENCE was correlated to decision-making, in general, p < .001")
+# print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+machine_learning_experience, data = rps_all_data_with_demo)))
+# print("IS THIS CORRECT WAY OF DOING THIS?")
+print(n<-xtabs(~game_theory_experience+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows self-reported game_theory_experience was not correlated to choice of advisor at p < .05")
 # print(n<-xtabs(~  game_theory_experience+Choice_of_Advisor , data = rps_all_data_with_demo))
 # print(chisq.test(n))
 # print("Chi-sq test on aggregate shows self-reported Game theory EXPERIENCE did not affect decision-making in general, p > .05")
-print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+game_theory_experience, data = rps_all_data_with_demo)))
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+game_theory_experience, data = rps_all_data_with_demo)))
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 
+print(n<-xtabs(~gender+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows self-reported gender was not correlated to choice of advisor at p < .05")
+# print(n<-xtabs(~  gender+Choice_of_Advisor , data = rps_all_data_with_demo))
+# print(chisq.test(n))
+# print("Chi-sq test on aggregate shows gender was correlated to Choice_of_Advisor, p < .05")
+# 
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+gender , data = rps_all_data_with_demo))
+# print(chisq.test(n[,1,]))
+# print(chisq.test(n[,2,]))
+# print(chisq.test(n[,3,]))
+# 
+# print(mantelhaen.test(n))
+# print("Chi-sq test on aggregate shows GENDER did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
+print(n<-xtabs(~age+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows age was correlated to choice of advisor at p < .05")
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+age , data = rps_all_data_with_demo))
+# print(mantelhaen.test(n))
+# print("CMH test on aggregate shows AGE did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+gender , data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("Chi-sq test on aggregate shows GENDER did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+age , data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("CMH test on aggregate shows AGE did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
-
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+years_military_experience , data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("CMH test on aggregate shows YEARS MIL EXP did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+print(n<-xtabs(~years_military_experience+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows self-reported years_military_experience was not correlated to choice of advisor at p < .05")
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+years_military_experience , data = rps_all_data_with_demo))
+# print(mantelhaen.test(n))
+# print("CMH test on aggregate shows YEARS MIL EXP did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 # print(chisq.test(n))
 # print("Chi-sq test on aggregate shows YEARS OF MILITARY EXPERIENCE did affect decision-making in general, p < .01")
 # print(n<-xtabs(~  years_military_experience+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
 
-
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+rank , data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("CMH test on aggregate shows RANK did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+print(n<-xtabs(~rank+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows ramk was not correlated to choice of advisor at p < .05")
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+rank , data = rps_all_data_with_demo))
+# print(mantelhaen.test(n))
+# print("CMH test on aggregate shows RANK did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 # print(chisq.test(n))
 # print("Chi-sq test on aggregate shows RANK did affect decision-making in general, p < .05")
 # print(n<-xtabs(~  rank+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
 
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+school , data = rps_all_data_with_demo))
+print(n<-xtabs(~school+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows school was not correlated to choice of advisor at p < .05")
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+school , data = rps_all_data_with_demo))
 # print(chisq.test(n))
 # print("Chi-sq test on aggregate shows SCHOOL did affect decision-making in general, p < .01")
 # print(n<-xtabs(~  school+Choice_of_Advisor+Adversary , data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("CMH test on aggregate shows SCHOOL did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+# print(mantelhaen.test(n))
+# print("CMH test on aggregate shows SCHOOL did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 # print(n<-xtabs(~  service+Choice_of_Advisor , data = rps_all_data_with_demo))
 # print(chisq.test(n))
 # print("Chi-sq test on aggregate shows SERVICE did affect decision-making in general, p < .01")
-print(n<-xtabs(~  Choice_of_Advisor+Adversary+service, data = rps_all_data_with_demo))
-print(mantelhaen.test(n))
-print("CMH test on aggregate shows SERVICE did not affect decision-making BY ADVERASRY, p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
+print(n<-xtabs(~service+topChoice , data = rps_all_data_with_demo)/30)
+print(l<-fisher.test(n))
+print("FIsher test on top Choice shows service was not correlated to choice of advisor at p < .05")
+
+# print(n<-xtabs(~  Choice_of_Advisor+Adversary+service, data = rps_all_data_with_demo))
+# print(mantelhaen.test(n))
+# print("CMH test on aggregate shows SERVICE did not affect decision-making BY ADVERASRY, p < .05")
+# print("IS THIS CORRECT WAY OF DOING THIS?")
 #m <- glmer(Choice_of_Advisor ~machine_learning_experience +(1|id), data=rps_all_data_with_demo)
 #--------------------RPS - Decision Time <-> Choices - Data Analysis-----------------
 
-p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   
+  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   
+  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   
+  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ 
+  scale_x_continuous(limits = c(0, 25))+
+  labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
@@ -2570,12 +2602,14 @@ print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
-print(chisq.test(xtabs(~Choice_of_Advisor + seconds_on_page, data=rps_all_data_with_demo)))
-print("RESULT: Chisq test shows a signifciant relationship between decision time and Choice of Advisor at p < .001")
-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",]$seconds_on_page)
-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",]$seconds_on_page)
-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",]$seconds_on_page)
-print("RESULT: Decisions to use the AI advisor were on average 1 second faster than those which made own choices or chose the human. This could be due to the placement of the buttons on the page, but still relevant" )
+
+
+
+a<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",]$seconds_on_page)
+b<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",]$seconds_on_page)
+c<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",]$seconds_on_page)
+d<-Anova(lm(seconds_on_page~Choice_of_Advisor, data=rps_all_data_with_demo))
+print(paste0("RESULT: Decisions to use the AI advisor (",round(b,2),"s) were on average ",round(mean(a,c)-b, 2)," second(s) faster than those which made own choices (",round(c,2),"s) or chose the human (",round(a,2),"s) (p<0.01). This could be due to the placement of the buttons on the page, but still relevant. " ))
 
 #--------------------Multi-Game - Data Analyses-----------------
 print("--------------------Multi-Game Analyses-----------------")
