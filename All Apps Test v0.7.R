@@ -202,7 +202,7 @@ for (i in time_data$id) {
 time_data$id <- as.factor(time_data$id)
 time_data[time_data$app_name == "prisoner_multiplayer_2",]$app_name <- "prisoner_multiplayer"
 
-#--------------------PW - data Transformation---------
+#--------------------IPD - data Transformation---------
 pw_ids <- subset(new_data, select=participant.label)
 pw_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_.*$', names(new_data))])
 pw_vs_human_cols <- bind_cols(pw_ids, new_data[grepl('^prisoner.*decision_vs_adv_1$', names(new_data))]) #get pw_vs_human choices as a df row:player, col:colnames
@@ -311,7 +311,7 @@ Choice_list <- c("Peace", "War")
 pw_cols_peace_by_id <- as.data.frame.matrix(xtabs(~ id + Adversary, data = pw_cols[pw_cols$Choice=="Peace",])) #is this used?
 pw_cols_by_id <- as.data.frame(xtabs(~id + Adversary + Choice, data = pw_cols)) #is this used?
 
-#--------------------PW - Machine Learning/NNET/TFT section--------------------
+#--------------------IPD - Machine Learning/NNET/TFT section--------------------
 
 # 
 # r <-	1
@@ -660,7 +660,7 @@ rps_long_ten_rounds$Round <- substrRight(rps_long_ten_rounds$Round, 1)
 rps_long_ten_rounds[rps_long_ten_rounds$Round == "0",]$Round <- 10
 rps_long_ten_rounds$Round <- as.integer(rps_long_ten_rounds$Round)
 
-#--------------------Demographics - Data Transformation & Merge w/PW & RPS----------------------
+#--------------------Demographics - Data Transformation & Merge w/IPD & RPS----------------------
 demo_ids <- subset(new_data, select=participant.label) #
 demo_data <- bind_cols(demo_ids, new_data[grepl('^post_game_survey.1.player.*$', names(new_data))]) #bind ids with data
 # need to check pervious line to make sure it doesn't mix them up!
@@ -780,8 +780,8 @@ write.csv(demo_data, "demo_data.csv")
 
 
 
-#------------********PW Analyses********--------------
-#--------------------PW - Initial Data Characterization-----------------
+#------------********IPD Analyses********--------------
+#--------------------IPD - Initial Data Characterization-----------------
 print("----------------------------PW analysis-----------------------------")
 print("")
 print("         --PW: Aggregate Observed Choices--")
@@ -836,7 +836,7 @@ print("RESULT: A Shapiro test on the residuals of the peace choices shows the da
 print("IMPLICATION: Can use parametric tests.")
 
 
-#--------------------PW - Round 1 Data Analyses (H1.1)-----------------
+#--------------------IPD - Round 1 Data Analyses (H1.1)-----------------
 print("------------------------PW Round 1 Analyses (H1.1)------------------------")
 
 #which one of these is most appropriate to use?
@@ -858,10 +858,18 @@ print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw
 print("H1.1.2T - fail to reject no variation")
 print(paste("RESULT: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
 
-#--------------------PW - Strategic Decisions Data Analysis (H1.2)-----------------
+#--------------------IPD - Strategic Decisions Data Analysis (H1.2)-----------------
 print("-------------------IPD: Strategic Decision-making Analyses (H1.2)------------------")
 print("       ----IPD: Strategic (All round) Choices (aggregate) - insert as table----")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
+a<-as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo))
+a<-a[a$my.decision==1,]
+p <- ggplot(a, aes(x=Adversary, y=Freq,color=Adversary))+
+  geom_boxplot()+
+  labs(title="PW-Aggregate Cooperation by adversary", y="Cooperation", x = "Adversary")
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 print("       ----IPD: Sample Distribution Characterization----")
 p<- ggplot(pw_df_1, aes(x=Freq))+
@@ -1627,408 +1635,421 @@ for (i in pw_ids) {
 
 
 
-#--------------------REMOVE - IPD - Memory Probability Analysis ---------------
-print(" ---IPD: Cooperation BY ROUND and competitor---")
-
-pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
-pw_df <- pw_df[pw_df$my.decision==1,]
-pw_df$period <- as.numeric(pw_df$period)
-a<- as.data.frame(matrix(NA, nrow=10, ncol=3))
-names(a) <- names(pw_df)[-4]
-a$period <- c(1:10)
-a$Adversary <- "Agg"
-n<- aggregate(Freq ~period, data=pw_df, FUN=sum)
-a<- merge(a,n, by="period")
-a$ratio <- a$Freq/(3*length(pw_ids))
-pw_df$ratio <- pw_df$Freq/(length(pw_ids))
-pw_df <- rbind(pw_df, a)
-pw_df$Adv_delta <- 0.05
-pw_df[pw_df$Adversary=="AI",]$Adv_delta <- (ai_adv_choices-.5)/10
-pw_df[pw_df$Adversary=="Human",]$Adv_delta <- (human_adv_choices-.5)/10
-pw_df[pw_df$Adversary=="Human+AI",]$Adv_delta <- (hai_adv_choices-.5)/10
-pw_df[pw_df$Adversary=="Agg",]$Adv_delta <- NA
-
-p<- ggplot(data=pw_df, aes(x=period, y=ratio, group="Adversary"))+  geom_point(aes(color=Adversary)) +
-  #geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  geom_line(aes(group=Adversary, color=Adversary, size=Adversary))+ 
-  scale_size_manual(values = c(0.5, 0.5, 0.5, 1))+
-  scale_color_manual(values = c("red","green","blue","black"))+
-  labs(title="IPD - Cooperation Choices by Round and Competitor",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
-  geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary), alpha=0.5,
-               arrow = arrow(length = unit(0.1,"cm")))
-
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("need to make aggregate a bold black line")
-print("RESULT: INTERESTING - It appears the AI responses mostly (all but 1) followed the adv's previous round's coop/defect (i.e. the aggregate memory is mem-1 and akin to TFT), but for BOTH the human and human+AI, the responses mostly differed or ignored (5/10 or 5/9) the adv's previous round coop/defect decision ")
-
-print("")
-# a context is a condition.  Memory is how many previous turns
-#mem0
-mem0_df <- as.data.frame(xtabs(~Adversary+id+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id, data=mem0_df, FUN=sum)
-names(a)[3] <- "context"
-mem0_df <- merge(a, mem0_df)
-
-#mem1
-mem1_df <- as.data.frame(xtabs(~Adversary+id+other.decision1+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+other.decision1, data=mem1_df, FUN=sum)
-names(a)[4] <- "context"
-mem1_df <- merge(a, mem1_df)
-
-#mem0+1 (only participant's previous choice - should catch ALLD, AllC)
-mem0plus1_df <- as.data.frame(xtabs(~Adversary+id+my.decision1+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+my.decision1, data=mem0plus1_df, FUN=sum)
-names(a)[4] <- "context"
-mem0plus1_df <- merge(a, mem0plus1_df)
-
-#mem2 
-mem2_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1, data=mem2_df, FUN=sum)
-names(a)[5] <- "context"
-mem2_df <- merge(a, mem2_df)
-
-mem1_plus_1_df<-as.data.frame(xtabs(~Adversary+id+other.decision2+other.decision1+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+other.decision2+other.decision1, data=mem1_plus_1_df, FUN=sum)
-names(a)[5] <- "context"
-mem1_plus_1_df <- merge(a, mem1_plus_1_df)
-
-#mem3 
-mem3_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+other.decision2+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1+other.decision2, data=mem3_df, FUN=sum)
-names(a)[6] <- "context"
-mem3_df <- merge(a, mem3_df)
-
-
-#mem4 
-mem4_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+other.decision2+my.decision2+my.decision, data=pw_all_data_with_demo))
-a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1+other.decision2+my.decision2, data=mem4_df, FUN=sum)
-names(a)[7] <- "context"
-mem4_df <- merge(a, mem4_df)
-
-#mem_df is a dataframe, by id & ddversary of the fisher test p.values of each of the contexts for that memory level
-mem_df <- NULL
-mem_df <- data.frame(rep(pw_ids,3))
-names(mem_df) <- "id"
-mem_df$Adversary <- "H"
-for (i in pw_ids) {
-  mem_df[mem_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
-}
-mem_df$mem0 <- NA
-mem_df$mem0plus1
-mem_df$mem1 <- NA
-mem_df$mem1plus1
-mem_df$mem2 <- NA
-mem_df$mem3 <- NA
-mem_df$mem4 <- NA
+# #--------------------REMOVE or keep as further research - IPD - Memory Probability Analysis ---------------
+# print(" ---IPD: Cooperation BY ROUND and competitor---")
 # 
-for (i in pw_ids) {
-  #   #print(i)
-  for (j in Adversary_list) {
-    # l<- matrix(mem0_df[mem0_df$Adversary==i,]$Freq, nrow=length(mem0_df[mem0_df$Adversary==i,]$Freq)/2)
-    # q <- fisher.test(l)
-    # mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- q$p.value
-    t <- fisher.test(mem0_df[mem0_df$id==i & mem0_df$Adversary==j, c("Freq","context")])
-    mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- t$p.value
-    t <- fisher.test(mem1_df[mem1_df$id==i & mem1_df$Adversary==j, c("Freq","context")])
-    mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem1 <- t$p.value
-    t <- fisher.test(mem2_df[mem2_df$id==i & mem2_df$Adversary==j, c("Freq","context")])
-    mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem2 <- t$p.value
-    t <- fisher.test(mem3_df[mem3_df$id==i & mem3_df$Adversary==j, c("Freq","context")])
-    mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem3 <- t$p.value
-    t <- fisher.test(mem4_df[mem4_df$id==i & mem4_df$Adversary==j, c("Freq","context")])
-    mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem4 <- t$p.value
-    
-    
-    #     e_temp <- e[,,adv,i]
-    #     e_temp <- e_temp[complete.cases(e_temp),]
-    #     o<-fisher.test(e_temp)
-    #     if(length(which(colSums(c[,,adv,i])==0))) {
-    #       mem_df[mem_df$id==i & mem_df$Adversary==adv,]$mem0 <- 0
-    #       #print(paste(adv,"Mem0: True"))
-    #     } else {
-    #       mem_df[mem_df$id==i & mem_df$Adversary==adv,]$mem0 <- 1
-    #     }
-    # 
-  }
-}
-#print(mem_df[with(mem_df, order(id)),])
-
-mem_df_1 <- NULL
-mem_df_1 <- data.frame(rep(pw_ids,3))
-names(mem_df_1) <- "id"
-mem_df_1$Adversary <- "H"
-for (i in pw_ids) {
-  mem_df_1[mem_df_1$id==i,]$Adversary <- c("Human","AI","Human+AI")
-}
-mem_df_1$mem0 <- NA
-mem_df_1$mem0plus1 <- NA
-mem_df_1$mem1and1 <- NA
-
-mem_df_1$mem1 <- NA
-mem_df_1$mem2 <- NA
-mem_df_1$mem1plus1 <- NA
-mem_df_1$mem3 <- NA
-mem_df_1$mem4 <- NA
-# 
-for (i in pw_ids) {
-  #   #print(i)
-  for (j in Adversary_list) {
-    # l<- matrix(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq, nrow=length(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq)/2)
-    # q <- fisher.test(l)
-    # mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- q$p.value
-    
-    l<- matrix(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq, nrow=length(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq)/2)
-    q <- fisher.test(l)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1 <- q$p.value
-    
-    m<- matrix(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq, nrow=length(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq)/2)
-    
-    q <- fisher.test(m)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0plus1 <- q$p.value
-    
-    # q <- fisher.test(rbind(l,m))
-    # mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1and1 <- q$p.value
-    # 
-    l<- matrix(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq, nrow=length(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq)/2)
-    q <- fisher.test(l)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem2 <- q$p.value
-    
-    l<- matrix(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq, nrow=length(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq)/2)
-    q <- fisher.test(l)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1plus1 <- q$p.value
-    
-    l<- matrix(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq, nrow=length(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq)/2)
-    q <- fisher.test(l)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem3 <- q$p.value
-    
-    
-    l<- matrix(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq, nrow=length(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq)/2)
-    q <- fisher.test(l)
-    mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem4 <- q$p.value
-    
-    if (mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq[1] %in% c(0,10)) {
-      mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 0
-    } else {
-      mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 1
-    }
-    
-  }
-}
-print(mem_df_1)
-
-#memory-1
-a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
-a$id <- NULL
-for (i in Adversary_list){
-  print(a[a$Adversary==i,])
-  print(b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2))
-  print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
-  print(chisq.test(b))
-  print(CramerV(a[a$Adversary==i,c("context","Freq")]))
-  print(cor(a[a$Adversary==i,c("context","Freq")], method="spearman"))
-  
-}
-print("RESULT: Play vs the AI was SIGNIFICANTLY a memory-one strategy, but not vs Human and Human+AI - see Figure X, PW - cooperation Choices by Round and Adverasry (i.e. ratio of choices), although the Human condition was a finding of statistical interest at (p<0.1)")
-
-
-#aggregate mem1
-a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
-a$id <- NULL
-for (i in Adversary_list){
-  b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
-  # print(b)
-  print(paste(i,chisq.test(b)["p.value"]))
-  # print(CramerV(b))
-  
-}
-print("RESULT: H and AI treatments showed significance at p <0.05 but HAI was n.s.")
-
-#mem0+1
-a<- aggregate(. ~ Adversary+my.decision1+my.decision, data=mem0plus1_df, FUN=sum)
-a$id <- NULL
-for (i in Adversary_list){
-  b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
-  # c<- a[a$Adversary==i,c("context","Freq")]
-  # print(b)
-  # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
-  print(paste(i,fisher.test(b)["p.value"])) #wilcox?
-  # print(CramerV(b))
-  
-}
-print("RESULT: All treatments showed significance in memory 0+1 (previous participant choice).")
-
-#mem2
-a<- aggregate(. ~ Adversary+other.decision1+my.decision1+my.decision, data=mem2_df, FUN=sum)
-a$id <- NULL
-for (i in Adversary_list){
-  b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
-  # c<- a[a$Adversary==i,c("context","Freq")]
-  # print(b)
-  # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
-  print(paste(i,fisher.test(b)["p.value"])) #wilcox?
-  # print(CramerV(b))
-  
-}
-print("RESULT: All treatments showed significance in memory 2 (other.decision1 and my.decision1)")
-
-a<- aggregate(. ~ Adversary+other.decision1+other.decision2+my.decision, data=mem1_plus_1_df, FUN=sum)
-a$id <- NULL
-for (i in Adversary_list){
-  b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
-  # c<- a[a$Adversary==i,c("context","Freq")]
-  # print(b)
-  # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
-  print(paste(i,fisher.test(b)["p.value"])) #wilcox?
-  # print(CramerV(b))
-}
-print("RESULT: Context vs Human and AI was again SIGNIFICANT in memory-1+1 (last two adversary choices), with Human+AI being n.s.")
-
-print("H1.2.5T - reject the null (that memory will not vary) - because HAI treatment is n.s. in cases which do not involve participant's previous choice")
-
-
-#--------------------REMOVE - PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
-print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
-pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
-pw_df <- pw_df[pw_df$my.decision==1,]
-pw_df$period <- as.numeric(pw_df$period)
-p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="IPD - Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-# print(p)
-print("RESULT: From the plot, it appeares the group of participants who defected in round 1 (0 in this plot) had little variance across rounds, but that the initial cooperator-group (coop, 1 in this graph) varied markedly.")
-
-print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
-print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
-print("RESULT: A Chi-sq test on the aggregate cooperate decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of cooperate Choices across all adversaries) are statistically dependent at p < .0001 (.05), so we conduct a...")
-print("")
-
-# print(kruskal.test(my.decision ~ my.round1decision, data=pw_all_data_with_demo))
-# print("RESULT: A Kruskal-Wallis test on the aggregate Peace decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of Peace Choices across all adversaries) are statistically dependent at p < .0001 (.05), so we conduct a RMLR...")
-# print("")
-# 
-# m <- glmer(my.decision ~ my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
-# # print(summary(m))
-# print(Anova(m, type="3"))
-# print("RESULT: A Repeated Measures Logisitic Regression (RMLR) shows that ROUND1 decision is statistically significant to variation in overall strategic gameplay (p <.01) ")
-# print("")
-print("IMPLICATION: Non-parametric analyses of Round 1 decisions show a strong statistical correlation to a participant's gameplay across rounds.")
-# m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
-# # print(summary(m))
-# print(Anova(m, type="3"))
-# print("RESULT: A Repeated Measures Logisitic Regression (RMLR) shows that when analyzed along with Adversary, my.decision1, and other.decision1, ROUND1 decision is a FINDING OF STATISTICALY INTEREST (p <.10) but is NOT STATISTICALLY SIGNIFICANT at p <.05.")
-
-
-
-
-print("        ---PW: Is ROUND ONE decision correlated to variation in strategic decisions BY COMPETITOR?")
-
-print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,2])
-print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,2]))
-print("RESULT: A Chi-Sq test of Aggregate cooperate decisions by competitor and round1 choice shows statistically significant variation in cooperateiveness (by competitor and Round 1 decision) at p <.05. So, we segregate the data by round 1 defectors and round 1 cooperators)...")
-
-print(" -- Aggregate choices of Round 1 Defectors")
-print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
-
-pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
-pw_df$period <- as.numeric(as.character(pw_df$period))
-pw_df$my.decision <- as.numeric(as.character(pw_df$my.decision))
-pw_df <- pw_df[pw_df$my.decision==1,]
-#pw_df$Freq <- pw_df[pw_df$my.decision==1,]$Freq/(pw_df[pw_df$my.decision==1,]$Freq+pw_df[pw_df$my.decision==0,]$Freq)
+# pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
+# pw_df <- pw_df[pw_df$my.decision==1,]
 # pw_df$period <- as.numeric(pw_df$period)
-p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  
-  geom_point(aes(color=Adversary))+
-  geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  labs(title="IPD-Round 1 Defectors: Cooperate Choices by Round and Adversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ scale_y_discrete(limits=c(0:10))+theme(plot.title = element_text(size=14), legend.title = element_text(size=8), legend.position = c(0.2, 0.8))#or use method="lm instead of auto"
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("")
+# a<- as.data.frame(matrix(NA, nrow=10, ncol=3))
+# names(a) <- names(pw_df)[-4]
+# a$period <- c(1:10)
+# a$Adversary <- "Agg"
+# n<- aggregate(Freq ~period, data=pw_df, FUN=sum)
+# a<- merge(a,n, by="period")
+# a$ratio <- a$Freq/(3*length(pw_ids))
+# pw_df$ratio <- pw_df$Freq/(length(pw_ids))
+# pw_df <- rbind(pw_df, a)
+# pw_df$Adv_delta <- 0.05
+# pw_df[pw_df$Adversary=="AI",]$Adv_delta <- (ai_adv_choices-.5)/10
+# pw_df[pw_df$Adversary=="Human",]$Adv_delta <- (human_adv_choices-.5)/10
+# pw_df[pw_df$Adversary=="Human+AI",]$Adv_delta <- (hai_adv_choices-.5)/10
+# pw_df[pw_df$Adversary=="Agg",]$Adv_delta <- NA
+# 
+# p<- ggplot(data=pw_df, aes(x=period, y=ratio, group="Adversary"))+  geom_point(aes(color=Adversary)) +
+#   #geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   geom_line(aes(group=Adversary, color=Adversary, size=Adversary))+ 
+#   scale_size_manual(values = c(0.5, 0.5, 0.5, 1))+
+#   scale_color_manual(values = c("red","green","blue","black"))+
+#   labs(title="IPD - Cooperation Choices by Round and Competitor",x="Round", y = "Ratio of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ylim(0,1)+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+
+#   geom_segment(aes(xend = period+.25, yend = ratio+Adv_delta, color=Adversary), alpha=0.5,
+#                arrow = arrow(length = unit(0.1,"cm")))
+# 
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# print("need to make aggregate a bold black line")
+# print("RESULT: INTERESTING - It appears the AI responses mostly (all but 1) followed the adv's previous round's coop/defect (i.e. the aggregate memory is mem-1 and akin to TFT), but for BOTH the human and human+AI, the responses mostly differed or ignored (5/10 or 5/9) the adv's previous round coop/defect decision ")
+# 
+# print("")
+# # a context is a condition.  Memory is how many previous turns
+# #mem0
+# mem0_df <- as.data.frame(xtabs(~Adversary+id+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id, data=mem0_df, FUN=sum)
+# names(a)[3] <- "context"
+# mem0_df <- merge(a, mem0_df)
+# 
+# #mem1
+# mem1_df <- as.data.frame(xtabs(~Adversary+id+other.decision1+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+other.decision1, data=mem1_df, FUN=sum)
+# names(a)[4] <- "context"
+# mem1_df <- merge(a, mem1_df)
+# 
+# #mem0+1 (only participant's previous choice - should catch ALLD, AllC)
+# mem0plus1_df <- as.data.frame(xtabs(~Adversary+id+my.decision1+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+my.decision1, data=mem0plus1_df, FUN=sum)
+# names(a)[4] <- "context"
+# mem0plus1_df <- merge(a, mem0plus1_df)
+# 
+# #mem2 
+# mem2_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1, data=mem2_df, FUN=sum)
+# names(a)[5] <- "context"
+# mem2_df <- merge(a, mem2_df)
+# 
+# mem1_plus_1_df<-as.data.frame(xtabs(~Adversary+id+other.decision2+other.decision1+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+other.decision2+other.decision1, data=mem1_plus_1_df, FUN=sum)
+# names(a)[5] <- "context"
+# mem1_plus_1_df <- merge(a, mem1_plus_1_df)
+# 
+# #mem3 
+# mem3_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+other.decision2+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1+other.decision2, data=mem3_df, FUN=sum)
+# names(a)[6] <- "context"
+# mem3_df <- merge(a, mem3_df)
+# 
+# 
+# #mem4 
+# mem4_df<-as.data.frame(xtabs(~Adversary+id+my.decision1+other.decision1+other.decision2+my.decision2+my.decision, data=pw_all_data_with_demo))
+# a<- aggregate(Freq~Adversary+id+other.decision1+my.decision1+other.decision2+my.decision2, data=mem4_df, FUN=sum)
+# names(a)[7] <- "context"
+# mem4_df <- merge(a, mem4_df)
+# 
+# #mem_df is a dataframe, by id & ddversary of the fisher test p.values of each of the contexts for that memory level
+# mem_df <- NULL
+# mem_df <- data.frame(rep(pw_ids,3))
+# names(mem_df) <- "id"
+# mem_df$Adversary <- "H"
+# for (i in pw_ids) {
+#   mem_df[mem_df$id==i,]$Adversary <- c("Human","AI","Human+AI")
+# }
+# mem_df$mem0 <- NA
+# mem_df$mem0plus1
+# mem_df$mem1 <- NA
+# mem_df$mem1plus1
+# mem_df$mem2 <- NA
+# mem_df$mem3 <- NA
+# mem_df$mem4 <- NA
+# # 
+# for (i in pw_ids) {
+#   #   #print(i)
+#   for (j in Adversary_list) {
+#     # l<- matrix(mem0_df[mem0_df$Adversary==i,]$Freq, nrow=length(mem0_df[mem0_df$Adversary==i,]$Freq)/2)
+#     # q <- fisher.test(l)
+#     # mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- q$p.value
+#     t <- fisher.test(mem0_df[mem0_df$id==i & mem0_df$Adversary==j, c("Freq","context")])
+#     mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem0 <- t$p.value
+#     t <- fisher.test(mem1_df[mem1_df$id==i & mem1_df$Adversary==j, c("Freq","context")])
+#     mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem1 <- t$p.value
+#     t <- fisher.test(mem2_df[mem2_df$id==i & mem2_df$Adversary==j, c("Freq","context")])
+#     mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem2 <- t$p.value
+#     t <- fisher.test(mem3_df[mem3_df$id==i & mem3_df$Adversary==j, c("Freq","context")])
+#     mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem3 <- t$p.value
+#     t <- fisher.test(mem4_df[mem4_df$id==i & mem4_df$Adversary==j, c("Freq","context")])
+#     mem_df[mem_df$id==i & mem_df$Adversary==j,]$mem4 <- t$p.value
+#     
+#     
+#     #     e_temp <- e[,,adv,i]
+#     #     e_temp <- e_temp[complete.cases(e_temp),]
+#     #     o<-fisher.test(e_temp)
+#     #     if(length(which(colSums(c[,,adv,i])==0))) {
+#     #       mem_df[mem_df$id==i & mem_df$Adversary==adv,]$mem0 <- 0
+#     #       #print(paste(adv,"Mem0: True"))
+#     #     } else {
+#     #       mem_df[mem_df$id==i & mem_df$Adversary==adv,]$mem0 <- 1
+#     #     }
+#     # 
+#   }
+# }
+# #print(mem_df[with(mem_df, order(id)),])
+# 
+# mem_df_1 <- NULL
+# mem_df_1 <- data.frame(rep(pw_ids,3))
+# names(mem_df_1) <- "id"
+# mem_df_1$Adversary <- "H"
+# for (i in pw_ids) {
+#   mem_df_1[mem_df_1$id==i,]$Adversary <- c("Human","AI","Human+AI")
+# }
+# mem_df_1$mem0 <- NA
+# mem_df_1$mem0plus1 <- NA
+# mem_df_1$mem1and1 <- NA
+# 
+# mem_df_1$mem1 <- NA
+# mem_df_1$mem2 <- NA
+# mem_df_1$mem1plus1 <- NA
+# mem_df_1$mem3 <- NA
+# mem_df_1$mem4 <- NA
+# # 
+# for (i in pw_ids) {
+#   #   #print(i)
+#   for (j in Adversary_list) {
+#     # l<- matrix(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq, nrow=length(mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq)/2)
+#     # q <- fisher.test(l)
+#     # mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- q$p.value
+#     
+#     l<- matrix(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq, nrow=length(mem1_df[mem1_df$id==i & mem1_df$Adversary==j,]$Freq)/2)
+#     q <- fisher.test(l)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1 <- q$p.value
+#     
+#     m<- matrix(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq, nrow=length(mem0plus1_df[mem0plus1_df$id==i & mem0plus1_df$Adversary==j,]$Freq)/2)
+#     
+#     q <- fisher.test(m)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0plus1 <- q$p.value
+#     
+#     # q <- fisher.test(rbind(l,m))
+#     # mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1and1 <- q$p.value
+#     # 
+#     l<- matrix(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq, nrow=length(mem2_df[mem2_df$id==i & mem2_df$Adversary==j,]$Freq)/2)
+#     q <- fisher.test(l)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem2 <- q$p.value
+#     
+#     l<- matrix(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq, nrow=length(mem1_plus_1_df[mem1_plus_1_df$id==i & mem1_plus_1_df$Adversary==j,]$Freq)/2)
+#     q <- fisher.test(l)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem1plus1 <- q$p.value
+#     
+#     l<- matrix(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq, nrow=length(mem3_df[mem3_df$id==i & mem3_df$Adversary==j,]$Freq)/2)
+#     q <- fisher.test(l)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem3 <- q$p.value
+#     
+#     
+#     l<- matrix(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq, nrow=length(mem4_df[mem4_df$id==i & mem4_df$Adversary==j,]$Freq)/2)
+#     q <- fisher.test(l)
+#     mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem4 <- q$p.value
+#     
+#     if (mem0_df[mem0_df$id==i & mem0_df$Adversary==j,]$Freq[1] %in% c(0,10)) {
+#       mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 0
+#     } else {
+#       mem_df_1[mem_df_1$id==i & mem_df_1$Adversary==j,]$mem0 <- 1
+#     }
+#     
+#   }
+# }
+# print(mem_df_1)
+# 
+# #memory-1
+# a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
+# a$id <- NULL
+# for (i in Adversary_list){
+#   print(a[a$Adversary==i,])
+#   print(b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2))
+#   print(chisq.test(a[a$Adversary==i,c("context","Freq")]))
+#   print(chisq.test(b))
+#   print(CramerV(a[a$Adversary==i,c("context","Freq")]))
+#   print(cor(a[a$Adversary==i,c("context","Freq")], method="spearman"))
+#   
+# }
+# print("RESULT: Play vs the AI was SIGNIFICANTLY a memory-one strategy, but not vs Human and Human+AI - see Figure X, PW - cooperation Choices by Round and Adverasry (i.e. ratio of choices), although the Human condition was a finding of statistical interest at (p<0.1)")
+# 
+# 
+# #aggregate mem1
+# a<- aggregate(. ~ Adversary+other.decision1+my.decision, data=mem1_df, FUN=sum)
+# a$id <- NULL
+# for (i in Adversary_list){
+#   b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
+#   # print(b)
+#   print(paste(i,chisq.test(b)["p.value"]))
+#   # print(CramerV(b))
+#   
+# }
+# print("RESULT: H and AI treatments showed significance at p <0.05 but HAI was n.s.")
+# 
+# #mem0+1
+# a<- aggregate(. ~ Adversary+my.decision1+my.decision, data=mem0plus1_df, FUN=sum)
+# a$id <- NULL
+# for (i in Adversary_list){
+#   b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
+#   # c<- a[a$Adversary==i,c("context","Freq")]
+#   # print(b)
+#   # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
+#   print(paste(i,fisher.test(b)["p.value"])) #wilcox?
+#   # print(CramerV(b))
+#   
+# }
+# print("RESULT: All treatments showed significance in memory 0+1 (previous participant choice).")
+# 
+# #mem2
+# a<- aggregate(. ~ Adversary+other.decision1+my.decision1+my.decision, data=mem2_df, FUN=sum)
+# a$id <- NULL
+# for (i in Adversary_list){
+#   b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
+#   # c<- a[a$Adversary==i,c("context","Freq")]
+#   # print(b)
+#   # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
+#   print(paste(i,fisher.test(b)["p.value"])) #wilcox?
+#   # print(CramerV(b))
+#   
+# }
+# print("RESULT: All treatments showed significance in memory 2 (other.decision1 and my.decision1)")
+# 
+# a<- aggregate(. ~ Adversary+other.decision1+other.decision2+my.decision, data=mem1_plus_1_df, FUN=sum)
+# a$id <- NULL
+# for (i in Adversary_list){
+#   b<- matrix(a[a$Adversary==i,]$Freq, nrow=length(a[a$Adversary==i,]$Freq)/2)
+#   # c<- a[a$Adversary==i,c("context","Freq")]
+#   # print(b)
+#   # print(paste(i,chisq.test(c)["p.value"])) #use kruskal test  for paired
+#   print(paste(i,fisher.test(b)["p.value"])) #wilcox?
+#   # print(CramerV(b))
+# }
+# print("RESULT: Context vs Human and AI was again SIGNIFICANT in memory-1+1 (last two adversary choices), with Human+AI being n.s.")
+# 
+# print("H1.2.5T - reject the null (that memory will not vary) - because HAI treatment is n.s. in cases which do not involve participant's previous choice")
+# 
 
-print(chisq.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,])))
-# print(fisher.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,])))
-print("RESULT: Overall cooperation by competitor a chisq test is siginificant at p <.05 .")
-# pw_r1_defectors <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
-# print(friedman.test(Freq~Adversary|id,data=pw_r1_defectors[pw_r1_defectors$my.decision=="Peace",]))
-# print("NOTE: INTERESTING:")
-# print("RESULT: A Friedman test shows that those that Round 1 defectors (chose WAR on the first round) DID NOT SHOW a statistically significant difference in gameplay by adversary at p <.05.")
-
-print("---PW: Repeated Measures Logistic Regression on ROUND ONE DEFECTORS---\n")
-print("NO - RMLR doesn' work on multinomial comparison")
-# m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,], family=binomial)
-# print(summary(m))
-# print(Anova(m, type="3"))
-# print("RESULT: A RMLR on ROUND ONE DEFECTORS showed initial propensity and the participant's previous choice showed graetest statistical significance (p <.05).")
-# print("IMPLICATON: For round one defectors, Adversary seems to have the least effect despite the difference in adversary gameplay compared to other typical strategic gameplay factors.")
-
-
-print("")
-print(" -- Aggregate choices of Round 1 cooperators")
-print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
-print(chisq.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,])))
-
-print("RESULT: A chisq test of proportions shows Round 1 choice correlation to overall cooperation by adversary is statistically significant at  p <.01.")
-
-pw_r1_cooperators <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
-print(friedman.test(Freq~Adversary|id,data=pw_r1_cooperators[pw_r1_cooperators$my.decision==1,]))
-print("RESULT: A friedman test shows that those that cooperated on the first round DID SHOW a statistically significant difference in cooperativeness by competitor at p <.01 (p <.05). So, we do a RMLR")
-
-# print("---PW: RMLR on ROUND ONE COOPERATORS---")
-# # m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,], family=binomial)
+# #--------------------REMOVE? - PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
+# print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
+# pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
+# pw_df <- pw_df[pw_df$my.decision==1,]
+# pw_df$period <- as.numeric(pw_df$period)
+# p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="IPD - Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# # print(p)
+# print("RESULT: From the plot, it appeares the group of participants who defected in round 1 (0 in this plot) had little variance across rounds, but that the initial cooperator-group (coop, 1 in this graph) varied markedly.")
+# 
+# print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
+# print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
+# print("RESULT: A Chi-sq test on the aggregate cooperate decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of cooperate Choices across all adversaries) are statistically dependent at p < .0001 (.05).")
+# print("")
+# 
+# # print(kruskal.test(my.decision ~ my.round1decision, data=pw_all_data_with_demo))
+# # print("RESULT: A Kruskal-Wallis test on the aggregate Peace decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of Peace Choices across all adversaries) are statistically dependent at p < .0001 (.05), so we conduct a RMLR...")
+# # print("")
+# # 
+# # m <- glmer(my.decision ~ my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
+# # # print(summary(m))
+# # print(Anova(m, type="3"))
+# # print("RESULT: A Repeated Measures Logisitic Regression (RMLR) shows that ROUND1 decision is statistically significant to variation in overall strategic gameplay (p <.01) ")
+# # print("")
+# print("IMPLICATION: Non-parametric analyses of Round 1 decisions show a strong statistical correlation to a participant's gameplay across rounds.")
+# # m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+my.round1decision+(1|id)+(1|pw_order), data=pw_all_data_with_demo, family=binomial)
+# # # print(summary(m))
+# # print(Anova(m, type="3"))
+# # print("RESULT: A Repeated Measures Logisitic Regression (RMLR) shows that when analyzed along with Adversary, my.decision1, and other.decision1, ROUND1 decision is a FINDING OF STATISTICALY INTEREST (p <.10) but is NOT STATISTICALLY SIGNIFICANT at p <.05.")
+# 
+# 
+# 
+# 
+# print("        ---PW: Is ROUND ONE decision correlated to variation in strategic decisions BY COMPETITOR?")
+# 
+# print(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,2])
+# print(chisq.test(xtabs(~ Adversary + my.round1decision + my.decision, data = pw_all_data_with_demo)[,,2]))
+# print("RESULT: A Chi-Sq test of Aggregate cooperate decisions by competitor and round1 choice shows statistically significant variation in cooperateiveness (by competitor and Round 1 decision) at p <.05. So, we segregate the data by round 1 defectors and round 1 cooperators)...")
+# 
+# print(" -- Aggregate choices of Round 1 Defectors")
+# print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
+# 
+# pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
+# pw_df$period <- as.numeric(as.character(pw_df$period))
+# pw_df$my.decision <- as.numeric(as.character(pw_df$my.decision))
+# pw_df <- pw_df[pw_df$my.decision==1,]
+# #pw_df$Freq <- pw_df[pw_df$my.decision==1,]$Freq/(pw_df[pw_df$my.decision==1,]$Freq+pw_df[pw_df$my.decision==0,]$Freq)
+# # pw_df$period <- as.numeric(pw_df$period)
+# p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  
+#   geom_point(aes(color=Adversary))+
+#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   labs(title="IPD-Round 1 Defectors: Cooperate Choices by Round and Adversary",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ scale_y_discrete(limits=c(0:10))+theme(plot.title = element_text(size=14), legend.title = element_text(size=8), legend.position = c(0.2, 0.8))#or use method="lm instead of auto"
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# print("")
+# 
+# print(chisq.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,])))
+# # print(fisher.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,])))
+# print("RESULT: Overall cooperation by competitor a chisq test is siginificant at p <.05 .")
+# # pw_r1_defectors <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,]))
+# # print(friedman.test(Freq~Adversary|id,data=pw_r1_defectors[pw_r1_defectors$my.decision=="Peace",]))
+# # print("NOTE: INTERESTING:")
+# # print("RESULT: A Friedman test shows that those that Round 1 defectors (chose WAR on the first round) DID NOT SHOW a statistically significant difference in gameplay by adversary at p <.05.")
+# 
+# print("---PW: Repeated Measures Logistic Regression on ROUND ONE DEFECTORS---\n")
+# print("NO - RMLR doesn' work on multinomial comparison")
+# # m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==0,], family=binomial)
 # # print(summary(m))
 # # print(Anova(m, type="3"))
-# # print("RESULT: A RMLR on ROUND ONE COOPERATORS showed that the participant's previous choice, followed by the adversary's decision, followed by initial propensity, show statistical significance at p < .05). INTERESTING:Adversary shows finding of statistical interest (p< .10) but isn't significant at p < .05, despite the difference in adversary gameplay.ALSO: looks like the two greatest factors in the model are initial propensity mediated by participant's previous decision.")
+# # print("RESULT: A RMLR on ROUND ONE DEFECTORS showed initial propensity and the participant's previous choice showed graetest statistical significance (p <.05).")
+# # print("IMPLICATON: For round one defectors, Adversary seems to have the least effect despite the difference in adversary gameplay compared to other typical strategic gameplay factors.")
 # 
-# m <- glmer(my.decision ~ Adversary+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,], family=binomial)
-# # print(summary(m))
-# print(Anova(m, type="3"))
-# print("RESULT: A RMLR on ROUND ONE COOPERATORS showed that the Adversary type had a statistically significant relationship with the decision at p < .05 (p < .01)")
-# print("HELP: Would like to know if other.decision2/3/4 (history) matters, but how do I code this? I keep getting 'rank deficient' error if I include my.decision2 or other.decision2. Is this because I'm using a binomial test for a multinomial variable?")
-
-
-
-pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
-pw_df <- pw_df[pw_df$my.decision==1,]
-pw_df$period <- as.numeric(pw_df$period)
-p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  
-  geom_point(aes(color=Adversary))+
-  geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
-  labs(title="IPD-Round 1 Cooperators: Cooperation by Round and Competitor",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# 
+# print("")
+# print(" -- Aggregate choices of Round 1 cooperators")
+# print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
+# print(chisq.test(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,])))
+# 
+# print("RESULT: A chisq test of proportions shows Round 1 choice correlation to overall cooperation by adversary is statistically significant at  p <.01.")
+# 
+# pw_r1_cooperators <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
+# print(friedman.test(Freq~Adversary|id,data=pw_r1_cooperators[pw_r1_cooperators$my.decision==1,]))
+# print("RESULT: A friedman test shows that those that cooperated on the first round DID SHOW a statistically significant difference in cooperativeness by competitor at p <.01 (p <.05). So, we do a RMLR")
+# 
+# # print("---PW: RMLR on ROUND ONE COOPERATORS---")
+# # # m <- glmer(my.decision ~ Adversary+my.decision1+other.decision1+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,], family=binomial)
+# # # print(summary(m))
+# # # print(Anova(m, type="3"))
+# # # print("RESULT: A RMLR on ROUND ONE COOPERATORS showed that the participant's previous choice, followed by the adversary's decision, followed by initial propensity, show statistical significance at p < .05). INTERESTING:Adversary shows finding of statistical interest (p< .10) but isn't significant at p < .05, despite the difference in adversary gameplay.ALSO: looks like the two greatest factors in the model are initial propensity mediated by participant's previous decision.")
+# # 
+# # m <- glmer(my.decision ~ Adversary+(1|id)+(1|pw_order), data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,], family=binomial)
+# # # print(summary(m))
+# # print(Anova(m, type="3"))
+# # print("RESULT: A RMLR on ROUND ONE COOPERATORS showed that the Adversary type had a statistically significant relationship with the decision at p < .05 (p < .01)")
+# # print("HELP: Would like to know if other.decision2/3/4 (history) matters, but how do I code this? I keep getting 'rank deficient' error if I include my.decision2 or other.decision2. Is this because I'm using a binomial test for a multinomial variable?")
+# 
+# 
+# 
+# pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$my.round1decision==1,]))
+# pw_df <- pw_df[pw_df$my.decision==1,]
+# pw_df$period <- as.numeric(pw_df$period)
+# p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=Adversary))+  
+#   geom_point(aes(color=Adversary))+
+#   geom_smooth(method='auto',formula=y~x, aes(group=Adversary, color=Adversary, fill=Adversary), alpha=0.2)+ 
+#   labs(title="IPD-Round 1 Cooperators: Cooperation by Round and Competitor",x="Round", y = "# of Choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
 # print(p)
-print("NOTE: Interesting that changes across rounds for Human+AI and AI are very similar, despite VERY different gameplay from the adversary.  This is in contrast to the human adversary.")
-print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding. You could explore this using a GLM with my.decision1 and other.decision1 as the main factors to see what the coefficients are (my.round1decision as an interaction with all variables?).  It's interesting that the initial amount of cooperation has an effect here.")
-
-
-
-#--------------------PW - Time <-> Strategic Decision Analysis-----------------
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# # print(p)
+# print("NOTE: Interesting that changes across rounds for Human+AI and AI are very similar, despite VERY different gameplay from the adversary.  This is in contrast to the human adversary.")
+# print("NOTE: Is it possible that participants' strategy against a human adversary are memory-1 and something else vs AI or HAI?  THIS would be an important and relevant finding. You could explore this using a GLM with my.decision1 and other.decision1 as the main factors to see what the coefficients are (my.round1decision as an interaction with all variables?).  It's interesting that the initial amount of cooperation has an effect here.")
+# 
+# 
+# 
+#--------------------IPD - Time <-> Strategic Decision Analysis-----------------
 print(" ---PW: Is BY-PAGE DECISION TIME correlated to decision-making?")
 p<- ggplot(pw_all_data_with_demo, aes(x=seconds_on_page, group=my.decision))+
   geom_density(aes(fill=my.decision, color=my.decision),alpha=0.3)+
   labs(title="IPD-Decision Time Density Plot", x="Seconds per Decision", y = "Density", fill="Decision",color="Decision")
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
+a<-pw_all_data_with_demo
+a$my.decision <- as.factor(a$my.decision)
+levels(a$my.decision) <- c("Cooperate","Defect")
+p<- ggplot(a, aes(y=seconds_on_page, x=my.decision))+
+  geom_boxplot()+
+  coord_trans(y="log10")+
+  labs(title="IPD-Decision Time Box Plot", x="Seconds per Decision", y = "Density", fill="Decision",color="Decision")
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 
 print(paste("RESULT: Average time for Cooperate decisions is",round(mean(pw_all_data_with_demo[pw_all_data_with_demo$my.decision==1,]$seconds_on_page),1), "seconds and average time for War decisions is", round(mean(pw_all_data_with_demo[pw_all_data_with_demo$my.decision==0,]$seconds_on_page),1),"seconds. "))
+print("RESULT: There was a small but insignificant difference in decision time between cooperate or defect decisions")
 
-print(wilcox.test(pw_all_data_with_demo[pw_all_data_with_demo$my.decision==0,]$seconds_on_page, pw_all_data_with_demo[pw_all_data_with_demo$my.decision==1,]$seconds_on_page))
-print("RESULT: There is a statistically significant difference between the time to make peace vs time to make war. ")
 
-#--------------------PW - Counterbalancing Data Analysis-----------------
+#--------------------IPD - Counterbalancing Data Analysis-----------------
 print("       ---PW: COUNTERBALANCING: Is IPD PLAY ORDER related to number of peace propensity (across all adversaries)--")
 print("         ----PW: counterbalancing ROUND ONE choices by IPD play order")
 # mean(pw_all_data_with_demo[pw_all_data_with_demo$id %in% pw_varied_round1[pw_varied_round1$Varied,]$id,]$pw_order)
 # print("RESULT: 40% of the participants that varied their choices played PW first and 60% played pw_second, so counterbalancing did not appear to affect Round 1 choices.")
-print(chisq.test(xtabs(~my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
+a<- xtabs(~my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+print(chisq.test(a))
 # m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,], family=binomial(link="logit"))
 # print(Anova(m))
-print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference at p <.05.")
+print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness (regardless of adversary) at p <.05.")
+a<-xtabs(~Adversary+my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+print(fisher.test(a[,2,]))
+print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness by adversary at p <.05.")
 
 
 print("         ----PW: counterbalancing STRATEGIC (all round) choices by IPD play order")
@@ -2038,6 +2059,12 @@ print("RESULT: A Chi-Sq test on  pw_order and aggregate cooperativeness choices 
 print(chisq.test(xtabs(~Adversary+ pw_order + my.decision, data = pw_all_data_with_demo)[,,2]))
 # print(chisq.test(xtabs(~Adversary+ pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("CHISQ test of cooperativeness by competior and play order showed no significant difference in variation at p<0.05")
+# print(a<-xtabs(~Adversary+my.decision+pw_order, data=pw_all_data_with_demo))
+# wilcox.test(a[,1,1], a[,2,1], paired=TRUE)
+# chisq.test(a[,,1])
+# chisq.test(a[,,2])
+# mantelhaen.test(a)
+
 n_1<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))
 n_2<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))
 n_1<- n_1[,1]/30
@@ -2091,7 +2118,7 @@ print("RESULt: does this mean there was some conditioning factor in the RPS game
 
 
 
-#--------------------PW - Demographic <-> Decision-making Data Analysis-----------------
+#--------------------IPD - Demographic <-> Decision-making Data Analysis-----------------
 print("--------------- PW<->Demo Analysis--------------- ")
 print("")
 # print("HELP: should I use the repeated measures logistic regression with all the demographic variables included, like this:")
@@ -2246,8 +2273,8 @@ descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, discrete = FALSE)
 plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="AI",]$Freq, "nbinom"))
 descdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, discrete = FALSE)
 plot(fitdist(rps_df_1[rps_df_1$Choice_of_Advisor=="none",]$Freq, "norm"))
-#--------------------RPS - Aggregation of Choice of Advisor (all) (H2.1.1)-------------
-print("---RPS: Choice of Advisor (regardless of Adversary) (H2.1.1T") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
+#--------------------RPS - Aggregation of Choice of Advisor (all) (H2[A].x)-------------
+print("---RPS: Choice of Advisor (regardless of Adversary) (H2.1T") #does the group show a propensity to choose one advisor over the others (or two over the third)? 
 n<- xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo)
 print(n)
 m<- as.data.frame(n)
@@ -2266,25 +2293,55 @@ p<- ggplot(m, aes("Choice of Advisor", y=Freq, fill = Choice_of_Advisor)) +
         axis.ticks = element_blank(),
         plot.title = element_text(hjust = 0.5))
 print(p)
+print("H2.1T & H2A.1T - RESULT: 63% of choices were 'no-advice'")
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+a<-as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
+p <- ggplot(a, aes(x=Choice_of_Advisor, y=Freq))+
+  geom_boxplot()+
+  coord_trans(y="sqrt")+
+  labs(title="RPS-Choice of Advisor Boxplot (Indiv)", y="Frequency (log2)", x = "Delegate")
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+b<-xtabs(~id+Choice_of_Advisor, data=rps_all_data_with_demo)
+b[,1] <- b[,1]+b[,2]
+b<- as.data.frame(b[,-2])
+c<- aggregate(.~id, data=b, FUN=max)
+d<- b[ifelse((b$Freq==c$Freq & b$id==c$id),TRUE, FALSE),]
+names(d)[2] <- "topChoice"
+d[,3] <- NULL
+print(paste0("H2A.2T - RESULT: ",length(which(d$topChoice=="none"))," participants chose 'no advice' as their top choice, and the remaining ",length(rps_ids)-length(which(d$topChoice=="none"))," chose to delegate as their top choice."))
+
+
 a<- as.data.frame(xtabs(~Choice_of_Advisor+id, data=rps_all_data_with_demo))
 print(friedman.test(Freq~Choice_of_Advisor|id, data=a))
-print("RESULT: Friedman test shows participants showed a significant difference in advisor choice")
+print("H2.1T - RESULT: Friedman test shows participants showed a significant difference in advisor choice")
 # print(chisq.test(n))
 # print("RESULT: Chisq test showed significant difference a p < .001 [p <.05]")
 # print(multinomial.test(as.vector(n)))
 # print("RESULT: Multinomial test showed significant difference a p < .001 [p <.05]")
+#move this higher because it adds the "top choice of advisor" to each row
+a<-as.data.frame(xtabs(~id+Choice_of_Advisor, data=rps_all_data_with_demo))
+b<- aggregate(.~id, data=a, FUN=max)
+c<- a[ifelse((a$Freq==b$Freq & a$id==b$id),TRUE, FALSE),]
+names(c)[2] <- "topChoice"
+c[,3] <- NULL
+rps_all_data_with_demo <- merge(rps_all_data_with_demo, c, by="id")
+print(xtabs(~topChoice, data=rps_all_data_with_demo)/30)
+print("H2.2T - RESULT: 18 (75%) of participants chose 'no advice' as their top choice, and the remaining 6 (25%) chose the AI")
 
 
 
-#--------------------RPS - Choice of Advisor by Adversary(H2.2)-------------
+#--------------------RPS - Choice of Advisor by Adversary(H3.x)-------------
 
 #video #9 (tests of proportions)
 print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversary")
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
-print("H2.2.1T - RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
+print("H3.1T - RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
 
 
 rps_ids <- unique(rps_all_data_with_demo$id)
@@ -2295,12 +2352,141 @@ for (i in rps_ids){
   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
 }
 d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-print(paste0("H2.2.2T - RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+print(paste0("H3.2T - RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
 
 
-#--------------------RPS - Decisions by Round - Data Analysis (H2.3)-----------------
+#--------------------RPS - Switch-Loss Analysis (H4)----------------
+# switch_array <- rps_array
+
+rps_switch_df<-rps_long_ten_rounds
+rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
+levels(rps_switch_df$Payoff) <- c("Lose","Draw","Win")
+rps_switch_df$switch <- as.factor("Stay")
+levels(rps_switch_df$switch) <- c("Switch","Stay")
+rps_switch_df$prev_choice <- as.factor("none")
+levels(rps_switch_df$prev_choice) <- Advisor_list
+rps_switch_df$prev_outcome <- as.factor("Win")
+levels(rps_switch_df$prev_outcome) <- c("Lose","Draw","Win")
+rps_switch_df$prev_adversary <- as.factor("Human")
+levels(rps_switch_df$prev_adversary) <- Adversary_list
+
+
+for (i in rps_ids){
+  
+  for (j in Adversary_list){
+    
+    a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1)
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
+    b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1)
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
+    c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
+    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
+  }
+}
+rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
+rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
+
+
+print("Switch-stay vs win/loss/draw")
+a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
+p <- ggplot(a, aes(x=Round, y=Freq))+
+  geom_col(position="dodge", aes(fill=switch))+
+  facet_grid(vars(prev_choice),vars(prev_outcome))
+print(p)
+print(b<- xtabs(~prev_outcome+switch, data=rps_switch_df))
+print(c<-chisq.test(b))
+print("RESULT (characterization, not hypothesis): Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed a significant relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw. ")#which begs the question: why did they switch?")
+
+
+p <- ggplot(a, aes(x=Round, y=Freq))+
+  geom_col(position="dodge", aes(fill=switch))+
+  facet_grid(vars(prev_choice),vars(prev_adversary))
+print(p)
+
+# removed because not relevant
+# print(a<- xtabs(~prev_adversary+switch, data=rps_switch_df))
+# print(chisq.test(a))
+# print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their  adversary.")
+# print(paste("Human-AI",chisq.test(a[-3,])["p.value"]))
+# print(paste("HAI-AI",chisq.test(a[-2,])["p.value"]))
+# print(paste("Human-HAI",chisq.test(a[-1,])["p.value"]))
+# print("post-hoc tests show the significant relationship is driven primarily by the Human+AI treatment")
+
+a<- xtabs(~prev_choice+switch+prev_outcome, data=rps_switch_df)
+print("Loss frame only:")
+print(a[,,1])
+print(b<-chisq.test(a[,,1]))
+print("RESULT: in the loss frame, there is significant relationship (X-squared = 24.735, df = 2, p-value = 4.255e-06) between variation in the stay/switch decisions and the previous advisor type")
+print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
+print(a[-2,,1])
+print(chisq.test(a[-2,,1]))
+print("RESULT:In the post-hoc pairwise comparison between the AI advisor and the 'no-advice' condition, there is still a significant relationship (X-squared = 16.891, df = 1, p-value = 3.959e-05). ")
+# print(a[-2,2,1]/rowSums(a[-2,,1]))
+print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
+print("RESULT = ALGORITHM AVERSION.")
+
+print("Although similar results exist in the win and draw frames:")
+# print(a[-2,2,3]/rowSums(a[-2,,3]))
+print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor and "))
+# print(a[-2,2,2]/rowSums(a[-2,,2]))
+print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
+print("and indeed previous choice seemed to matter more than previous outcome:")
+print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
+print(chisq.test(a))
+print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor, but:") #follow with friedman test
+
+b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
+print("Participant switched x percent of the time:")
+print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
+friedman.test(t(l))
+friedman.test(l)
+print("RESULT: there was NO statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome, and as shown before, it wasn't based on outcome alone...")
+print("This begs the question: if it's not outcome, why did they switch? - future research!")
+
+#--------------------RPS - Decision Time <-> Choices (H5)-----------------
+
+# 
+p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Choice_of_Advisor)", x="Seconds per Decision", y = "Density", color = "Choice")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
+
+a<-rps_all_data_with_demo[,c("id","Round","Choice_of_Advisor","seconds_on_page")]
+a$Choice_of_Advisor <-as.character(a$Choice_of_Advisor)
+a[a$Choice_of_Advisor!="none",]$Choice_of_Advisor <- "agent"
+a$Choice_of_Advisor <-as.factor(as.character(a$Choice_of_Advisor))
+p <- ggplot(a, aes(x=Choice_of_Advisor, y=seconds_on_page))+
+  geom_boxplot()+
+  coord_trans(y="log2")+
+  labs(title="RPS-Decision Time Boxplot by Delegation decision", y="Seconds per Decision", x = "Delegation")
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+
+a<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!="none",]$seconds_on_page)
+b<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",]$seconds_on_page)
+print(paste0("RESULT: Delegation decisions showed a minor (delgation was ",round(b-a, 2),"s faster) but insignificant difference in decision time. This could be due to the placement of the buttons on the page, but still relevant. It is possible that, in a game of skill or in a multi-taskign situation, this difference will increase."))
+
+
+
+a<-rps_all_data_with_demo[,c("id","Round","Adversary","seconds_on_page")]
+p <- ggplot(a, aes(x=Adversary, y=seconds_on_page))+
+  geom_boxplot()+
+  coord_trans(y="log2")+
+  labs(title="RPS-Decision Time Boxplot by Adversary", y="Seconds per Decision", x = "Adversary")
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+print(chisq.test(xtabs(~Adversary + seconds_on_page, data=rps_all_data_with_demo)))
+print("Interesting, but not hypothesis - RESULT: Chisq test shows no signifciant relationship between decision time and Adversary")
+
+
+#--------------------Interesting, but not hypothesis- RPS - Trends over time -----------------
 print("RPS: Choice of Advisor by round (all Adversaries)")
+print("Future research - RPS - looks like initial choices may be unstable, and trend toward something else - ")
 df <- as.data.frame(xtabs(~Round + Choice_of_Advisor, data=rps_all_data_with_demo))
 p<- ggplot(data = df, 
        aes(x=Round,
@@ -2351,120 +2537,40 @@ print("RESULT: A CMH test showed a statistically significant dependence between 
 
 print("HELP: How do I code to determine whether Choice_of_Advisor varied across rounds, by Adversary? (i.e.compare (the slope of change across rounds) across adversaries")
 
-#--------------------RPS - Switch-Loss Analysis (H2.4)----------------
-# switch_array <- rps_array
-
-rps_switch_df<-rps_long_ten_rounds
-rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
-levels(rps_switch_df$Payoff) <- c("Lose","Draw","Win")
-rps_switch_df$switch <- as.factor("Stay")
-levels(rps_switch_df$switch) <- c("Switch","Stay")
-rps_switch_df$prev_choice <- as.factor("none")
-levels(rps_switch_df$prev_choice) <- Advisor_list
-rps_switch_df$prev_outcome <- as.factor("Win")
-levels(rps_switch_df$prev_outcome) <- c("Lose","Draw","Win")
-rps_switch_df$prev_adversary <- as.factor("Human")
-levels(rps_switch_df$prev_adversary) <- Adversary_list
-
-
-for (i in rps_ids){
-
-  for (j in Adversary_list){
-
-    a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
-    b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
-    c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
-  }
-}
-rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
-rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
-
-
-print("Switch-stay vs win/loss/draw")
-a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
-p <- ggplot(a, aes(x=Round, y=Freq))+
-  geom_col(position="dodge", aes(fill=switch))+
-  facet_grid(vars(prev_choice),vars(prev_outcome))
-print(p)
-print(a<- xtabs(~prev_outcome+switch, data=rps_switch_df))
-print(chisq.test(a))
-print("RESULT (characterization, not hypothesis): Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw. which begs the question: why did they switch?")
-
-# removed because not relevant
-# print(a<- xtabs(~prev_adversary+switch, data=rps_switch_df))
-# print(chisq.test(a))
-# print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their  adversary.")
-# print(paste("Human-AI",chisq.test(a[-3,])["p.value"]))
-# print(paste("HAI-AI",chisq.test(a[-2,])["p.value"]))
-# print(paste("Human-HAI",chisq.test(a[-1,])["p.value"]))
-# print("post-hoc tests show the significant relationship is driven primarily by the Human+AI treatment")
-
-
-a<- xtabs(~prev_choice+switch+prev_outcome, data=rps_switch_df)
-print("Loss frame only:")
-print(a[,,1])
-print(chisq.test(a[,,1]))
-print("RESULT: in the loss frame, there is significant relationship (X-squared = 18.282, df = 2, p-value = 0.0001072) between variation in the stay/switch decisions and the previous advisor type")
-print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
-print(a[-2,,1])
-print(chisq.test(a[-2,,1]))
-print("RESULT:In the post-hoc pairwise comparison between the AI advisor and the 'no-advice' condition, there is still a significant relationship (X-squared = 6.4736, df = 1, p-value = 0.01095). ")
-print(a[-2,2,1]/rowSums(a[-2,,1]))
-print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
-
-print("Although similar results exist in the win and draw frames:")
-print(a[-2,2,3]/rowSums(a[-2,,3]))
-print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor"))
-print(a[-2,2,2]/rowSums(a[-2,,2]))
-print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
-print("and indeed previous choice seemed to matter more than previous outcome:")
-print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
-print(chisq.test(a))
-print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor, but:") #follow with friedman test
-
-b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
-print("Participant switched x percent of the time:")
-print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
-friedman.test(t(l))
-friedman.test(l)
-print("RESULT: there was NO statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome, and as shown before, it wasn't based on outcome alone...")
-print("This begs the quesiton: if it's not outcome, why did they switch? - future research!")
 
 #--------------------RPS - Counterbalancing - Data Analysis-----------------
-#move this higher because it adds the "top choice of advisor" to each row
-a<-as.data.frame(xtabs(~id+Choice_of_Advisor, data=rps_all_data_with_demo))
-b<- aggregate(.~id, data=a, FUN=max)
-c<- a[ifelse((a$Freq==b$Freq & a$id==b$id),TRUE, FALSE),]
-names(c)[2] <- "topChoice"
-c[,3] <- NULL
-rps_all_data_with_demo <- merge(rps_all_data_with_demo, c, by="id")
+
 print(fisher.test(xtabs(~topChoice + pw_order, data=rps_all_data_with_demo)/30))
 print(fisher.test(xtabs(~topChoice + rps_order, data=rps_all_data_with_demo)/30))
-print("RESULT: Fisher test of both pw_order (p-value = 0.3572) and rps_order (p-value = 0.9743) did not affect top Advisor choice of participatnts ")
+
+
 
 #check for correlation with counterbalancing
-print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+pw_order, data = rps_all_data_with_demo)))
-print("RESULT: A CMH/Mantelhaen test on aggregate shows GAME ORDER counterbalancing (pw_order) DID NOT affect decision-making by adversary at p < .05")
-print("IS THIS CORRECT WAY OF DOING THIS?")
 
-
-
-print("usijng individual fisher tests for signficant variation (i.e. true or false) compared with variation in pw_order")
-rps_fisher_test$pw_order <- NA
-rps_fisher_test$rps_order <- NA
-for (i in rps_ids) {
-    rps_fisher_test[rps_fisher_test$id==i,"pw_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$pw_order)
-    rps_fisher_test[rps_fisher_test$id==i,"rps_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$rps_order)
-}
-print(fisher.test(xtabs(~All + pw_order, rps_fisher_test)))
-print("RESULT: A fisher test on the participants' pw_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
 
 print(n<-xtabs(~  rps_order+Choice_of_Advisor , data = rps_all_data_with_demo))
 print(friedman.test(t(n)))
-print("Friedman test of RPS order (Friedman chi-squared = 3.301, df = 5, p-value = 0.6537) also showed no statistically significant difference")
+print("Friedman test of RPS order (Friedman chi-squared = 3.301, df = 5, p-value = 0.6537) also showed no statistically significant difference in choice of advisor as a result of ADVERSARY order")
+print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+pw_order, data = rps_all_data_with_demo)))
+print("RESULT: A CMH/Mantelhaen test on aggregate shows GAME ORDER counterbalancing (pw_order) DID NOT affect decision-making by adversary at p < .05")
+print("IS THIS CORRECT WAY OF DOING THIS?")
+print(mantelhaen.test(xtabs(~ Choice_of_Advisor +Adversary+rps_order, data = rps_all_data_with_demo)))
+print("RESULT: A CMH/Mantelhaen test on aggregate shows ADVERSARY order counterbalancing (rps_order) DID NOT affect decision-making by adversary at p < .05")
+
+
+
+# print("usijng individual fisher tests for signficant variation (i.e. true or false) compared with variation in pw_order")
+# rps_fisher_test$pw_order <- NA
+# rps_fisher_test$rps_order <- NA
+# for (i in rps_ids) {
+#     rps_fisher_test[rps_fisher_test$id==i,"pw_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$pw_order)
+#     rps_fisher_test[rps_fisher_test$id==i,"rps_order"] <- unique(rps_all_data_with_demo[rps_all_data_with_demo$id==i,]$rps_order)
+# }
+# print(fisher.test(xtabs(~All + pw_order, rps_fisher_test)))
+# print("RESULT: A fisher test on the participants' pw_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
+# print("RESULT: Fisher test of both pw_order (p-value = 0.3572) and rps_order (p-value = 0.9743) did not affect top Advisor choice of participatnts ")
+
+
 # print(l<-chisq.test(n))
 # print("Chi-sq test on aggregate shows RPS counterbalancing (rps_order) did affect decision-making IN GENERAL, p < .001, but")
 # print(mantelhaen.test(xtabs(~  Choice_of_Advisor +Adversary+rps_order, data = rps_all_data_with_demo)))
@@ -2581,36 +2687,6 @@ print("FIsher test on top Choice shows service was not correlated to choice of a
 # print("CMH test on aggregate shows SERVICE did not affect decision-making BY ADVERASRY, p < .05")
 # print("IS THIS CORRECT WAY OF DOING THIS?")
 #m <- glmer(Choice_of_Advisor ~machine_learning_experience +(1|id), data=rps_all_data_with_demo)
-#--------------------RPS - Decision Time <-> Choices - Data Analysis-----------------
-
-p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   
-  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human",],fill="red", color="red",alpha=0.3)+   
-  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="Human+AI",],fill="blue", color="blue",alpha=0.3)+   
-  geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Adversary=="AI",],fill="green", color="green",alpha=0.3)+ 
-  scale_x_continuous(limits = c(0, 25))+
-  labs(title="RPS-Decision Time Density Plot (by Adversary)", x="Seconds per Decision", y = "Density", color = "Adversary type")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("RESULT: PLOT shows average decision time by Adversary did not vary ")
-print(chisq.test(xtabs(~Adversary + seconds_on_page, data=rps_all_data_with_demo)))
-print("RESULT: Chisq test shows no signifciant relationship between decision time and Adversary")
-
-# 
-p<- ggplot(rps_all_data_with_demo, aes(x=seconds_on_page))+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",],fill="red", color="red",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",],fill="blue", color="blue",alpha=0.3)+   geom_density(data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",],fill="green", color="green",alpha=0.3)+ scale_x_continuous(limits = c(0, 25))+labs(title="RPS-Decision Time Density Plot (by Choice_of_Advisor)", x="Seconds per Decision", y = "Density", color = "Choice")  #+ scale_color_manual(values = c('Human' = 'red', 'Human+AI' = 'blue', "AI" = 'green'))
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print("RESULT: PLOT shows average decision time by Choice of advisor did not vary (distributions and means are slightly different)")
-
-
-
-a<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="human",]$seconds_on_page)
-b<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="AI",]$seconds_on_page)
-c<-mean(rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor=="none",]$seconds_on_page)
-d<-Anova(lm(seconds_on_page~Choice_of_Advisor, data=rps_all_data_with_demo))
-print(paste0("RESULT: Decisions to use the AI advisor (",round(b,2),"s) were on average ",round(mean(a,c)-b, 2)," second(s) faster than those which made own choices (",round(c,2),"s) or chose the human (",round(a,2),"s) (p<0.01). This could be due to the placement of the buttons on the page, but still relevant. " ))
-
 #--------------------Multi-Game - Data Analyses-----------------
 print("--------------------Multi-Game Analyses-----------------")
 print("The multi-game analyses should form the bases for the AI-impact index. ")
