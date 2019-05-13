@@ -184,8 +184,12 @@ all_data <- all_data[all_data$risk==0,]
 all_data <- all_data[all_data$error==0,]
 all_data <- all_data[all_data$period<=10,]
 ad_p10<-all_data[all_data$period==10,]
+ad_p10$my.decision <- as.numeric(ad_p10$my.decision)
+
 ad_p10$my.d<- rowSums(ad_p10[,c("my.decision","my.decision1","my.decision2","my.decision3", "my.decision4", "my.decision5", "my.decision6", "my.decision7", "my.decision8", "my.decision9")])
+ad_p10$my.round1decision <- ad_p10$my.decision9
 ad_p10$other.d<- rowSums(ad_p10[,c("other.decision1","other.decision2","other.decision3", "other.decision4", "other.decision5", "other.decision6", "other.decision7", "other.decision8", "other.decision9")])
+ad_p10$other.round1decision <- ad_p10$other.decision9
 
 
 time_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/TimeSpent (accessed 2019-01-21).csv"
@@ -986,6 +990,7 @@ print("")
 print("LIMTATION/FINDING: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
 print("       ----IPD: Comparison to all_data - (Hx.x.xT)----")
+
 ggplot(ad_p10, aes(x=my.d))+geom_histogram()
 ggplot(ad_p10, aes(x=other.d))+geom_histogram()
 ggplot(ad_p10[ad_p10$other.d==3,], aes(x=my.d))+geom_histogram() #similar to AI
@@ -995,7 +1000,6 @@ ggplot(ad_p10[ad_p10$other.d==7,], aes(x=my.d))+geom_histogram() #similar to HAI
 
 
 ggplot(data=ad_p10[ad_p10$other.d==3,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
 t.test(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
 
 ggplot(data=ad_p10[ad_p10$other.d==5,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",], aes(x=Freq), color="red")
@@ -1006,7 +1010,7 @@ ggplot(data=ad_p10[ad_p10$other.d==7,]) + geom_density( aes(x=my.d), color="gree
 boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, pw_df_1[pw_df_1$Adversary=="Human",]$Freq) #1= all_data, 2 = HAI, 3 = Human for comparison
 t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
 
-print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect")
+print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect?  Not 'trusting' a human with an advantage?")
 
 
 
@@ -1691,7 +1695,7 @@ for (i in pw_ids) {
 
 
 
-# #--------------------REMOVE or keep as further research - IPD - Memory Probability Analysis ---------------
+# #--------------------further research - IPD - Memory Probability Analysis ---------------
 # print(" ---IPD: Cooperation BY ROUND and competitor---")
 # 
 # pw_df <- as.data.frame(xtabs(~period + my.decision +Adversary, data=pw_all_data_with_demo))
@@ -1952,21 +1956,34 @@ for (i in pw_ids) {
 # print("H1.2.5T - reject the null (that memory will not vary) - because HAI treatment is n.s. in cases which do not involve participant's previous choice")
 # 
 
-# #--------------------REMOVE? - PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
-# print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
-# pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
-# pw_df <- pw_df[pw_df$my.decision==1,]
-# pw_df$period <- as.numeric(pw_df$period)
-# p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="IPD - Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
-# print(p)
-# print(paste0("Insert ", p$labels$title," Plot"))
-# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-# # print(p)
-# print("RESULT: From the plot, it appeares the group of participants who defected in round 1 (0 in this plot) had little variance across rounds, but that the initial cooperator-group (coop, 1 in this graph) varied markedly.")
+# #--------------------Further Research - PW - Round 1 <-> Strategic Decisions Data Analysis-----------------
+print("        ---PW: Is ROUND ONE decision correlated to STRATEGIC DECISIONS?")
+pw_df <- as.data.frame(xtabs(~period + my.decision +my.round1decision, data=pw_all_data_with_demo))
+pw_df <- pw_df[pw_df$my.decision==1,]
+pw_df$period <- as.numeric(pw_df$period)
+p<- ggplot(data=pw_df, aes(x=period, y=Freq, group=my.round1decision))+  geom_point(aes(color=my.round1decision))+geom_smooth(method='lm',formula=y~x, aes(group=my.round1decision, color=my.round1decision, fill=my.round1decision), alpha=0.2)+ labs(title="IPD - Peace Choices by Round 1 Choice",x="Round", y = "# of Choices", color = "my.round1decision") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))#or use method="lm instead of auto"
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+
+print(p)
+print("RESULT: From the plot, it appeares the group of participants who defected in round 1 (0 in this plot) had little variance across rounds, but that the initial cooperator-group (coop, 1 in this graph) varied markedly.")
 # 
-# print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
-# print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
-# print("RESULT: A Chi-sq test on the aggregate cooperate decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of cooperate Choices across all adversaries) are statistically dependent at p < .0001 (.05).")
+print(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo))
+print(chisq.test(xtabs(~ my.round1decision + my.decision, data = pw_all_data_with_demo)))
+print("RESULT: A Chi-sq test on the aggregate cooperate decisions and round 1 decisions shows the IV(Round 1 decision) and DV (aggregate sum of cooperate Choices across all adversaries) are statistically dependent at p < .0001 (.05).")
+
+a <- as.data.frame(xtabs(~id+my.decision+my.round1decision, data=pw_all_data_with_demo))
+print(lm(Freq ~ my.round1decision, data=a))
+print(Anova(lm(Freq ~ my.round1decision, data=a), type="III"))
+print("RESULT: An anova shows a participant's round1 decision to be significantly (p < .001) correlated to their aggregate cooperation")
+
+pw_df <- as.data.frame(xtabs(~id+Adversary + my.decision +my.round1decision, data=pw_all_data_with_demo))
+pw_df <- pw_df[pw_df$my.decision==1,]
+a<- pw_df[pw_df$Freq > 3,]
+p<- ggplot(data=pw_df, aes(y=Freq))+geom_boxplot(aes(x=my.round1decision, color=Adversary))
+print(p)
+print("RESULT: The John Henry effect is even stronger once removing the 'defectors' ")
 # print("")
 # 
 # # print(kruskal.test(my.decision ~ my.round1decision, data=pw_all_data_with_demo))
