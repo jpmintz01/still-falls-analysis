@@ -175,9 +175,18 @@ Human_actions$Adversary <- "Human"
 #--------------------Time -data transformation--------------------
 #choose and readthe all_data data file
 #filepath <- file.choose()
-# train_data_file_path <-"/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_data_train.csv"
+#train_data_file_path <-"/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_data_train.csv"
+filepath <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/all_data.csv"
 # #read the file with headers
-# all_data <- read.csv(train_data_file_path, header = TRUE, stringsAsFactors = TRUE)
+#all_data <- read.csv(train_data_file_path, header = TRUE, stringsAsFactors = TRUE)
+all_data <- read.csv(filepath, header = TRUE, stringsAsFactors = TRUE)
+all_data <- all_data[all_data$risk==0,]
+all_data <- all_data[all_data$error==0,]
+all_data <- all_data[all_data$period<=10,]
+ad_p10<-all_data[all_data$period==10,]
+ad_p10$my.d<- rowSums(ad_p10[,c("my.decision","my.decision1","my.decision2","my.decision3", "my.decision4", "my.decision5", "my.decision6", "my.decision7", "my.decision8", "my.decision9")])
+ad_p10$other.d<- rowSums(ad_p10[,c("other.decision1","other.decision2","other.decision3", "other.decision4", "other.decision5", "other.decision6", "other.decision7", "other.decision8", "other.decision9")])
+
 
 time_data_file_path <- "/Users/johnpaulmintz/Dissertation/Analysis (git)/Still-Falls Analysis/TimeSpent (accessed 2019-01-21).csv"
 time_data <- read.csv(time_data_file_path, header = TRUE, stringsAsFactors = TRUE)
@@ -767,15 +776,17 @@ write.csv(demo_data, "demo_data.csv")
 
 #--------------------Demographics - Data Visualization------------------
 
-#ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
-#ggplot(demo_data) + geom_histogram( aes(years_military_experience) )
-#ggplot(demo_data) + geom_histogram(stat="count", aes(school) )
-#ggplot(demo_data) + geom_histogram(stat="count", aes(rank) )
-#ggplot(demo_data) + geom_histogram(stat="count", aes(service) )
+print("Demographic data - put these in a facet")
+ggplot(demo_data) + geom_histogram( aes(age) ) #age histogram
+ggplot(demo_data) + geom_histogram( aes(years_military_experience) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(gender) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(school) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(rank) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(service) )
 #genders <- c(length(which(demo_data$gender=="Male")), length(which(demo_data$gender=="Female")))
 #pie(genders) #need a better chart here
-#ggplot(demo_data) + geom_histogram(stat="count", aes(game_theory_experience) )
-# ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(game_theory_experience) )
+ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience) )
 
 
 
@@ -802,7 +813,24 @@ print(paste0("Human: ",paste0(human_adv_choices, collapse="")))
 print(paste0("Human+AI: ",paste0(hai_adv_choices, collapse="")))
 
 print("")
-print("         --PW: Data Normality Tests--")
+print("         --IPD: Basic characterizaxtion--")
+a<-as.data.frame(xtabs(~id+my.decision, data=pw_all_data_with_demo))
+print(paste("Mean Cooperation:", mean(a[a$my.decision==1,]$Freq)))
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+print(paste("Mode Cooperation:", getmode(a[a$my.decision==1,]$Freq)))
+print(paste("Median Cooperation:", median(a[a$my.decision==1,]$Freq)))
+print(paste("Range of Cooperation:", paste(range(a[a$my.decision==1,]$Freq), collapse="-")))
+ggplot(data=a, aes(y=Freq, x=my.decision,group=my.decision))+
+  geom_boxplot()
+
+
+
+
+
+print("         --IPD: Data Normality Tests--")
 
 pw_df_1<- as.data.frame(xtabs(~my.decision + Adversary+id, data=pw_all_data_with_demo))
 #pw_df_1 <- pw_df_1[pw_df_1$my.decision=="Peace",]
@@ -815,9 +843,12 @@ print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
 print("RESULT: A visual inspection of the density distribution plot of peace choices indicates the data may be normally distributed. So we conduct a Shapiro-Wilk test...")
 
-#tests on all Peace choices across all players
+#tests on all coopearate choices across all players
 print(shapiro.test(xtabs(~my.decision+id, data=pw_all_data_with_demo)[1,]))#test for normality (#normal)
-print("RESULT: A Shapiro test on the aggregation of peace choices indicates the data is likely normally distributed..")
+print("RESULT: A Shapiro test on the aggregation cooperate choices indicates the data is likely normally distributed..")
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,1]))#AI test for normality (#normal)
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,2]))#Human test for normality (#normal)
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,3]))#Human+AI test for normality (#normal)
 
 
 print(descdist(xtabs(~my.decision+id, data=pw_all_data_with_demo)[2,], discrete = FALSE)) #2nd row = coop
@@ -954,6 +985,31 @@ print("H1.2.3T - reject the null since H-HAI comparison is n.s. but Human-AI is 
 print("")
 print("LIMTATION/FINDING: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
+print("       ----IPD: Comparison to all_data - (Hx.x.xT)----")
+ggplot(ad_p10, aes(x=my.d))+geom_histogram()
+ggplot(ad_p10, aes(x=other.d))+geom_histogram()
+ggplot(ad_p10[ad_p10$other.d==3,], aes(x=my.d))+geom_histogram() #similar to AI
+#shapiro, descdist, etc on these?
+ggplot(ad_p10[ad_p10$other.d==5,], aes(x=my.d))+geom_histogram() #similar to Human
+ggplot(ad_p10[ad_p10$other.d==7,], aes(x=my.d))+geom_histogram() #similar to HAI
+
+
+ggplot(data=ad_p10[ad_p10$other.d==3,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",], aes(x=Freq), color="red")
+boxplot(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
+t.test(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
+
+ggplot(data=ad_p10[ad_p10$other.d==5,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",], aes(x=Freq), color="red")
+boxplot(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
+t.test(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
+
+ggplot(data=ad_p10[ad_p10$other.d==7,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",], aes(x=Freq), color="red")
+boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, pw_df_1[pw_df_1$Adversary=="Human",]$Freq) #1= all_data, 2 = HAI, 3 = Human for comparison
+t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
+
+print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect")
+
+
+
 
 
 
