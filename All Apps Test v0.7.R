@@ -185,7 +185,7 @@ all_data <- all_data[all_data$error==0,]
 all_data <- all_data[all_data$period<=10,]
 ad_p10<-all_data[all_data$period==10,]
 ad_p10$my.decision <- as.numeric(ad_p10$my.decision)
-
+ad_p10[ad_p10$my.decision==2,]$my.decision <- 0
 ad_p10$my.d<- rowSums(ad_p10[,c("my.decision","my.decision1","my.decision2","my.decision3", "my.decision4", "my.decision5", "my.decision6", "my.decision7", "my.decision8", "my.decision9")])
 ad_p10$my.round1decision <- ad_p10$my.decision9
 ad_p10$other.d<- rowSums(ad_p10[,c("other.decision1","other.decision2","other.decision3", "other.decision4", "other.decision5", "other.decision6", "other.decision7", "other.decision8", "other.decision9")])
@@ -882,16 +882,15 @@ print("")
 print("           ----PW: Round 1 Tests (H1.1.xT)----")
 b <- xtabs(~my.decision+id, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
 a<- names(b[2,])[b[2,] %in% c(1,2)] #column names of participants who had 1 or 2 peace choices in round 1
-print(paste0(length(a)," (",round(100*length(a)/length(pw_ids), 2),"%) participants (",paste0(a, collapse=", "),") varied their round 1 choice by competitor."))
-print("H1.1.1T - Reject the null which says no one will vary (b/c 5 did)")
+print(paste0("Amplifying: ",length(a)," (",round(100*length(a)/length(pw_ids), 2),"%) participants (",paste0(a, collapse=", "),") varied their round 1 choice by competitor."))
 c<- aggregate(Choice~Adversary, pw_cols[(pw_cols$id %in% a) & pw_cols$Round==1, ], FUN =sum)
 c$Choice <- c$Choice/length(a)
 print(c)
-print("RESULT: Of those who varied their round 1 choice, they were most cooperative with the HUman and least cooperative with the Human+AI")
+print("AMPLIFYING: Of those who varied their round 1 choice, they were most cooperative with the HUman and least cooperative with the Human+AI")
 
 print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
 print("H1.1.2T - fail to reject no variation")
-print(paste("RESULT: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
+print(paste("HYPOTHESIS: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
 
 #--------------------IPD - Strategic Decisions Data Analysis (H1.2)-----------------
 print("-------------------IPD: Strategic Decision-making Analyses (H1.2)------------------")
@@ -931,36 +930,37 @@ print("how to automatically insert/save cullen & freq graph of AI data")
 print("how to plus these three on the same graph?")
 print("RESULT: Cullen & Frey plot indicates a slight departure from normal distributon in the AI condition.")
 
-print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.1T)----")
-print("from analysis of the aggregate means, they are in the expected order - most cooperative with the Human+AI and least cooperative with the AI")
-pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
-rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
+# print("       ----IPD: Strategic Decisions Rank Analysis (H1.2.1T)----")
+# print("from analysis of the aggregate means, they are in the expected order - most cooperative with the Human+AI and least cooperative with the AI")
+# pw_array <- xtabs(~Adversary+my.decision+id, data=pw_all_data_with_demo)
+# rank_matrix <- matrix(NA, nrow=3, ncol=length(pw_ids), dimnames=list(Adversary_list, pw_ids))
+# 
+# for (i in pw_ids) {
+#   rank_matrix[,i] <- rank(pw_array[,2,i])
+# }
+# 
+# length(which(rank_matrix[1,]==1))/length(pw_ids) # ratio that were least cooperative against the AI (no ties allowed)
+# print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]==1))/length(pw_ids),1),"% of the participants were least cooperative with the AI (no ties)"))
+# 
+# print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]<2))/length(pw_ids),1),"% of the participants were least cooperative with the AI"))
+# 
+# length(which(rank_matrix[3,]==3))/length(pw_ids) #ratio that was most cooperative with the Human+AI (no ties allowed)
+# print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[3,]==3))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI (no ties)"))
+# 
+# print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]>2))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI"))
+# 
+# print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*5/length(pw_ids),1),"% of the participants demonstrated the expected rank order."))
+# 
+# a<- as.data.frame(xtabs(~Adversary+id+my.decision, data=pw_all_data_with_demo)[,,2])
+# print(wilcox.test(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="AI",]$Freq, paired=TRUE))
+# print("As expected, the HUman and AI sign-rank comparison indicates a significant difference")
+# print(wilcox.test(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq, paired=TRUE))
+# print("NOT expected, the HUman and Human+AI sign-rank comparison indicates a n.s. difference")
+# print("H1.2.1T - reject the null (which states there will be a difference) due to Human-HAI n.s.")
 
-for (i in pw_ids) {
-  rank_matrix[,i] <- rank(pw_array[,2,i])
-}
-
-length(which(rank_matrix[1,]==1))/length(pw_ids) # ratio that were least cooperative against the AI (no ties allowed)
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]==1))/length(pw_ids),1),"% of the participants were least cooperative with the AI (no ties)"))
-
-print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]<2))/length(pw_ids),1),"% of the participants were least cooperative with the AI"))
-
-length(which(rank_matrix[3,]==3))/length(pw_ids) #ratio that was most cooperative with the Human+AI (no ties allowed)
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[3,]==3))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI (no ties)"))
-
-print(paste0("RESULT: Even allowing for ties, the simple rank analysis of the cooperation counts shows that only ",round(100*length(which(rank_matrix[1,]>2))/length(pw_ids),1),"% of the participants were most cooperative with the Human+AI"))
-
-print(paste0("RESULT: A simple rank analysis of the cooperation counts shows that only ",round(100*5/length(pw_ids),1),"% of the participants demonstrated the expected rank order."))
-
-a<- as.data.frame(xtabs(~Adversary+id+my.decision, data=pw_all_data_with_demo)[,,2])
-print(wilcox.test(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="AI",]$Freq, paired=TRUE))
-print("As expected, the HUman and AI sign-rank comparison indicates a significant difference")
-print(wilcox.test(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq, paired=TRUE))
-print("NOT expected, the HUman and Human+AI sign-rank comparison indicates a n.s. difference")
-print("H1.2.1T - reject the null (which states there will be a difference) due to Human-HAI n.s.")
 
 
-print("       ----IPD: Aggreagate chisq coop-competitor statistical analysis (H1.2.2T)----")
+print("       ----IPD: Aggregate chisq coop-competitor statistical analysis (H1.2.2T)----")
 print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of cooperation Choices) are statistically dependent at p <.01.")
 print("H1.2.2T - fail to reject the null (of a significant relations between competitor & cooperation rate)")
@@ -971,21 +971,27 @@ print("RESULT: pairwise chisq.test of all-round cooperation sums shows expected 
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
 print ("H1.2.2T - reject the null because of n.s. difference between Human and HAI conditions...")
 
-print("       ----IPD: pairwise RMLR - Participant coop-competitor - pairwise RMLR (H1.2.2T)----")
-a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="AI",]
-a$Adversary <- as.numeric(a$Adversary)
-a$Adversary <- as.factor(a$Adversary)
-m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (link="logit"))
-print("Human-HAI comparison:")
-print(Anova(m, type="3"))
-a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="Human+AI",]
-a$Adversary <- as.numeric(a$Adversary)
-a$Adversary <- as.factor(a$Adversary)
-m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (link="logit"))
-print("Human-AI comparison:")
-print(Anova(m, type="3"))
-print("RESULT:Pairwise (Human-AI) Repeated Measures Logistic Regressions show the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p < .001 (.05), but the Human-HAI comparison is not")
-print("H1.2.3T - reject the null since H-HAI comparison is n.s. but Human-AI is p<0.05")
+# a<- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,2])
+# print(friedman.test(Freq~Adversary|id, data=a))
+##kruskal test vs friedman test?
+# a<-as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,2])
+# kruskal.test(list(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq,a[a$Adversary=="AI",]$Freq))
+
+# print("       ----IPD: pairwise RMLR - Participant coop-competitor - pairwise RMLR (H1.2.2T)----")
+# a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="AI",]
+# a$Adversary <- as.numeric(a$Adversary)
+# a$Adversary <- as.factor(a$Adversary)
+# m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (link="logit"))
+# print("Human-HAI comparison:")
+# print(Anova(m, type="3"))
+# a <- pw_all_data_with_demo[pw_all_data_with_demo$Adversary!="Human+AI",]
+# a$Adversary <- as.numeric(a$Adversary)
+# a$Adversary <- as.factor(a$Adversary)
+# m <- glmer(my.decision ~ Adversary+(1|id)+(1|period), data=a, family=binomial (link="logit"))
+# print("Human-AI comparison:")
+# print(Anova(m, type="3"))
+# print("RESULT:Pairwise (Human-AI) Repeated Measures Logistic Regressions show the relationship between variation on the DV (Choice) and variation on the IV (Adversary) is statistically significant at p < .001 (.05), but the Human-HAI comparison is not")
+# print("H1.2.3T - reject the null since H-HAI comparison is n.s. but Human-AI is p<0.05")
 print("")
 print("LIMTATION/FINDING: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
@@ -998,19 +1004,43 @@ ggplot(ad_p10[ad_p10$other.d==3,], aes(x=my.d))+geom_histogram() #similar to AI
 ggplot(ad_p10[ad_p10$other.d==5,], aes(x=my.d))+geom_histogram() #similar to Human
 ggplot(ad_p10[ad_p10$other.d==7,], aes(x=my.d))+geom_histogram() #similar to HAI
 
+a_3 <- as.data.frame(ad_p10[ad_p10$other.d==3,]$my.d)
+names(a_3) <- "Freq"
+a_3$set <- "AI_all"
+a_5 <- as.data.frame(ad_p10[ad_p10$other.d==5,]$my.d)
+names(a_5) <- "Freq"
+a_5$set <- "H_all"
+a_7 <- as.data.frame(ad_p10[ad_p10$other.d==7,]$my.d)
+names(a_7) <- "Freq"
+a_7$set <- "HAI_all"
+b_H <- as.data.frame(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
+names(b_H) <- "Freq"
+b_H$set <- "H_exp"
+b_HAI <- as.data.frame(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
+names(b_HAI) <- "Freq"
+b_HAI$set <- "HAI_exp"
+b_AI <- as.data.frame(pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
+names(b_AI) <- "Freq"
+b_AI$set <- "AI_exp"
+plot.data <-rbind(a_3,a_5,a_7, b_H, b_HAI, b_AI)
+
 
 ggplot(data=ad_p10[ad_p10$other.d==3,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",], aes(x=Freq), color="red")
+boxplot(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq, names=c("all_data(3)","AI data"))
 t.test(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
 
 ggplot(data=ad_p10[ad_p10$other.d==5,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
+boxplot(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq, names=c("all_data(5)","Human data"))
 t.test(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
 
+ 
 ggplot(data=ad_p10[ad_p10$other.d==7,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, pw_df_1[pw_df_1$Adversary=="Human",]$Freq) #1= all_data, 2 = HAI, 3 = Human for comparison
+boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, names=c("all_data(7)","Human+AI data")) #1= all_data, 2 = HAI, 3 = Human for comparison
 t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
 
-print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect?  Not 'trusting' a human with an advantage?")
+p<- ggplot(data=plot.data, aes(x=set, y=Freq))+geom_boxplot()
+print(p)
+print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect?  Not 'trusting' a human with an advantage? And, there is a significant order effect in the HAI condition (and a nearly significant in the H condition - possibly related to the lack of deception belief?)")
 
 
 
@@ -2115,20 +2145,20 @@ print("       ---PW: COUNTERBALANCING: Is IPD PLAY ORDER related to number of pe
 print("         ----PW: counterbalancing ROUND ONE choices by IPD play order")
 # mean(pw_all_data_with_demo[pw_all_data_with_demo$id %in% pw_varied_round1[pw_varied_round1$Varied,]$id,]$pw_order)
 # print("RESULT: 40% of the participants that varied their choices played PW first and 60% played pw_second, so counterbalancing did not appear to affect Round 1 choices.")
-a<- xtabs(~my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+a<- xtabs(~Adversary+pw_order+my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])[,,2]
 print(chisq.test(a))
 # m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,], family=binomial(link="logit"))
 # print(Anova(m))
-print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness (regardless of adversary) at p <.05.")
-a<-xtabs(~Adversary+my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
-print(fisher.test(a[,2,]))
-print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness by adversary at p <.05.")
+print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness by competitor at p <.05.")
+# a<-xtabs(~Adversary+my.decision+pw_order, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+# print(fisher.test(a[,2,]))
+# print("RESULT:  a chisq test on ROUND ONE decisions and pw_order DID NOT show a statistically significant difference in cooperativness by adversary at p <.05.")
 
 
 print("         ----PW: counterbalancing STRATEGIC (all round) choices by IPD play order")
-print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
-print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)))
-print("RESULT: A Chi-Sq test on  pw_order and aggregate cooperativeness choices showed A STATISTICALLY SIGNIFICANT relationship between overall cooperativeness and play order at p <.05, but...")
+# print(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo))
+# print(chisq.test(xtabs(~ pw_order + my.decision, data = pw_all_data_with_demo)))
+# print("RESULT: A Chi-Sq test on  pw_order and aggregate cooperativeness choices showed A STATISTICALLY SIGNIFICANT relationship between overall cooperativeness and play order at p <.05, but...")
 print(chisq.test(xtabs(~Adversary+ pw_order + my.decision, data = pw_all_data_with_demo)[,,2]))
 # print(chisq.test(xtabs(~Adversary+ pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
 print("CHISQ test of cooperativeness by competior and play order showed no significant difference in variation at p<0.05")
@@ -2137,47 +2167,47 @@ print("CHISQ test of cooperativeness by competior and play order showed no signi
 # chisq.test(a[,,1])
 # chisq.test(a[,,2])
 # mantelhaen.test(a)
-
-n_1<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))
-n_2<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))
-n_1<- n_1[,1]/30
-n_2 <- n_2[,1]/30
-# n<-wilcox.test(n_1,n_2, paired=FALSE)
-# n["data.name"] <- "Played PW First and Played PW Second"
-# print(n)
-# print("RESULT: A Wilcox test on Order of Play (first or second) and total 'peacefulness' (number of Peace choices) did NOT SHOW A STATISTICALLY SIGNIFICANT result at p <.05")
-# print("HELP: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate? Probably the latter")
-m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
-print(Anova(m))
-print("RESULT: A RMLR on STRATEGIC decisions and pw_order DID NOT show a statistically significant difference at p <.05.")
-
-
-n_1<-as.data.frame(xtabs(~ id+Adversary+my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,])[,,1])
-n_2<-as.data.frame(xtabs(~ id+Adversary+my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,])[,,1])
-p<- ggplot(n_1, aes(x=Freq))+
-  geom_density(data=n_1[n_1$Adversary=="Human",],fill="red", color="red",alpha=0.2, linetype="dashed")+
-  geom_density(data=n_1[n_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.2, linetype="dashed")+
-  geom_density(data=n_1[n_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.2, linetype="dashed")+
-  geom_density(data=n_2[n_2$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
-  geom_density(data=n_2[n_2$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
-  geom_density(data=n_2[n_2$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3) + labs(title="PW-Peace Choices Distribution (by PW Play order & Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=8))
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# 
+# n_1<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))
+# n_2<-(xtabs(~ id+ my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))
+# n_1<- n_1[,1]/30
+# n_2 <- n_2[,1]/30
+# # n<-wilcox.test(n_1,n_2, paired=FALSE)
+# # n["data.name"] <- "Played PW First and Played PW Second"
+# # print(n)
+# # print("RESULT: A Wilcox test on Order of Play (first or second) and total 'peacefulness' (number of Peace choices) did NOT SHOW A STATISTICALLY SIGNIFICANT result at p <.05")
+# # print("HELP: Which test (chisq on aggregate or wilcox on 'by-id') is more appropriate? Probably the latter")
+# # m <- glmer(my.decision ~ pw_order + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
+# # print(Anova(m))
+# # print("RESULT: A RMLR on STRATEGIC decisions and pw_order DID NOT show a statistically significant difference at p <.05.")
+# 
+# 
+# n_1<-as.data.frame(xtabs(~ id+Adversary+my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,])[,,1])
+# n_2<-as.data.frame(xtabs(~ id+Adversary+my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,])[,,1])
+# p<- ggplot(n_1, aes(x=Freq))+
+#   geom_density(data=n_1[n_1$Adversary=="Human",],fill="red", color="red",alpha=0.2, linetype="dashed")+
+#   geom_density(data=n_1[n_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.2, linetype="dashed")+
+#   geom_density(data=n_1[n_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.2, linetype="dashed")+
+#   geom_density(data=n_2[n_2$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
+#   geom_density(data=n_2[n_2$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
+#   geom_density(data=n_2[n_2$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3) + labs(title="PW-Peace Choices Distribution (by PW Play order & Adversary)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=8))
 # print(p)
-print("RESULT: See PLOT: A visual inspection of the plot shows the AI and Human (blue and red) are similar,the human (red) means are similar, but the AI-assisted human are  different between those who played PW first and those who played RPS first, so,,,,")
-
-
-print("    -- PW: Aggregate Cooperation  by competitor and pw_order")
-print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
-print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
-print("RESULT: A Chi-Sq test of Peace choices by Adversary and pw_order DID NOT show a statistically significant relationship at p <.05. ")
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# # print(p)
+# # print("RESULT: See PLOT: A visual inspection of the plot shows the AI and Human (blue and red) are similar,the human (red) means are similar, but the AI-assisted human are  different between those who played PW first and those who played RPS first, so,,,,")
+# 
+# 
+# print("    -- PW: Aggregate Cooperation  by competitor and pw_order")
+# print(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1])
+# print(chisq.test(xtabs(~ Adversary + pw_order + my.decision, data = pw_all_data_with_demo)[,,1]))
+# print("RESULT: A Chi-Sq test of Peace choices by Adversary and pw_order DID NOT show a statistically significant relationship at p <.05. ")
 
 
 print(chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]))) 
-print("RESULT: A Chi-Sq test of coopeartion  by competitor for those who PLAYED PW FIRST DID SHOW a statistically significant relationship at p <. 05.")
+print("RESULT: A Chi-Sq test of coopeartion for those who PLAYED PW FIRST DID SHOW a statistically significant relationship between competitor and cooperation at p <. 05.")
 print(chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]))) 
-print("RESULT: A Chi-Sq test of cooperation by competitor for those who PLAYED PW SECOND did NOT show a statistically significant relationship at p <. 05.")
+print("RESULT: A Chi-Sq test of cooperation for those who PLAYED PW SECOND did NOT show a statistically significant relationship between competitor and cooperation at p <. 05.")
 print("RESULT: Participants who played PW first showed a statistically significant difference in warlike-ness by adversary (as expected).  HOWEVER, participants who played PW second DID NOT show a statistically significant difference in Peace choices by adversary, even through the adversaries' gameplay varied significantly and the same as those who played pw first .        NOTE: Was there something about playing RPS first that made participants more warlike toward the Human+AI adversary?")
 print("RESULt: does this mean there was some conditioning factor in the RPS game?")
 
@@ -2415,7 +2445,9 @@ print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversar
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
 print("H3.1T - RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
-
+#kruskal test vs friedman test?
+a<-as.data.frame(xtabs(~Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
+kruskal.test(list(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq,a[a$Adversary=="AI",]$Freq))
 
 rps_ids <- unique(rps_all_data_with_demo$id)
 rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
