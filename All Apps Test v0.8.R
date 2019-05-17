@@ -1725,6 +1725,52 @@ for (i in pw_ids) {
 
 
 
+# -------------------IPD - Effect of adversary on Memory-1/2 odds ---------
+print("MEMORY-1 (competitor decision - other.decision1)")
+a<-xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
+print(rowSums(a, dims=2))
+print(chisq.test(rowSums(a, dims=2)))
+print("A significant result on this Chisq test indicates a relationship between other.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+print(mantelhaen.test(a))
+print("The significant result (p = 0.002335) indicates that the association between treatment (other.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+print(BreslowDayTest(a))
+print("The large p-value for the Breslow-Day test (p=0.1025) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+print("")
+print("pairwise B-D tests")
+print(BreslowDayTest(a[,,-1]))
+print("The Breslow-Day test (p=0.0405) indicates a significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+print(BreslowDayTest(a[,,-2]))
+print("The Breslow-Day test (p=0.10) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+
+print("MEMORY-1 (own decision - my.decision1)")
+a<-xtabs(~my.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
+print(rowSums(a, dims=2))
+print(chisq.test(rowSums(a, dims=2)))
+print("A significant result on this Chisq test indicates a relationship between my.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+print(mantelhaen.test(a))
+print("The significant result (p-value < 2.2e-16) indicates that the association between treatment (my.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+print(BreslowDayTest(a))
+print("The large p-value for the Breslow-Day test (p=0.3396) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+print("")
+print("pairwise B-D tests")
+print(BreslowDayTest(a[,,-1]))
+print("The Breslow-Day test (p=0.2316) indicates no significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+print(BreslowDayTest(a[,,-2]))
+print("The Breslow-Day test (p=0.1782) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+
+print("MEMORY-2 (other.decision1 + my.decision1)")
+m<-as.data.frame(xtabs(~my.decision+my.decision1+other.decision1+Adversary, data=pw_all_data_with_demo))
+m$num<-paste(m$my.decision1,m$other.decision1)
+o<-xtabs(Freq~num+my.decision+Adversary, data=m)
+chisq.test(rowSums(o, dims=2))
+mantelhaen.test(o)
+oddsratio(o[,,1])
+oddsratio(o[,,2])
+oddsratio(o[,,3])
+
+
 # #--------------------further research - IPD - Memory Probability Analysis ---------------
 # print(" ---IPD: Cooperation BY ROUND and competitor---")
 # 
@@ -2506,169 +2552,57 @@ rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_o
 rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
 
 
+a<-as.data.frame(xtabs(~id+prev_choice+switch, data=rps_switch_df[rps_switch_df$prev_outcome=="Lose",]))
+b <- a[a$switch=="Switch",]
+b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
+b$switch <- NULL
+b$Freq <- NULL
+l<-xtabs(ratio~id+prev_choice, data=b)
+print(friedman.test(l))
+print("Characterization: In the loss frame alone a  friedman test shows stay/switch ratio has a signifcant relationship with previous choice")
 
-
-
 # 
-# print("Switch-stay vs win/loss/draw")
-# a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
-# p <- ggplot(a, aes(x=Round, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(prev_choice),vars(prev_outcome))
-# print(p)
-# print(b<- xtabs(~prev_outcome+switch, data=rps_switch_df))
-# print(c<-chisq.test(b))
-# print("Characterization, not hypothesis: Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant overall relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw. ")#which begs the question: why did they switch?")
-# 
-# a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
-# p <- ggplot(a, aes(x=prev_outcome, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(prev_choice))
-# print(p)
-# print(b<- xtabs(~prev_outcome+switch, data=rps_switch_df))
-# print(c<-chisq.test(b))
-# print("Characterization, not hypothesis: Chisq.test (X-squared = 1.9684, df = 2, p-value = 0.3737) showed no significant overall relationship between participants' likelihood of switching or staying based on their previous loss, win, or draw. ")#which begs the question: why did they switch?"
-# 
-# print(b<- xtabs(~prev_choice+switch, data=rps_switch_df))
-# print(c<-chisq.test(b))
-# print("Characterization, not hypothesis: Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant overall relationship between participants' likelihood of switching or staying based on their previous choice. ")#which begs the question: why did they switch?"
-# a<-as.data.frame(xtabs(~id+prev_choice+switch, data=rps_switch_df))
-# b <- a[a$switch=="Switch",]
-# b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
-# b$switch <- NULL
-# b$Freq <- NULL
-# l<-xtabs(ratio~id+prev_choice, data=b)
-# print(friedman.test(l))
-# print("Characterization: friedman test shows stay/switch ratio has a signifcant relationship with previous choice")
-# c<- as.data.frame(xtabs(ratio~id+prev_choice, data=b))
-# p <- ggplot(data=c, aes(x=prev_choice, y=Freq))+geom_boxplot()+labs(title="Stay Ratio (stay-switch)")
-# print(p)
-# l<-as.data.frame(l)
-# print(wilcox.test(l[l$prev_choice=="human",]$Freq, l[l$prev_choice=="AI",]$Freq), alternative="greater")
-# print(wilcox.test(l[l$prev_choice=="human",]$Freq, l[l$prev_choice=="none",]$Freq), alternative="greater")
-# print(wilcox.test(l[l$prev_choice=="none",]$Freq, l[l$prev_choice=="AI",]$Freq), alternative="less")
-# 
-# 
+# print("convert stay/switch to ratio")
 # a<-as.data.frame(xtabs(~id+prev_choice+prev_outcome+switch, data=rps_switch_df))
 # b <- a[a$switch=="Switch",]
 # b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
 # b$switch <- NULL
 # b$Freq <- NULL
-# d<- as.data.frame(xtabs(ratio~id+prev_choice+prev_outcome, data=b))
-# p <- ggplot(data=d, aes(x=prev_choice, y=Freq))+geom_boxplot(position="dodge",aes(fill=prev_outcome))+labs(title="Stay Ratio by outcome (stay-switch)")
-# print(p)
-# 
-# 
-# 
-# 
-# 
-# a<- as.data.frame(xtabs(~switch+prev_choice+prev_outcome+prev_adversary+Round, data=rps_switch_df))
-# a$outcome <- "LD"#code loss or draw as the same
-# a[a$prev_outcome=="Win",]$outcome <- "Win" 
-# a$AI <- "other" 
-# a[a$prev_choice=="AI",]$AI <- "AI"
-# p <- ggplot(a, aes(x=outcome, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(AI))
-# print(p)
-# 
-# print(q<- xtabs(Freq~switch+AI, data=a[a$prev_outcome=="Win",]))
-# print(l<-chisq.test(q)) #after a win, is there a relationship between the type of advisor and whether the participants switch or stay? NO - 
-# print(q<- xtabs(Freq~switch+AI+outcome, data=a[a$prev_outcome!="Win",]))
-# print(l<-chisq.test(q)) #after a loss or draw, is there a relationship between the type of advisor and whether the participants switch or stay? YES
-# # print(q<- xtabs(Freq~switch+AI, data=a[a$prev_outcome=="Lose",]))
-# # print(l<-chisq.test(q)) #after a loss, is there a relationship between the type of advisor and whether the participants switch or stay?
-# # print(q<- xtabs(Freq~switch+AI, data=a[a$prev_outcome=="Draw",]))
-# # print(l<-chisq.test(q)) #after adraw, is there a relationship between the type of advisor and whether the participants switch or stay?
-# # print(q<- xtabs(Freq~switch+prev_adversary, data=a))
-# # print(l<-chisq.test(q)) #did previous adverasry type affect switch-stay decsions?
-# 
-# print(q<- xtabs(Freq~switch+AI+prev_adversary, data=a[a$prev_outcome=="Win",]))
-# print(l<-mantelhaen.test(q)) #after a loss or draw, is there a relationship between the type of advisor and whether the participants switch or stay after accounting for adversary type?
-# 
-# 
-# #
-# # 
-# # print(q<- xtabs(Freq~switch+outcome, data=a))
-# # print(l<-chisq.test(q))
-# # print(q<-xtabs(Freq~switch+AI+outcome, data=a)) 
-# # print(r<-mantelhaen.test(q)) #test for the association between advisor type and outcome, after accounting for differences caused by outcome (but since outcome wasn't significant and advisor was,)
-# # # print(BreslowDayTest(q, OR=r$estimate))
-# # print(q<-xtabs(Freq~switch+outcome+AI, data=a))
-# # print(r<-mantelhaen.test(q)) 
-# # # print(BreslowDayTest(q, OR=r$estimate))
-# # 
-# 
-# 
-# 
-# p <- ggplot(a, aes(x=Round, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(prev_choice),vars(prev_adversary))
-# print(p)
-# 
-# 
-# p <- ggplot(a, aes(x=prev_outcome, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(prev_choice))
-# print(p)
-# p <- ggplot(a, aes(x=prev_outcome, y=Freq))+
-#   geom_col(position="dodge", aes(fill=switch))+
-#   facet_grid(vars(prev_adversary))
-# print(p)
-# # removed because not relevant
-# # print(a<- xtabs(~prev_adversary+switch, data=rps_switch_df))
-# # print(chisq.test(a))
-# # print("RESULT (Hyp): Chisq.test (X-squared = 6.1872, df = 2, p-value = 0.04534) showed a significant relationship at p<0.05 between participants' likelihood of switching or staying based on their  adversary.")
-# # print(paste("Human-AI",chisq.test(a[-3,])["p.value"]))
-# # print(paste("HAI-AI",chisq.test(a[-2,])["p.value"]))
-# # print(paste("Human-HAI",chisq.test(a[-1,])["p.value"]))
-# # print("post-hoc tests show the significant relationship is driven primarily by the Human+AI treatment")
-# 
-# # print(mantelhaen.test(a))
-# # print(BreslowDayTest(x=a, OR=1))
-
-
-a<- xtabs(~prev_choice+switch+prev_outcome, data=rps_switch_df)
-print("Loss frame only:")
-print(a[,,1])
-print(b<-chisq.test(a[,,1]))
-print("RESULT: in the loss frame, there is significant relationship (X-squared = 18.282, df = 2, p-value = 0.0001072) between variation in the stay/switch decisions and the previous advisor type")
-
-a<-as.data.frame(xtabs(~id+prev_choice+prev_outcome+switch, data=rps_switch_df))
-b <- a[a$switch=="Switch",]
-b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
-b$switch <- NULL
-b$Freq <- NULL
-d<- as.data.frame(xtabs(ratio~id+prev_choice, data=b[b$prev_outcome=="Lose",]))
-p <- ggplot(data=d, aes(x=prev_choice, y=Freq))+geom_boxplot()+labs(title="Stay Ratio after a Loss (stay-switch)", y="Stay Ratio", x="Previous Delegate")
+# d<- as.data.frame(xtabs(ratio~id+prev_choice, data=b[b$prev_outcome=="Lose",]))
+p <- ggplot(data=b, aes(x=prev_choice, y=ratio))+geom_boxplot()+labs(title="Stay Ratio after a Loss (stay-switch)", y="Stay Ratio", x="Previous Delegate")
 print(p)
 
 
-print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
-print(a[-2,,1])
-print(fisher.test(a[-2,,1]))
-print("RESULT:In the post-hoc pairwise comparison between the AI advisor and the 'no-advice' condition, there is still a significant relationship (X-squared = 16.891, df = 1, p-value = 3.959e-05). ")
-# print(a[-2,2,1]/rowSums(a[-2,,1]))
-print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
-print("RESULT = ALGORITHM AVERSION.")
+print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="human",]$ratio))
+print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="none",]$ratio))
+print("RESULT: despite a significant relationship between stay/switch ratio (in general and in the loss frame), there are no significant differences (after a loss) between the propensity to stay with the AI and teh propensity to stay with the other delegates.  This is possibly due to the design, and the comparison with human choices has such a small quantity, the noise is too high")
 
-print("Although similar results exist in the win and draw frames:")
-# print(a[-2,2,3]/rowSums(a[-2,,3]))
-print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor and "))
-# print(a[-2,2,2]/rowSums(a[-2,,2]))
-print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
-print("and indeed previous choice seemed to matter more than previous outcome:")
-print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
-print(chisq.test(a))
-print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor, but:") #follow with friedman test
-
-b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
-print("Participant switched x percent of the time:")
-print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
-friedman.test(t(l))
-friedman.test(l)
-print("RESULT: there was NO statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome, and as shown before, it wasn't based on outcome alone...")
-print("This begs the question: if it's not outcome, why did they switch? - future research!")
+# 
+# print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
+# print(a[-2,,1])
+# print(fisher.test(a[-2,,1]))
+# print("RESULT:In the post-hoc pairwise comparison between the AI advisor and the 'no-advice' condition, there is still a significant relationship (X-squared = 16.891, df = 1, p-value = 3.959e-05). ")
+# # print(a[-2,2,1]/rowSums(a[-2,,1]))
+# print(paste("RESULT (hyp): After a loss, participants switched",round(100*a[1,2,1]/sum(a[1,,1]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,1]/sum(a[3,,1]),1),"% of the time after using no advisor"))
+# print("RESULT = ALGORITHM AVERSION.")
+# 
+# print("Although similar results exist in the win and draw frames:")
+# # print(a[-2,2,3]/rowSums(a[-2,,3]))
+# print(paste("RESULT (info): After a win, participants switched",round(100*a[1,2,3]/sum(a[1,,3]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,3]/sum(a[3,,3]),1),"% of the time after using no advisor and "))
+# # print(a[-2,2,2]/rowSums(a[-2,,2]))
+# print(paste("RESULT (info): After a draw, participants switched",round(100*a[1,2,2]/sum(a[1,,2]),1),"% of the time after using an AI advisor, and only",round(100*a[3,2,2]/sum(a[3,,2]),1),"% of the time after using no advisor"))
+# print("and indeed previous choice seemed to matter more than previous outcome:")
+# print(a<- xtabs(~prev_choice+switch, data=rps_switch_df))
+# print(chisq.test(a))
+# print("RESULT (hyp): Chisq.test (X-squared = 25.113, df = 2, p-value = 3.522e-06) showed a significant relationship at p<0.0001 between participants' overall likelihood of switching or staying based on their previous choice of advisor, but:") #follow with friedman test
+# 
+# b<- xtabs(~prev_choice+prev_outcome+switch, data=rps_switch_df)
+# print("Participant switched x percent of the time:")
+# print(l<-round(100*b[,,2]/(b[,,1]+b[,,2]), 1))
+# friedman.test(t(l))
+# friedman.test(l)
+# print("RESULT: there was NO statistically signicant relationship between variation in switch-stay ratio between previous choice and previous outcome, and as shown before, it wasn't based on outcome alone...")
+# print("This begs the question: if it's not outcome, why did they switch? - future research!")
 
 #--------------------RPS - Decision Time <-> Choices (H5)-----------------
 
