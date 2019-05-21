@@ -835,60 +835,86 @@ print(paste0("Human: ",paste0(human_adv_choices, collapse="")))
 print(paste0("Human+AI: ",paste0(hai_adv_choices, collapse="")))
 
 print("")
-print("         --IPD: Basic characterizaxtion--")
-a<-as.data.frame(xtabs(~id+my.decision, data=pw_all_data_with_demo))
-print(paste("Mean Cooperation:", mean(a[a$my.decision==1,]$Freq)))
+print("       -------IPD: Data characterization----")
+
+print("         --IPD: Basic characteristics--")
+a<-as.data.frame(xtabs(~id+my.decision+Adversary, data=pw_all_data_with_demo))
+l<-descdist(a[a$my.decision==1,]$Freq, discrete = FALSE) #2nd row = coop
+print(l)
+print("how to insert/save cullen & freq graph of data")
+print("RESULT: Cullen & Frey plot indicates a close to normal distributon for aggregate data.")
+print(paste("Mean Cooperation:", l$mean))
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 print(paste("Mode Cooperation:", getmode(a[a$my.decision==1,]$Freq)))
-print(paste("Median Cooperation:", median(a[a$my.decision==1,]$Freq)))
-print(paste("Range of Cooperation:", paste(range(a[a$my.decision==1,]$Freq), collapse="-")))
-ggplot(data=a, aes(y=Freq, x=my.decision,group=my.decision))+
-  geom_boxplot()
+print(paste("Median Cooperation:", l$median))
+print(paste("Range of Cooperation:", paste(l$min,l$max, collapse="-")))
+print(paste("Standard Dev:",l$sd))
+print(paste("Variance:",l$sd^2))
+print("variance greater than the mean = overdispersed")
+a<-as.data.frame(xtabs(~id+my.decision+Adversary, data=pw_all_data_with_demo))
+l<-descdist(a[a$my.decision==1 & a$Adversary=="AI",]$Freq, discrete = FALSE) #2nd row = coop
+print("how to insert/save cullen & freq graph of data")
+l<-descdist(a[a$my.decision==1 & a$Adversary=="Human",]$Freq, discrete = FALSE) #2nd row = coop
+print("how to insert/save cullen & freq graph of data")
+l<-descdist(a[a$my.decision==1 & a$Adversary=="Human+AI",]$Freq, discrete = FALSE) #2nd row = coop
+print("how to insert/save cullen & freq graph of data")
+
+print("         --IPD: Parametric test 1 - sample size (>20 per group)--")
+print("number of participants per pw counterbalancing treatment group")
+print(xtabs(~pw_order, data=pw_all_data_with_demo)/30)
+print("fail-<20 per group")
 
 
 
-
-
-print("         --IPD: Data Normality Tests--")
+print("         --IPD: Parametric test 2- Data Normality Tests--")
 
 pw_df_1<- as.data.frame(xtabs(~my.decision + Adversary+id, data=pw_all_data_with_demo))
 #pw_df_1 <- pw_df_1[pw_df_1$my.decision=="Peace",]
 pw_df_1 <- pw_df_1[pw_df_1$my.decision==1,]
 p<- ggplot(pw_df_1, aes(x=Freq))+
-  geom_density(data=pw_df_1,fill="black", color="black",alpha=0.3)+
-  stat_function(fun = dnorm,color="blue",args = list(mean = mean(pw_df_1$Freq), sd = sd(pw_df_1$Freq)),linetype = "dashed")+ labs(title="IPD-Cooperation Density Distribution", x="Frequency", y = "Density of Choices") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
+  geom_density(aes(linetype="Aggregate"),color="black",size = 0.75,show.legend=F)+
+  stat_function(fun = dnorm, color="black",args = list(mean = mean(pw_df_1$Freq), sd = sd(pw_df_1$Freq)),aes(linetype = "Normal Curve"))+ 
+  geom_density(aes(group=Adversary, fill=Adversary), alpha=0.4,color="black", size=0.3, linetype="solid")+
+  labs(title="IPD - Density Plot", subtitle="Aggregate Cooperation Density", x="Frequency", y = "Density",fill = "Treatment\n(Competitor)", linetype=NULL) +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=12))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+ggsave(paste0(p$labels$title,p$labels$subtitle,".pdf"), plot=p, device="pdf")
 print("RESULT: A visual inspection of the density distribution plot of peace choices indicates the data may be normally distributed. So we conduct a Shapiro-Wilk test...")
 
 #tests on all coopearate choices across all players
 print(shapiro.test(xtabs(~my.decision+id, data=pw_all_data_with_demo)[1,]))#test for normality (#normal)
 print("RESULT: A Shapiro test on the aggregation cooperate choices indicates the data is likely normally distributed..")
-print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,1]))#AI test for normality (#normal)
-print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,2]))#Human test for normality (#normal)
-print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[1,,3]))#Human+AI test for normality (#normal)
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[2,,1]))#AI test for normality (#normal)
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[2,,2]))#Human test for normality (#normal)
+print(shapiro.test(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[2,,3]))#Human+AI test for normality (#normal)
 
 
-print(descdist(xtabs(~my.decision+id, data=pw_all_data_with_demo)[2,], discrete = FALSE)) #2nd row = coop
-print("how to insert/save cullen & freq graph of data")
-print("RESULT: Cullen & Frey plot indicates a close to normal distributon.")
-p<-plot(fitdist(xtabs(~my.decision+id, data=pw_all_data_with_demo)[2,], "norm"))#2nd row = coop
+
+
+p<-plot(fitdist(as.data.frame(xtabs(~my.decision+id+Adversary, data=pw_all_data_with_demo)[2,,])$Freq, "norm"))#2nd row = coop
 print(p)
 print(paste0("Insert fitddist Plot"))
 ggsave(paste0("IPD - fitdist plot.jpg"), plot=p, device="jpg")
 print("RESULT: Fit Dist plot indicates a close to normal distributon.")
 
-l <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,2]) #2==coop
-m <- aov(Freq ~ Adversary, data = l)
-print(shapiro.test(residuals(m))) #overall, data normal
-print("RESULT: A Shapiro test on the residuals of the peace choices shows the data IS NORMALLY DISTRIBUTED (but barely).")
-print("IMPLICATION: Can use parametric tests.")
+# 
+# l <- as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo)[,,2]) #2==coop
+# m <- aov(Freq ~ Adversary, data = l)
+# print(shapiro.test(residuals(m))) #overall, data normal
+# print("RESULT: A Shapiro test on the residuals of the peace choices shows the data IS NORMALLY DISTRIBUTED (but barely).")
 
 
+a<-as.data.frame(xtabs(~id+my.decision+Adversary, data=pw_all_data_with_demo))
+
+ggplot(data=a[a$my.decision==1,], aes(y=Freq,group=my.decision))+
+  geom_boxplot()
+
+print(ggplot(data=a[a$my.decision==1,], aes(y=Freq,x=Adversary))+
+  geom_boxplot())
+print("Although the aggregate data shows no outliers, the by-treatment does in the AI-treatment(and shows clusters at ...0 and) ")
 #--------------------IPD - Round 1 Data Analyses (H1.1)-----------------
 print("------------------------PW Round 1 Analyses (H1.1)------------------------")
 
@@ -899,6 +925,15 @@ print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo[pw_all_data_with_
 print("")
 print("           ----PW: Round 1 Tests (H1.1.xT)----")
 b <- xtabs(~my.decision+id, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
+c<-as.data.frame(xtabs(~my.decision+Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,]))
+p<- ggplot(data=c, aes(x=Adversary, y=Freq,group=my.decision))+
+  geom_col(aes(fill=my.decision), position="dodge")+
+  labs(title="IPD - Round 1 Barplot", subtitle="Aggregate Cooperation", x="Treatment (competitor)", y = "Count") + theme(plot.title = element_text(size=12))+
+  scale_fill_discrete(name = "Round 1\nDecision", labels = c("Defect","Cooperate"))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,p$labels$subtitle,".pdf"), plot=p, device="pdf")
+
 a<- names(b[2,])[b[2,] %in% c(1,2)] #column names of participants who had 1 or 2 peace choices in round 1
 print(paste0("Amplifying: ",length(a)," (",round(100*length(a)/length(pw_ids), 2),"%) participants (",paste0(a, collapse=", "),") varied their round 1 choice by competitor."))
 c<- aggregate(Choice~Adversary, pw_cols[(pw_cols$id %in% a) & pw_cols$Round==1, ], FUN =sum)
@@ -906,45 +941,89 @@ c$Choice <- c$Choice/length(a)
 print(c)
 print("AMPLIFYING: Of those who varied their round 1 choice, they were most cooperative with the HUman and least cooperative with the Human+AI")
 
-print(fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
+# 
+# 
+print(l<-fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
 print("H1.1.2T - fail to reject no variation")
 print(paste("HYPOTHESIS: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
+# 
+c<-as.data.frame(xtabs(my.decision~id+Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,]))
+print(bartlett.test(Freq~Adversary, data=c))
+print("Characterization-the bartlett test shows the groups in c are not heteroschedastic, so a  kruskal test should be ok")
+print(l<-kruskal.test(Freq~Adversary, data=c))
+print("RESULT: a Kruskal-Wallis test shows no significant difference between the round 1 choices by competitor.")
+#if the result is signficiant, print(epsilonSquared(x = c$Freq, g = c$Adversary)) #>0.08 is moderate
 
+
+
+# model = lm(Freq ~ Adversary, 
+#            data=c)
+# 
+# library(car)
+# 
+# Anova(model, Type="II",
+#       white.adjust=TRUE)
+
+# d<-as.data.frame(cbind(dummy(c$Adversary), c$Freq))
+# print(a<-glm(V3~Human+AI, data=d, family=binomial("logit")))
+# print(Anova(a))
+# print("One-way anova...")
 #--------------------IPD - Strategic Decisions Data Analysis (H1.2)-----------------
 print("-------------------IPD: Strategic Decision-making Analyses (H1.2)------------------")
 print("       ----IPD: Strategic (All round) Choices (aggregate) - insert as table----")
 print(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
-a<-as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo))
-a<-a[a$my.decision==1,]
-p <- ggplot(a, aes(x=Adversary, y=Freq,color=Adversary))+
-  geom_boxplot()+
-  labs(title="PW-Aggregate Cooperation by adversary", y="Cooperation", x = "Adversary")
+a<-as.data.frame(xtabs(~Adversary+my.decision, data=pw_all_data_with_demo))
+p<- ggplot(data=a, aes(x=Adversary, y=Freq,group=my.decision))+
+  geom_col(aes(fill=my.decision), position="dodge")+
+  labs(title="IPD - Match Barplot", subtitle="Aggregate Cooperation", x="Treatment (competitor)", y = "Count") + theme(plot.title = element_text(size=12))+
+  scale_fill_discrete(name = "Decision", labels = c("Defect","Cooperate"))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+ggsave(paste0(p$labels$title,p$labels$subtitle,".pdf"), plot=p, device="pdf")
+
+a<-as.data.frame(xtabs(~id+Adversary+my.decision, data=pw_all_data_with_demo))
+a<-a[a$my.decision==1,]
+p <- ggplot(a, aes(x=Adversary, y=Freq))+
+  geom_boxplot(aes(color=Adversary), show.legend=F)+
+  labs(title="IPD - Match Cooperation Rate Boxplot",subtitle="Match Cooperation by Competitor",x="Treatment (competitor)", y="Cooperation Rate")+
+  theme(plot.title = element_text(size=12))+
+  scale_y_discrete(limits=c(0:10))
+print(p)
+print(paste0("Insert ", p$labels$title," ",p$labels$subtitle," Plot"))
+ggsave(paste0(p$labels$title,"",p$labels$subtitle,".pdf"), plot=p, device="pdf")
+
 
 print("       ----IPD: Sample Distribution Characterization----")
 p<- ggplot(pw_df_1, aes(x=Freq))+
-  geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",],fill="red", color="red",alpha=0.3)+
-  geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
-  geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3)+
-  stat_function(fun = dnorm,color="blue",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="AI",]$Freq)),linetype = "dashed")+
-  stat_function(fun = dnorm,color="red",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
-  stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed") + labs(title="IPD - Cooperation Distribution (by Competitor)",x="Frequency", y = "Density of Choices", color = "Adversary") +scale_x_discrete(limits=c(0:10))+ theme(plot.title = element_text(size=9))
+  geom_density(aes(color=Adversary, fill=Adversary),alpha=0.3)+
+  # geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",],fill="blue", color="blue",alpha=0.3)+
+  # geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",],fill="green", color="green", alpha=0.3)+
+  stat_function(fun = dnorm,color="red",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="AI",]$Freq)),linetype = "dashed")+
+  stat_function(fun = dnorm,color="green",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)),linetype = "dashed")+
+  stat_function(fun = dnorm,color="blue",args = list(mean = mean(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq), sd = sd(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)),linetype = "dashed") + 
+  labs(title="IPD - By-treatment Cooperation",subtitle="Normal curves for comparison",x="Frequency", y = "Density of Choices", color = "Treatment\n(competitor)") +
+  scale_x_discrete(limits=c(0:10))+ 
+  scale_fill_discrete(guide=FALSE)
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 print("RESULT: A visual inspection of the density plot (by adversary) indicates possible differences in the distributions.")
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="AI",]$Freq))#normal
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="Human",]$Freq))#normal
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq))#normal
 print("RESULT: These Shapiro-Wilk tests on the PEace choices by adversary show normal distributions, although the AI data appears to be a worse fit to normal distribution. More data are needed. In fact, before the manipulation check fails were removed, the AI data departed significantly from normality.")
-
+c<-as.data.frame(xtabs(my.decision~id+Adversary, data=pw_all_data_with_demo))
+print(bartlett.test(Freq~Adversary, data=c))
+leveneTest(Freq~Adversary, data=c)
+fligner.test(Freq~Adversary, data=c)
+print("Characterization-the bartlett test shows the groups are not heteroschedastic")
+# print(kruskal.test(Freq~Adversary, data=c))
+print("Human data characteristics")
 print(descdist(xtabs(~my.decision+id, data=pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human",])[2,], discrete = FALSE))
+print("Human+AI data characteristics")
 print(descdist(xtabs(~my.decision+id, data=pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="Human+AI",])[2,], discrete = FALSE))
-print("how to insert/save cullen & freq graph of Human+AIdata")
+print("AI data characteristics")
 print(descdist(xtabs(~my.decision+id, data=pw_all_data_with_demo[pw_all_data_with_demo$Adversary=="AI",])[2,], discrete = FALSE))
-print("how to automatically insert/save cullen & freq graph of AI data")
 print("how to plus these three on the same graph?")
 print("RESULT: Cullen & Frey plot indicates a slight departure from normal distributon in the AI condition.")
 
@@ -984,6 +1063,7 @@ print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) o
 print("H1.2.2T - fail to reject the null (of a significant relations between competitor & cooperation rate)")
 print("       ----IPD: pairwise chisq - coop-competitor statistical analysis (H1.2.2T)----")
 print(chisq.test(pw_sum[-3,]))
+print(chisq.test(pw_sum[-2,]))
 print(chisq.test(pw_sum[-1,]))
 print("RESULT: pairwise chisq.test of all-round cooperation sums shows expected (p<0.05) in Human-AI pair, but n.s. difference in Human-HAI pair, despite differences in adversary gameplay")
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
@@ -1014,50 +1094,82 @@ print("")
 print("LIMTATION/FINDING: Differences in Adversary gameplay are a possible confounding factor. Various statistical analyses show statistically significant variation by adversary type in participant choices across all rounds, particularly between the HUman and the Human-AI conditions, but not between the Human-Human+AI conditions. Were this difference significant across both pairs, competitor gameplay could be the cause of variation.  However, given the lack of difference between the Human and Human+AI competitors, it is possible this difference is caused by the type of competitor. See limitations...")
 print("")
 print("       ----IPD: Comparison to all_data - (Hx.x.xT)----")
+ad_p10 <- ad_p10[ad_p10$other.d==3|ad_p10$other.d==5|ad_p10$other.d==7,]
+# ad_p10$other.d <-as.factor(ad_p10$other.d)
+p<-ggplot(ad_p10, aes(x=my.d, group=other.d))+
+  geom_density(aes(fill=other.d), alpha=0.5)+
+  scale_x_discrete(limits=c(0:10))+
+  labs(title="IPD - Large-N Dataset Density Plot", subtitle="Cooperation", x="Frequency",fill="Treatment\nanalog", y = "Density") + theme(plot.title = element_text(size=12))+
+  scale_fill_discrete(labels = c("AI (3)","Human (5)","Human+AI (7)"))
+print(p)
 
-ggplot(ad_p10, aes(x=my.d))+geom_histogram()
-ggplot(ad_p10, aes(x=other.d))+geom_histogram()
-ggplot(ad_p10[ad_p10$other.d==3,], aes(x=my.d))+geom_histogram() #similar to AI
-#shapiro, descdist, etc on these?
-ggplot(ad_p10[ad_p10$other.d==5,], aes(x=my.d))+geom_histogram() #similar to Human
-ggplot(ad_p10[ad_p10$other.d==7,], aes(x=my.d))+geom_histogram() #similar to HAI
+# 
+# ggplot(ad_p10, aes(x=other.d))+geom_histogram()
+# ggplot(ad_p10[ad_p10$other.d==3,], aes(x=my.d))+geom_histogram() #similar to AI
+# #shapiro, descdist, etc on these?
+# ggplot(ad_p10[ad_p10$other.d==5,], aes(x=my.d))+geom_histogram() #similar to Human
+# ggplot(ad_p10[ad_p10$other.d==7,], aes(x=my.d))+geom_histogram() #similar to HAI
 
 a_3 <- as.data.frame(ad_p10[ad_p10$other.d==3,]$my.d)
 names(a_3) <- "Freq"
-a_3$set <- "AI_all"
+a_3$Adversary <- "AI"
+a_3$set <- "all"
+
 a_5 <- as.data.frame(ad_p10[ad_p10$other.d==5,]$my.d)
 names(a_5) <- "Freq"
-a_5$set <- "H_all"
+a_5$Adversary <- "Human"
+a_5$set <- "all"
+
 a_7 <- as.data.frame(ad_p10[ad_p10$other.d==7,]$my.d)
 names(a_7) <- "Freq"
-a_7$set <- "HAI_all"
+a_7$Adversary <- "HAI"
+a_7$set <- "all"
+
 b_H <- as.data.frame(pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
 names(b_H) <- "Freq"
-b_H$set <- "H_exp"
+b_H$Adversary <- "Human"
+b_H$set <- "exp"
+
 b_HAI <- as.data.frame(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
 names(b_HAI) <- "Freq"
-b_HAI$set <- "HAI_exp"
+b_HAI$Adversary <- "HAI"
+b_HAI$set <- "exp"
+
 b_AI <- as.data.frame(pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
 names(b_AI) <- "Freq"
-b_AI$set <- "AI_exp"
+b_AI$Adversary <- "AI"
+b_AI$set <- "exp"
+
 plot.data <-rbind(a_3,a_5,a_7, b_H, b_HAI, b_AI)
+plot.data$both <- paste(plot.data$Adversary,plot.data$set)
 
+# ggplot(data=ad_p10[ad_p10$other.d==3,]) + 
+#   geom_density( aes(x=my.d), color="green") + 
+#   geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",], aes(x=Freq), color="red")
+# boxplot(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq, names=c("all_data(3)","AI data"))
+print(t.test(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq))
+print("RESULT: No significant difference in the AI treatment and the 30% cooperation expected")
 
-ggplot(data=ad_p10[ad_p10$other.d==3,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="AI",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq, names=c("all_data(3)","AI data"))
-t.test(ad_p10[ad_p10$other.d==3,]$my.d, pw_df_1[pw_df_1$Adversary=="AI",]$Freq)
-
-ggplot(data=ad_p10[ad_p10$other.d==5,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq, names=c("all_data(5)","Human data"))
-t.test(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq)
-
+# ggplot(data=ad_p10[ad_p10$other.d==5,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human",], aes(x=Freq), color="red")
+# boxplot(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq, names=c("all_data(5)","Human data"))
+print(t.test(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human",]$Freq))
+print("RESULT: No difference in the Human treatment and the 50% cooperation expected")
  
-ggplot(data=ad_p10[ad_p10$other.d==7,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",], aes(x=Freq), color="red")
-boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, names=c("all_data(7)","Human+AI data")) #1= all_data, 2 = HAI, 3 = Human for comparison
-t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq)
+# ggplot(data=ad_p10[ad_p10$other.d==7,]) + geom_density( aes(x=my.d), color="green") + geom_density(data=pw_df_1[pw_df_1$Adversary=="Human+AI",], aes(x=Freq), color="red")
+# boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, names=c("all_data(7)","Human+AI data")) #1= all_data, 2 = HAI, 3 = Human for comparison
+print(t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq))
+print("RESULT: Significant difference in the Human+AI treatment and the 70% cooperation expected")
 
-p<- ggplot(data=plot.data, aes(x=set, y=Freq))+geom_boxplot()
+p<- ggplot(data=plot.data, aes(Adversary, Freq))+
+  geom_boxplot(aes(color=set))+
+  scale_y_discrete(limits=c(0:10))+
+  labs(title="IPD - Measured-Expected Comparison Boxplots", subtitle="Comparison of Experimental data (by treatment)\nwith analogs in the large-n dataset", x="Adversary and set",color="Dataset", y = "Cooperation Rate") + 
+  theme(plot.title = element_text(size=12), plot.subtitle = element_text(size=9))+
+  scale_color_discrete(labels = c("Large-N","Present Study"))
 print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+
 print("RESULT: AI and human distributions of participants' aggregate individual cooperation (by competitor) match reasnably well, and t.tests show n.s. difference. tHis indicates that the sample (not individuals) played mostly like their human counterparts from all_data based on aggregate competitor gameplay. However, Human+AI shows asignificant difference at p<0.001 w/95% confidence. Something is amiss with the human+AI condition. Because it is lower, it is possibel there is a decoy effect with the human, but even the human treatment showed a higher mean. Maybe the John Henry effect?  Not 'trusting' a human with an advantage? And, there is a significant order effect in the HAI condition (and a nearly significant in the H condition - possibly related to the lack of deception belief?)")
 
 
@@ -1072,68 +1184,65 @@ colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
 a<- as.data.frame(a)
 a$id <- pw_ids
 
-
+#calculate memory-zero same counts and ID's
 for (i in pw_ids){
   a[a$id==i,2] = length(which(q[q$id==i & q$Adversary=="Human",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
   a[a$id==i,3] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="AI",]$my.decision))
   a[a$id==i,4] = length(which(q[q$id==i & q$Adversary=="Human+AI",]$my.decision==q[q$id==i & q$Adversary=="Human",]$my.decision))
 }
 a$sum <- rowSums(a[,2:4])
-
 pw_same_count_df <- a
-
-
-
-# print(pw_same_count_df)
-# print(ggplot(pw_same_count_df) + geom_bar(aes(sum)))
-
-
-
-print(paste0("RESULT: ",100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids),"% of participants played same choices across multiple competitors in all ten rounds. "))
+num<- 100*nrow(pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,])/length(pw_ids)
+names <- pw_same_count_df[pw_same_count_df$`H-AI`==10 | pw_same_count_df$`HAI-AI`==10 |pw_same_count_df$`HAI-H`==10,"id"]
+print(paste0("RESULT: ",num,"% of participants (",paste0(names, collapse=", "),") played same choices across multiple competitors in all ten rounds."))
+a <- as.data.frame(xtabs(~id+my.decision+Adversary, data=pw_all_data_with_demo)[,1,])
+names_alldc <- a[a$Freq==10|a$Freq==0,]$id
+print("should I include 9's (i.e. they played the same except one choice?)")
+print(paste0("Of these ",num," participants, ",length(intersect(names,names_alldc))," (",paste0(intersect(names,names_alldc), collapse = ","),") played AllD or AllC. Meaning ",length(setdiff(names,names_alldc)), " (",paste0(setdiff(names,names_alldc),collapse=", "),") played another memory-zero or password-type strategy (assumption)."))
 
 # nrow(pw_same_count_df[pw_same_count_df$sum >24.5 | pw_same_count_df$sum <19.4,])
-
-a<- xtabs(~period+id+TFT, data=pw_all_data_with_demo)[,,"Peace"]
-a[a==0|a==3] <- 3
-a[a==1|a==2] <- 1
-a[a==1] <- 0
-a[a==3] <- 1
-f<- data.frame(rowMeans(a))
-f$period <- c(1:10)
-names(f)[1] <- "mean"
-f$type <- "TFT"
-
-a<- xtabs(~period+id+my.decision, data=pw_all_data_with_demo)[,,2]
-a[a==0|a==3] <- 3
-a[a==1|a==2] <- 1
-a[a==1] <- 0
-a[a==3] <- 1
-b<- data.frame(rowMeans(a))
-b$period <- c(1:10)
-names(b)[1] <- "mean"
-b$type <- "players"
-c<- xtabs(~period+id+other.decision1, data=pw_all_data_with_demo)[,,2]
-c[c==0|c==3] <- 3
-c[c==1|c==2] <- 1
-c[c==1] <- 0
-c[c==3] <- 1
-d<- data.frame(rowMeans(c))
-d$period <- c(1:9)
-names(d)[1] <- "mean"
-d$type <-"adv"
-e<- rbind(d,b,f)
-p<- ggplot(data=e[e$type=="players",], aes(x=period, y=mean))+
-  #geom_smooth(method='auto',formula=y~x)+ 
-  geom_line()+ 
-  # geom_point(data=e[e$type=="adv",])+
-  labs(title="PW - Ratio of all 3-same Choice by Round",x="Round", y = "Ratio of all 3 same choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+ylim(0,1)#or use method="lm"
-
-print(p)
-print("need to fix y labels and cooperative play by adversaries?")
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-
-print(paste0("On average, ",round(mean(e[e$type=="players",]$mean)*100,1), "% of choices were the same across adversaries. In contrast, a TFT strategy against each of the competitors yields only ",round(mean(e[e$type=="TFT",]$mean)*100, 1),"% of the same choices across competitors in each round."))
+# 
+# a<- xtabs(~period+id+TFT, data=pw_all_data_with_demo)[,,"Peace"]
+# a[a==0|a==3] <- 3
+# a[a==1|a==2] <- 1
+# a[a==1] <- 0
+# a[a==3] <- 1
+# f<- data.frame(rowMeans(a))
+# f$period <- c(1:10)
+# names(f)[1] <- "mean"
+# f$type <- "TFT"
+# 
+# a<- xtabs(~period+id+my.decision, data=pw_all_data_with_demo)[,,2]
+# a[a==0|a==3] <- 3
+# a[a==1|a==2] <- 1
+# a[a==1] <- 0
+# a[a==3] <- 1
+# b<- data.frame(rowMeans(a))
+# b$period <- c(1:10)
+# names(b)[1] <- "mean"
+# b$type <- "players"
+# c<- xtabs(~period+id+other.decision1, data=pw_all_data_with_demo)[,,2]
+# c[c==0|c==3] <- 3
+# c[c==1|c==2] <- 1
+# c[c==1] <- 0
+# c[c==3] <- 1
+# d<- data.frame(rowMeans(c))
+# d$period <- c(1:9)
+# names(d)[1] <- "mean"
+# d$type <-"adv"
+# e<- rbind(d,b,f)
+# p<- ggplot(data=e[e$type=="players",], aes(x=period, y=mean))+
+#   #geom_smooth(method='auto',formula=y~x)+ 
+#   geom_line()+ 
+#   # geom_point(data=e[e$type=="adv",])+
+#   labs(title="PW - Ratio of all 3-same Choice by Round",x="Round", y = "Ratio of all 3 same choices", color = "Adversary") +scale_x_discrete(limits=c(1:10))+ theme(plot.title = element_text(size=14), legend.title = element_text(size=9), legend.position = c(0.8, 0.8))+ylim(0,1)#or use method="lm"
+# 
+# print(p)
+# print("need to fix y labels and cooperative play by adversaries?")
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+# 
+# print(paste0("On average, ",round(mean(e[e$type=="players",]$mean)*100,1), "% of choices were the same across adversaries. In contrast, a TFT strategy against each of the competitors yields only ",round(mean(e[e$type=="TFT",]$mean)*100, 1),"% of the same choices across competitors in each round."))
 
 
 #Axelrod fingerprint function
@@ -1589,7 +1698,7 @@ print("NEED TO MAKE THIS CHART FOR THE AXELROD DF")
 m<-melt(aggregate(.~Adversary, data=axl_fp_df[,-1],FUN=sum))
 p<- ggplot(m, aes(x= Adversary, y= variable, fill=value))+
   geom_raster(aes(fill=value))+
-  labs(title="IPD-Strategy Inference: AXL Strategies by Competitor",x="Adversary", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 8, angle = 45, hjust = 1, vjust = 0, face = "plain"))  
+  labs(title="IPD-Strategy Inference: AXL Strategies by Competitor",x="Adversary", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))  
                                                                                                                                                                       
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
@@ -1753,67 +1862,68 @@ for (i in pw_ids) {
 
 
 
-# ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
-print("MEMORY-0.5 (competitor decision - other.decision1)")
-a<-xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
-print(rowSums(a, dims=2))
-print(chisq.test(rowSums(a, dims=2)))
-print("A significant result on this Chisq test indicates a relationship between other.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
-print(mantelhaen.test(a))
-print("The significant result (p = 0.002335) indicates that the association between treatment (other.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
-print(BreslowDayTest(a))
-print("The large p-value for the Breslow-Day test (p=0.1025) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
-print("")
-print("pairwise B-D tests")
-print(BreslowDayTest(a[,,-1]))
-print("The Breslow-Day test (p=0.0405) indicates a significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
-print(BreslowDayTest(a[,,-2]))
-print("The Breslow-Day test (p=0.10) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
-print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
-
-print("MEMORY-1 (own decision - my.decision1)")
-a<-xtabs(~my.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
-print(rowSums(a, dims=2))
-print(chisq.test(rowSums(a, dims=2)))
-print("A significant result on this Chisq test indicates a relationship between my.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
-print(mantelhaen.test(a))
-print("The significant result (p-value < 2.2e-16) indicates that the association between treatment (my.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
-print(BreslowDayTest(a))
-print("The large p-value for the Breslow-Day test (p=0.3396) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
-print("")
-print("pairwise B-D tests")
-print(BreslowDayTest(a[,,-1]))
-print("The Breslow-Day test (p=0.2316) indicates no significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
-print(BreslowDayTest(a[,,-2]))
-print("The Breslow-Day test (p=0.1782) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
-print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
-
-print("MEMORY-2 (other.decision1 + my.decision1)")
-m<-as.data.frame(xtabs(~my.decision+my.decision1+other.decision1+Adversary, data=pw_all_data_with_demo))
-m$num<-paste(m$my.decision1,m$other.decision1)
-o<-xtabs(Freq~num+my.decision+Adversary, data=m)
-p<-aggregate(Freq ~ my.decision + Adversary, data=o, FUN=sum)
-names(p)[3] <- "sum"
-r<-merge(o,p,by=c("Adversary","my.decision"))
-s<-array(NA, dim=c(2,2,3,4), dimnames=list(c("c","d"),c("Sums(c|d)","Freq(c|d)"), Adversary_list,levels(r$num)))
-
-for (cont in levels(r$num)) {
-  print(cont)
-    for (adv in Adversary_list) {
-
-    s[,,adv,cont]<-matrix(c(r[r$Adversary==adv & r$num==cont,]$sum,r[r$Adversary==adv & r$num==cont,]$Freq), nrow=2)
-    }
-  print(BreslowDayTest(s[,,,cont]))
-
-}
-print("Result: breslow day test shows no effect of adversary on memory-(1+1) except in the d,c condition/context")
-
-chisq.test(rowSums(o, dims=2))
-mantelhaen.test(o)
-oddsratio(o[,,1])
-oddsratio(o[,,2])
-oddsratio(o[,,3])
-
+# # ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
+# print("---------------further research - IPD - Effect of adversary on Memory-1/2 odds")
+# print("MEMORY-0.5 (competitor decision - other.decision1)")
+# a<-xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
+# print(rowSums(a, dims=2))
+# print(chisq.test(rowSums(a, dims=2)))
+# print("A significant result on this Chisq test indicates a relationship between other.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+# print(mantelhaen.test(a))
+# print("The significant result (p = 0.002335) indicates that the association between treatment (other.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+# print(BreslowDayTest(a))
+# print("The large p-value for the Breslow-Day test (p=0.1025) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+# print("")
+# print("pairwise B-D tests")
+# print(BreslowDayTest(a[,,-1]))
+# print("The Breslow-Day test (p=0.0405) indicates a significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+# print(BreslowDayTest(a[,,-2]))
+# print("The Breslow-Day test (p=0.10) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+# print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+# 
+# print("MEMORY-1 (own decision - my.decision1)")
+# a<-xtabs(~my.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
+# print(rowSums(a, dims=2))
+# print(chisq.test(rowSums(a, dims=2)))
+# print("A significant result on this Chisq test indicates a relationship between my.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+# print(mantelhaen.test(a))
+# print("The significant result (p-value < 2.2e-16) indicates that the association between treatment (my.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+# print(BreslowDayTest(a))
+# print("The large p-value for the Breslow-Day test (p=0.3396) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+# print("")
+# print("pairwise B-D tests")
+# print(BreslowDayTest(a[,,-1]))
+# print("The Breslow-Day test (p=0.2316) indicates no significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+# print(BreslowDayTest(a[,,-2]))
+# print("The Breslow-Day test (p=0.1782) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+# print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+# 
+# print("MEMORY-2 (other.decision1 + my.decision1)")
+# m<-as.data.frame(xtabs(~my.decision+my.decision1+other.decision1+Adversary, data=pw_all_data_with_demo))
+# m$num<-paste(m$my.decision1,m$other.decision1)
+# o<-xtabs(Freq~num+my.decision+Adversary, data=m)
+# p<-aggregate(Freq ~ my.decision + Adversary, data=o, FUN=sum)
+# names(p)[3] <- "sum"
+# r<-merge(o,p,by=c("Adversary","my.decision"))
+# s<-array(NA, dim=c(2,2,3,4), dimnames=list(c("c","d"),c("Sums(c|d)","Freq(c|d)"), Adversary_list,levels(r$num)))
+# 
+# for (cont in levels(r$num)) {
+#   print(cont)
+#     for (adv in Adversary_list) {
+# 
+#     s[,,adv,cont]<-matrix(c(r[r$Adversary==adv & r$num==cont,]$sum,r[r$Adversary==adv & r$num==cont,]$Freq), nrow=2)
+#     }
+#   print(BreslowDayTest(s[,,,cont]))
+# 
+# }
+# print("Result: breslow day test shows no effect of adversary on memory-(1+1) except in the d,c condition/context")
+# 
+# chisq.test(rowSums(o, dims=2))
+# mantelhaen.test(o)
+# oddsratio(o[,,1])
+# oddsratio(o[,,2])
+# oddsratio(o[,,3])
+# 
 
 # ---------------------further research - IPD - Convolutional Strategy inference (sliding window analysis) with statistical likelihood using multiple 5-(or x-)round sliding windows?-------------
 
