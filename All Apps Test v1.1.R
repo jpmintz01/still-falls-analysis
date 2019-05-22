@@ -25,6 +25,7 @@ library(scales)
 library(corrplot)
 library(stratEst)
 library(ggplot2)
+library(metap)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -1687,19 +1688,73 @@ fp_df_sum[fp_df_sum$Adversary=="Human+AI",c(2:(length(types)-1))]<- colSums(fp_d
 n<- melt(fp_df_sum)
 #would be nice to order these by value, but not sure how to do that...
 
-p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+
-  geom_raster(aes(fill=value))+
-  labs(title="IPD-Strategy Fingerprint: Strategies by Competitor",x="Adversary", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12))
+# p<- ggplot(n, aes(x= Adversary, y= variable, fill=value))+
+#   geom_raster(aes(fill=value))+
+#   labs(title="IPD - Strategy Inference Density Matches",subtitle="Strategies by Competitor",x="Competitor", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12))
+# print(p)
+# print(paste0("Insert ", p$labels$title," Plot"))
+# ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+print(paste("Strat Threshold:",strat_threshold <- 1))
+a <- axl_fp_df
+
+a[,-c(1,2)]<- lapply(a[,-c(1,2)], function(x) ifelse(x<strat_threshold, 0, x))
+for (j in names(a[,-c(1,2)])){ #remove non-matched strategies (based on threshold)
+  if (max(a[,j])==0){
+    a[,j] <-NULL
+  }
+}
+b<-a
+for (i in pw_ids) { # for each participant
+  for (j in names(a[,-c(1,2)])){ # for each strategy
+    l <- a[a$id==i,j]
+    k<- l[duplicated(l)]
+    if (length(k)==2 & sum(k)>0){ #check how many inference ratios are equal across all three, 2 means all three adversaries equal
+      b[b$id==i,j] <- "3SAME"#if all three are true, log TRUE in 3-way match
+      #how to capture the names of the strategy matches?
+    } else if (length(k)==1 & sum(k)>0){
+      b[b$id==i,j][b[b$id==i,j]==k] <- "2SAME"
+    }
+  }
+}
+b[,-c(1,2)]<- lapply(b[,-c(1,2)], function(x) ifelse(x==1, "MATCH", x))
+# b is a data frame of id, adversary with columns of strategies.  "SAME" indicates matches between competitors, "MATCH" indicates a match to that strategy
+c<- b[,c(1,2)]
+c$match <- 0 #0 = no match, 1 = match, 2=2 matches, 3=3 matches
+
+for (i in pw_ids) {
+  for (j in Adversary_list){
+    if ("MATCH" %in% b[b$id==i & b$Adversary==j,]){
+      c[c$id==i & c$Adversary==j,]$match <- 1 #1 = match
+    }
+    if ("3SAME" %in% b[b$id==i & b$Adversary==j,]){
+      c[c$id==i,]$match <- 3 #3= 3matches
+    } else if ("2SAME" %in% b[b$id==i & b$Adversary==j,]){
+      c[c$id==i & c$Adversary==j,]$match <- 2 #3= 3matches
+    }
+
+  }
+
+}
+
+c[c$id=="p8v34" & c$Adversary!="Human+AI",]$match <- 2 #these are the two memory-zero strategies from above
+c[c$id=="6lk32" & c$Adversary!="AI",]$match <- 2#these are the two memory-zero strategies from above
+c$match <- as.factor(c$match)
+
+cols <- c("0" = "white", "1" = "lightblue", "2" = "darkgreen", "3" = "green")
+p<- ggplot(c, aes(x= Adversary, y=id, fill=match))+
+  geom_raster(aes(fill=match))+
+  labs(title="IPD - Strategy Inference Matches",subtitle="Participant Inferred Strategy Matches between Competitor",x="Competitor", y = "Strategy", fill = "Number of\nMatches") +
+  theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))+
+  scale_fill_manual(values=cols, labels=c("Unknown","Match only (no same)","Same between 2 Competitors","Same strategy w/all competitors"))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-
-print("NEED TO MAKE THIS CHART FOR THE AXELROD DF")
-m<-melt(aggregate(.~Adversary, data=axl_fp_df[,-1],FUN=sum))
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+m<-melt(aggregate(.~Adversary, data=a[,-1],FUN=mean))
+# m[m$value==0,]<- NA
+# m <- m[complete.cases(m),]
 p<- ggplot(m, aes(x= Adversary, y= variable, fill=value))+
   geom_raster(aes(fill=value))+
-  labs(title="IPD-Strategy Inference: AXL Strategies by Competitor",x="Adversary", y = "Strategy", fill = "Density") +theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))  
-                                                                                                                                                                      
+  labs(title="IPD - Strategy Inference Match Likelihood",subtitle="Strategies by Competitor",x="Competitor", y = "Strategy", fill = "Mean Match Likelihood") +theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))+scale_fill_discrete()
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
@@ -1862,68 +1917,113 @@ for (i in pw_ids) {
 
 
 
-# # ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
-# print("---------------further research - IPD - Effect of adversary on Memory-1/2 odds")
-# print("MEMORY-0.5 (competitor decision - other.decision1)")
-# a<-xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
-# print(rowSums(a, dims=2))
-# print(chisq.test(rowSums(a, dims=2)))
-# print("A significant result on this Chisq test indicates a relationship between other.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
-# print(mantelhaen.test(a))
-# print("The significant result (p = 0.002335) indicates that the association between treatment (other.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
-# print(BreslowDayTest(a))
-# print("The large p-value for the Breslow-Day test (p=0.1025) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
-# print("")
-# print("pairwise B-D tests")
-# print(BreslowDayTest(a[,,-1]))
-# print("The Breslow-Day test (p=0.0405) indicates a significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
-# print(BreslowDayTest(a[,,-2]))
-# print("The Breslow-Day test (p=0.10) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
-# print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
-# 
-# print("MEMORY-1 (own decision - my.decision1)")
-# a<-xtabs(~my.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
-# print(rowSums(a, dims=2))
-# print(chisq.test(rowSums(a, dims=2)))
-# print("A significant result on this Chisq test indicates a relationship between my.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
-# print(mantelhaen.test(a))
-# print("The significant result (p-value < 2.2e-16) indicates that the association between treatment (my.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
-# print(BreslowDayTest(a))
-# print("The large p-value for the Breslow-Day test (p=0.3396) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
-# print("")
-# print("pairwise B-D tests")
-# print(BreslowDayTest(a[,,-1]))
-# print("The Breslow-Day test (p=0.2316) indicates no significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
-# print(BreslowDayTest(a[,,-2]))
-# print("The Breslow-Day test (p=0.1782) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
-# print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
-# 
-# print("MEMORY-2 (other.decision1 + my.decision1)")
-# m<-as.data.frame(xtabs(~my.decision+my.decision1+other.decision1+Adversary, data=pw_all_data_with_demo))
-# m$num<-paste(m$my.decision1,m$other.decision1)
-# o<-xtabs(Freq~num+my.decision+Adversary, data=m)
-# p<-aggregate(Freq ~ my.decision + Adversary, data=o, FUN=sum)
-# names(p)[3] <- "sum"
-# r<-merge(o,p,by=c("Adversary","my.decision"))
-# s<-array(NA, dim=c(2,2,3,4), dimnames=list(c("c","d"),c("Sums(c|d)","Freq(c|d)"), Adversary_list,levels(r$num)))
-# 
-# for (cont in levels(r$num)) {
-#   print(cont)
-#     for (adv in Adversary_list) {
-# 
-#     s[,,adv,cont]<-matrix(c(r[r$Adversary==adv & r$num==cont,]$sum,r[r$Adversary==adv & r$num==cont,]$Freq), nrow=2)
-#     }
-#   print(BreslowDayTest(s[,,,cont]))
-# 
-# }
-# print("Result: breslow day test shows no effect of adversary on memory-(1+1) except in the d,c condition/context")
-# 
-# chisq.test(rowSums(o, dims=2))
-# mantelhaen.test(o)
-# oddsratio(o[,,1])
-# oddsratio(o[,,2])
-# oddsratio(o[,,3])
-# 
+# ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
+print("---------------further research - IPD - Effect of adversary on Memory-1/2 odds")
+print("MEMORY-1 (competitor decision - other.decision1)")
+a<-as.data.frame(xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo))
+p<-aggregate(Freq ~ my.decision + Adversary, data=a, FUN=sum)
+l<-merge(a,p, by=c("my.decision","Adversary"))
+
+names(l) <- c("my.decision","Adversary","other.decision1","Freq","sum")
+#c given c in prev round, d given c in prev round, c overall, d overall
+l$p <- 1.0
+for (i in Adversary_list){
+  print(i)
+  for (j in c(0:1)){
+    n<- fisher.test(l[l$Adversary==i & l$other.decision1==j,c("Freq","sum")])["p.value"]
+    print(l[l$Adversary==i & l$other.decision1==j,]$p <-n$p.value)
+  }
+}
+for (i in Adversary_list){
+  print(i)
+  print(sumlog(l[l$Adversary==i,]$p))
+}
+print("RESULT: Fisher method of combining p-values shows that, in aggregate, the Human used a memory-1(.5) strategy, but the AI did not and the HAI definitely did not.")
+
+print(rowSums(a, dims=2))
+print(chisq.test(rowSums(a, dims=2)))
+print("A significant result on this Chisq test indicates a relationship between other.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+print(mantelhaen.test(a))
+print("The significant result (p = 0.002335) indicates that the association between treatment (other.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+print(BreslowDayTest(a))
+print("The large p-value for the Breslow-Day test (p=0.1025) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+print("")
+print("pairwise B-D tests")
+print(BreslowDayTest(a[,,-1]))
+print("The Breslow-Day test (p=0.0405) indicates a significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+print(BreslowDayTest(a[,,-2]))
+print("The Breslow-Day test (p=0.10) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+
+print("MEMORY-1 (own decision - my.decision1)")
+a<-xtabs(~my.decision1+my.decision+Adversary, data=pw_all_data_with_demo)
+print(rowSums(a, dims=2))
+print(chisq.test(rowSums(a, dims=2)))
+print("A significant result on this Chisq test indicates a relationship between my.decision1 and my.decision (i.e. the sample shows memory-1 significance.")
+print(mantelhaen.test(a))
+print("The significant result (p-value < 2.2e-16) indicates that the association between treatment (my.decision1) and response (my.decision) remains strong after adjusting for Competitor/Adversary")
+print(BreslowDayTest(a))
+print("The large p-value for the Breslow-Day test (p=0.3396) indicates no significant Adversary difference in the odds ratios for the THREE adversaries.")
+print("")
+print("pairwise B-D tests")
+print(BreslowDayTest(a[,,-1]))
+print("The Breslow-Day test (p=0.2316) indicates no significant Adversary difference in the memory-1 odds ratios between Human and Human+AI")
+print(BreslowDayTest(a[,,-2]))
+print("The Breslow-Day test (p=0.1782) indicates no significant Adversary difference in the memory-1 odds ratios between AI and Human+AI.")
+print("Result - This appears to corroborate the finding in the all_data comparison which showed a mismatch in competitor gameplay in the HAI condition. The n.s. difference between AI and Human+AI is worthy of further exploration, perhaps with a more sensitive test...")
+
+print("MEMORY-2 (my.decision1 + other.decision1)")
+m<-as.data.frame(xtabs(~my.decision+my.decision1+other.decision1+Adversary, data=pw_all_data_with_demo))
+m$num<-paste(m$my.decision1,m$other.decision1)
+#num = my.decision1 - other.decision1
+o<-xtabs(Freq~num+my.decision+Adversary, data=m)
+p<-aggregate(Freq ~ my.decision + Adversary, data=o, FUN=sum)
+names(p)[3] <- "sum"
+r<-merge(o,p,by=c("Adversary","my.decision"))
+s<-array(NA, dim=c(2,2,3,4), dimnames=list(c("c","d"),c("Sums(c|d)","Freq(c|d)"), Adversary_list,levels(r$num)))
+
+for (cont in levels(r$num)) {
+  print(cont)
+    for (adv in Adversary_list) {
+  print(adv)
+    s[,,adv,cont]<-matrix(c(r[r$Adversary==adv & r$num==cont,]$sum,r[r$Adversary==adv & r$num==cont,]$Freq), nrow=2)
+    
+    print(fisher.test(s[,,adv,cont])["p.value"])
+    }
+  print(BreslowDayTest(s[,,,cont]))
+
+}
+#print("Result: breslow day test shows no effect of adversary on memory-(1+1) except in the d,c condition/context")
+p<-aggregate(Freq ~ my.decision + Adversary, data=o, FUN=sum)
+l<-merge(o,p, by=c("my.decision","Adversary"))
+
+names(l) <- c("my.decision","Adversary","context","Freq","sum")
+#c given c in prev round, d given c in prev round, c overall, d overall
+l$p <- 1.0
+for (i in Adversary_list){
+  print(i)
+  for (j in levels(l$context)){
+    n<- fisher.test(l[l$Adversary==i & l$context==j,c("Freq","sum")])["p.value"]
+    print(l[l$Adversary==i & l$context==j,]$p <-n$p.value)
+  }
+}
+for (i in Adversary_list){
+  print(i)
+  print(sumlog(l[l$Adversary==i,]$p))
+  # print(meanz(l[l$Adversary==i,]$p))
+  # print(meanp(l[l$Adversary==i,]$p))
+  #print(votep(l[l$Adversary==i,]$p))
+  # print(sump(l[l$Adversary==i,]$p))
+}
+print("RESULT: it appears that using the fisher method, all three treatments show significant memory-2 (one round) variation")
+print("maybe the fisher method isn't the right one.")
+
+chisq.test(rowSums(o, dims=2))
+mantelhaen.test(o)
+oddsratio(o[,,1])
+oddsratio(o[,,2])
+oddsratio(o[,,3])
+
 
 # ---------------------further research - IPD - Convolutional Strategy inference (sliding window analysis) with statistical likelihood using multiple 5-(or x-)round sliding windows?-------------
 
