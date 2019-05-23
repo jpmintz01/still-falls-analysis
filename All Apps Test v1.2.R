@@ -1696,8 +1696,17 @@ n<- melt(fp_df_sum)
 # print(p)
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print(paste("Strat Threshold:",strat_threshold <- 0.9))
+print(paste("Strat Threshold:",strat_threshold <- 1))
 a <- axl_fp_df
+for (i in pw_ids){
+  print(i)
+  for (j in names(a[,-c(1,2)])){
+    if (sum(a[a$id==i,j])>=(strat_threshold*3) & min(a[a$id==i,j])>=strat_threshold) {
+      print(paste0("-",j))
+    }
+  }
+}
+print("This method uses 0.9 as the threshold and if the sum of the three competitor matches is greater than 3x the threshold and all values are greater than threshold, it is considered a 3-way match.  It yields 8 players with 3-way matches")
 
 a[,-c(1,2)]<- lapply(a[,-c(1,2)], function(x) ifelse(x<strat_threshold, 0, x))
 for (j in names(a[,-c(1,2)])){ #remove non-matched strategies (based on threshold)
@@ -1749,7 +1758,7 @@ p<-c %>%
   mutate(id=reorder(id,match)) %>% 
   ggplot(aes(x= reorder(Adversary,match), y=id, fill=as.factor(match)))+
   geom_raster(aes(fill=as.factor(match)))+
-  labs(title="IPD - Strategy Inference Matches",subtitle=paste0("Participant Inferred Strategy Matches between Competitor - Threshold = ",strat_threshold,""),x="Competitor", y = "Strategy", fill = "Number of\nMatches") +
+  labs(title="IPD - Strategy Inference Matches",subtitle=paste0("Inferred Strategies across competitors  \nThreshold = ",strat_threshold,""),x="Competitor", y = "Strategy", fill = "Number of\nMatches") +
   theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))+
   scale_fill_manual(values=cols, labels=c("3"="Same strategy w/all competitors","2"="Same strategy w/two competitors","1"="Inference only \n(no match between competitors)","0"="Unknown (No Inference Match)"))+
   guides(fill = guide_legend(reverse = TRUE))
