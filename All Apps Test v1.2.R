@@ -1741,26 +1741,43 @@ for (i in pw_ids) {
 #the follwoing lines tell the plot to display the two memory-zero matches, unless other startegies are matched to all three
 c[c$id=="p8v34" & c$Adversary!="Human+AI",]$match <- max(2,c[c$id=="p8v34" & c$Adversary!="Human+AI",]$match) #these are the two memory-zero strategies from above
 c[c$id=="6lk32" & c$Adversary!="AI",]$match <- max(2,c[c$id=="6lk32" & c$Adversary!="AI",]$match)#these are the two memory-zero strategies from above
-c$match <- as.factor(c$match)
 
-cols <- c("0" = "lightgray", "1" = "orange", "2" = "darkgreen", "3" = "blue")
-p<- ggplot(c, aes(x= Adversary, y=id, fill=match))+
-  geom_raster(aes(fill=match))+
+# c$match <- as.factor(c$match)
+cols <- c("3" = "blue",  "2" = "darkgreen","1" = "orange", "0" = "lightgray")
+p<-c %>% 
+  arrange(match) %>%
+  mutate(id=reorder(id,match)) %>% 
+  ggplot(aes(x= reorder(Adversary,match), y=id, fill=as.factor(match)))+
+  geom_raster(aes(fill=as.factor(match)))+
   labs(title="IPD - Strategy Inference Matches",subtitle=paste0("Participant Inferred Strategy Matches between Competitor - Threshold = ",strat_threshold,""),x="Competitor", y = "Strategy", fill = "Number of\nMatches") +
   theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))+
-  scale_fill_manual(values=cols, labels=c("Unknown","Match only (no same)","Same between 2 Competitors","Same strategy w/all competitors"))
+  scale_fill_manual(values=cols, labels=c("3"="Same strategy w/all competitors","2"="Same strategy w/two competitors","1"="Inference only \n(no match between competitors)","0"="Unknown (No Inference Match)"))+
+  guides(fill = guide_legend(reverse = TRUE))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
-m<-melt(aggregate(.~Adversary, data=a[,-1],FUN=mean))
+
 # m[m$value==0,]<- NA
 # m <- m[complete.cases(m),]
+display_threshold <- 0.25
+m<-melt(aggregate(.~Adversary, data=a[,-1],FUN=mean))
+for (n in levels(m$variable)) {
+  if (sum(m[m$variable==n,]$value)<=display_threshold){
+    m <- m[!m$variable==n,]
+  }
+}
+
 p<- ggplot(m, aes(x= Adversary, y= variable, fill=value))+
   geom_raster(aes(fill=value))+
-  labs(title="IPD - Strategy Inference Match Likelihood",subtitle="Strategies by Competitor",x="Competitor", y = "Strategy", fill = "Mean Match Likelihood") +theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"))
+  labs(title="IPD - Strategy Inference Match Likelihood",subtitle=paste0(nrow(m)/3," highest matched strategies by Competitor\nDisplay Threshold: ",display_threshold),x="Competitor", y = "Strategy", fill = "Inference Match Likelihood") +
+  theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"),  panel.background= element_rect(fill="black"),panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid",
+                                 colour = "black"))
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 
 # p<-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
 # 
@@ -2730,7 +2747,7 @@ a<-as.data.frame(xtabs(~id+Choice_of_Advisor+Adversary, data=rps_all_data_with_d
 
 p<-ggplot(data=a, aes(y=Freq,x=Choice_of_Advisor))+
   geom_boxplot(color=c("green","red","blue"))+
-  labs(title="RPS - Delegation Boxplot", x="Delegate", y = "# of Choices")
+  labs(title="RPS - Delegate Boxplot", x="Delegate", y = "# of Choices")
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
@@ -2752,26 +2769,28 @@ print("---RPS: Choice of Advisor (regardless of Adversary) (H2.1T") #does the gr
 n<- xtabs(~Choice_of_Advisor, data = rps_all_data_with_demo)
 print(n)
 m<- as.data.frame(n)
-m$Freq <- (m$Freq/sum(m$Freq))*100
+m$perc <- (m$Freq/sum(m$Freq))*100
 p<- ggplot(m, aes("Choice of Advisor", y=Freq, fill = Choice_of_Advisor)) +
   geom_bar(width = 1, size = 1, color = "white", stat = "identity") +
   coord_polar("y") +
-  geom_text(aes(label = paste0(round(Freq), "%")), 
+  geom_text(aes(label = paste0(Freq," (",round(perc), "%)")), 
             position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "RPS-Choice of Advisor (Aggregate)") +
+  labs(x = NULL, y = NULL, fill = "Delegate", 
+       title = "RPS Aggregate Delegation Ratios") +
   guides(fill = guide_legend(reverse = TRUE)) +
   theme_classic() +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank(),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust=0.5))+
+  scale_fill_discrete(labels=c("AI","Human","None"))
 print(p)
 print("Amplifying: 63% of choices were 'no-advice'")
 print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+theme_update(plot.title = element_text(hjust = 0.5)) #centers ggplot titles
 
-a<-as.data.frame(xtabs(~id+Choice_of_Advisor, data=rps_all_data_with_demo))
+a<-as.data.frame(xtabs(~id+Choice_of_Advisor+Adversary, data=rps_all_data_with_demo))
 p <- ggplot(a, aes(x=Choice_of_Advisor, y=Freq))+
   geom_boxplot()+
   coord_trans(y="sqrt")+
@@ -2815,6 +2834,7 @@ print("---RPS: Aggregate: Tests of proportions on AGGREGATE choices (by Adversar
 print(df <- xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))
 print(chisq.test(xtabs(~ Adversary + Choice_of_Advisor, data=rps_all_data_with_demo))) 
 print("Hypothesis RESULT: A Chi-sq test shows advisor choice is statistically independent of Adversary type at p < .05.")
+
 print(mantelhaen.test(xtabs(~ Adversary + Choice_of_Advisor+pw_order, data=rps_all_data_with_demo))) 
 print("Correcting for game order does not affect the result...: A CMHtest shows advisor choice is statistically independent of Adversary type at p < .05.")
 print(mantelhaen.test(xtabs(~ Adversary + Choice_of_Advisor+rps_order, data=rps_all_data_with_demo))) 

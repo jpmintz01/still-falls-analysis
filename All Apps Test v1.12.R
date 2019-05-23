@@ -2730,7 +2730,7 @@ a<-as.data.frame(xtabs(~id+Choice_of_Advisor+Adversary, data=rps_all_data_with_d
 
 p<-ggplot(data=a, aes(y=Freq,x=Choice_of_Advisor))+
   geom_boxplot(color=c("green","red","blue"))+
-  labs(title="RPS - Delegation Boxplot", x="Delegate", y = "# of Choices")
+  labs(title="RPS - Delegate Boxplot", x="Delegate", y = "# of Choices")
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
