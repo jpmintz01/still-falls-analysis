@@ -2899,16 +2899,49 @@ rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df
 
 
 a<-as.data.frame(xtabs(~id+prev_choice+switch, data=rps_switch_df[rps_switch_df$prev_outcome=="Lose",]))
-b <- a[a$switch=="Switch",]
 
+#pairwise chisq.tests
+print(xtabs(Freq~prev_choice+switch,data=a))
+print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)))
+print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-1,]))
+print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-2,]))
+print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-3,]))
+
+b <- a[a$switch=="Switch",]
 b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
 b$switch <- NULL
 b$Freq <- NULL
+p<-ggplot(b, aes(x=ratio, color=prev_choice))+geom_density()
+print(p)
 l<-xtabs(ratio~id+prev_choice, data=b)
 print(friedman.test(l))
 print("Characterization: In the loss frame alone a  friedman test shows stay/switch ratio has a signifcant relationship with previous choice")
+print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Stay",]$Freq, a[a$prev_choice=="AI" & a$switch=="Stay",]$Freq, alternative="less",paired=TRUE))
+print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Stay",]$Freq, a[a$prev_choice=="none" & a$switch=="Stay",]$Freq, alternative="less",paired=TRUE))
+print(wilcox.test(a[a$prev_choice=="AI" & a$switch=="Stay",]$Freq, a[a$prev_choice=="none" & a$switch=="Stay",]$Freq,alternative="less", paired=TRUE))
 
-# 
+
+print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Switch",]$Freq, a[a$prev_choice=="AI" & a$switch=="Switch",]$Freq, alternative="less", paired=TRUE))
+print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Switch",]$Freq, a[a$prev_choice=="none" & a$switch=="Switch",]$Freq, alternative="less",paired=TRUE))
+print(wilcox.test(a[a$prev_choice=="none" & a$switch=="Switch",]$Freq, a[a$prev_choice=="AI" & a$switch=="Switch",]$Freq,paired=TRUE))
+
+print("result shows sigificant differences in whether participants stayed or switched, by adverasry" )
+print(xtabs(Freq~prev_choice+switch,data=a)[,1]/xtabs(Freq~prev_choice+switch,data=a)[,2])
+print("result shows AI more likely to stay than human, and none more likely to stay than both in whether participants stayed or switched, by adverasry" )
+
+l<-rps_switch_df
+l<- l[l$Round>1,]
+l$switch <- as.factor(l$switch)
+print(contrasts(l$prev_adversary))
+print(contrasts(l$prev_outcome))
+print(contrasts(l$prev_choice))
+q<- glm(switch ~ Round+prev_choice+prev_outcome+prev_adversary+prev_outcome:prev_adversary+prev_choice:prev_adversary+prev_outcome:prev_choice+Round:prev_choice+Round:prev_adversary+Round:prev_outcome, data=l,family = "binomial")
+print(summary(q))
+print(Anova(q))
+print("RESULT: a binomial logistic regression shows previous choice is the most signifciant factor  and that prev_adversary is significant as well, but prev_outcome is not, individiually or as an interaction, and neither round nor other interactions are significant")
+
+
+# id Round Adversary Choice_of_Advisor Payoff switch prev_choice prev_outcome prev_adversary
 # print("convert stay/switch to ratio")
 # a<-as.data.frame(xtabs(~id+prev_choice+prev_outcome+switch, data=rps_switch_df))
 # b <- a[a$switch=="Switch",]
