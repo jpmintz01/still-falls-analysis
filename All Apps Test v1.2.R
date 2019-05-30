@@ -1181,6 +1181,17 @@ print("RESULT: AI and human distributions of participants' aggregate individual 
 
 
 #--------------------IPD - Strategy Inference Analysis (H1.3.1-2T) (includes same count)-----------------
+
+print("for probability calculations (3-way match, not method validation")
+print("# of Axelrod strategies = 232")
+print("# of unique ten-round responses to AI = 94")
+print("# of unique ten-round responses to HAI = 74")
+print("# of unique ten-round responses to Human = 99")
+print("# of matched ten-round responses (per participant or sample)= NsubAI or NsubHuman")
+print("# of unique ten-round reponses to that adversary (94,74, or 99) = SsubAI")
+print("probability of a match to that adversary Psubx= Nsubx/Ssubx")
+print("given 94 (or 74 or 99) unique strategies to match out of 1024 permutations (2^10 - 2 choices over ten rounds), only 1 in ~10 will match")
+print("given those three probabilities, what is the probability of a three-way match")
 q <- pw_all_data_with_demo
 a <- matrix(NA, nrow=length(pw_ids), ncol=4)
 colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
@@ -1947,7 +1958,43 @@ for (i in pw_ids) {
 
 
 # ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
-print("---------------further research - IPD - Effect of adversary on Memory-1/2 odds")
+print("---------------further research - IPD - Effect of adversary on individual Memory odds")
+#p1 = probability of cooperation after CC
+#p2 = probability of coopeartion after Particitipant C and adversary D
+#p3 = probability of coopeartion after ParticitipantD and adversary C
+#p4 = probability of coopeartion after DD
+a<-as.data.frame(xtabs(~other.decision1+my.decision1+my.decision+Adversary+id, data=pw_all_data_with_demo))
+a$p <- paste0(a$my.decision1, a$other.decision1)
+a$p <- as.factor(a$p)
+levels(a$p) <- c("p4","p3","p2","p1") #c("DD","DC","CD","CC") #
+l<-aggregate(Freq~p+Adversary+id, data= a, FUN=sum)
+names(l)[4] <- "sum"
+b<-a[a$my.decision==1,]
+l<-merge(b[,c("p","Adversary","id","Freq")],l[,c("p","Adversary","id","sum")], by=c("p","Adversary","id"))
+
+n<-as.data.frame(matrix(NA, nrow=length(pw_ids)*3, ncol=6))
+names(n) <- c("id","Adversary","p1","p2","p3","p4")
+n$id <- rep(pw_ids,3)
+for (i in pw_ids) {
+  n[n$id==i,]$Adversary <- Adversary_list
+}
+for (i in pw_ids) {
+  for (j in Adversary_list){
+    for (k in (c("p1","p2","p3","p4"))) {
+      s<-l[l$id==i & l$Adversary==j & l$p==k,]
+      n[n$id==i & n$Adversary==j,k]<- s$Freq/s$sum
+    }
+  }
+}
+m <- n
+m[is.na(m)]<-0
+print(friedman.test(p1~Adversary|id, data=m))
+print(friedman.test(p2~Adversary|id, data=m))
+print(friedman.test(p3~Adversary|id, data=m))
+print(friedman.test(p4~Adversary|id, data=m))
+
+
+print("---------------further research - IPD - Effect of adversary on aggregate Memory-1/2 odds")
 print("MEMORY-1 (competitor decision - other.decision1)")
 a<-as.data.frame(xtabs(~other.decision1+my.decision+Adversary, data=pw_all_data_with_demo))
 p<-aggregate(Freq ~ my.decision + Adversary, data=a, FUN=sum)
@@ -2868,6 +2915,43 @@ print("Correcting for game order does not affect the result...: A CMHtest shows 
 
 #--------------------RPS - Switch-Loss Analysis (H4)----------------
 # switch_array <- rps_array
+rps_all_data_with_demo$stayed<-ifelse(rps_all_data_with_demo$Choice_of_Advisor==rps_all_data_with_demo$Choice.1,"Stayed","Switched")
+print(xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo))
+print(chisq.test(xtabs(~stayed+Adversary.1+id, data=rps_all_data_with_demo)))
+
+print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo))
+print(chisq.test(l))
+print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo))
+print(chisq.test(l))
+print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo))
+print(chisq.test(l))
+print("RESULT: Participant's previous outcome is not significant in next chocie")
+print("prev Adversary where a participant switched:")
+print(xtabs(~Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+print("prev Outcome where a participant switched:")
+print(xtabs(~Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+print("prev Choice where a participant switched:")
+print(xtabs(~Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+p<-ggplot(as.data.frame(xtabs(~stayed+Adversary.1+id, data=rps_all_data_with_demo)), aes(x=Freq, color=Adversary.1))+facet_grid(~stayed)+geom_density()
+print(p)
+
+print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+print(fisher.test(l))
+print("RESULT: no variation in preference for choice based on previous outcome")
+print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+print(fisher.test(l))
+print("RESULT: no variation in preference for choice based on previous Adversary")
+
+print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==-1,]))
+print(m<-chisq.test(l))
+print("RESULT: no variation in preference for choice based on previous Adversary")
+
+
+
+q<- multinom(Choice_of_Advisor ~ Round+Choice.1+Outcome.1+Adversary.1+Choice.1:Outcome.1+Choice.1:Adversary.1+Outcome.1:Adversary.1, data=rps_all_data_with_demo)
+print(Anova(q))
+print("RESULT: Multinomial logisitc regrssion shows the most significant variable is participant's previous choice, with round and choice-adversary significant, and choice-outcome p<0.10")
+
 
 rps_switch_df<-rps_long_ten_rounds
 rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
