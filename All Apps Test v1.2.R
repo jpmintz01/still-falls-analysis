@@ -1192,6 +1192,7 @@ print("# of unique ten-round reponses to that adversary (94,74, or 99) = SsubAI"
 print("probability of a match to that adversary Psubx= Nsubx/Ssubx")
 print("given 94 (or 74 or 99) unique strategies to match out of 1024 permutations (2^10 - 2 choices over ten rounds), only 1 in ~10 will match")
 print("given those three probabilities, what is the probability of a three-way match")
+print("# probability of random 3-way match is NsubAI/232 * NsubHuman/232 * NsubHAI/232")
 q <- pw_all_data_with_demo
 a <- matrix(NA, nrow=length(pw_ids), ncol=4)
 colnames(a) <- c("id","H-AI","HAI-AI","HAI-H")
@@ -1259,7 +1260,7 @@ print(paste0("Of these ",num," participants, ",length(intersect(names,names_alld
 # print(paste0("On average, ",round(mean(e[e$type=="players",]$mean)*100,1), "% of choices were the same across adversaries. In contrast, a TFT strategy against each of the competitors yields only ",round(mean(e[e$type=="TFT",]$mean)*100, 1),"% of the same choices across competitors in each round."))
 
 
-#Axelrod fingerprint function
+#Axelrod fingerprint function where round 1 must match
 axelrod_fp <- function(player_vec, strat_actions) {
   if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
     for (i in player_vec){ 
@@ -1275,11 +1276,36 @@ axelrod_fp <- function(player_vec, strat_actions) {
     # print(i)
     # print(as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)])))
     # print(length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec))
-    axelrod_df[,i] <- length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec)
+    if (player_vec[1]!=as.list(as.numeric(strat_actions[strat_actions$Strategy==i, 2]))){
+      axelrod_df[,i] <- 0
+    } else {
+      axelrod_df[,i] <- length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec)
+    }
   }
   
   return(axelrod_df)
 }
+#Axelrod fingerprint function where it's ok if round 1 doesn't match
+# axelrod_fp <- function(player_vec, strat_actions) {
+#   if(player_vec[1]=="Peace"|player_vec[1]=="War"){#convert factor to numeric
+#     for (i in player_vec){ 
+#       player_vec[player_vec=="Peace"] <- 1
+#       player_vec[player_vec=="War"] <- 0
+#       player_vec <- as.numeric(player_vec)
+#     }
+#   }
+#   strat_types <- strat_actions$Strategy
+#   axelrod_df <- as.data.frame(matrix(data=0, nrow=1, ncol=length(strat_types)))
+#   names(axelrod_df) <- strat_types
+#   for (i in strat_types) {
+#     # print(i)
+#     # print(as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)])))
+#     # print(length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec))
+#     axelrod_df[,i] <- length(which(player_vec==as.list(as.numeric(strat_actions[strat_actions$Strategy==i, c(2:11)]))))/length(player_vec)
+#   }
+#   
+#   return(axelrod_df)
+# }
 #strategy fingerprinting function
 fingerprint <- function(player_vec, adv_vec, types){  #returns named vector percent match to various fingerprint types  given a player's choices and the adverary's choices
   #inputs: player_vec = a vector of 1's and zero's with 1 being cooperate?
@@ -1707,7 +1733,7 @@ n<- melt(fp_df_sum)
 # print(p)
 # print(paste0("Insert ", p$labels$title," Plot"))
 # ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
-print(paste("Strat Threshold:",strat_threshold <- 1))
+print(paste("Strat Threshold:",strat_threshold <- 0.9))
 a <- axl_fp_df
 for (i in pw_ids){
   print(i)
@@ -1717,11 +1743,33 @@ for (i in pw_ids){
     }
   }
 }
-print("This method uses 0.9 as the threshold and if the sum of the three competitor matches is greater than 3x the threshold and all values are greater than threshold, it is considered a 3-way match.  It yields 8 players with 3-way matches")
+print("if This method uses 0.9 as the threshold and if the sum of the three competitor matches is greater than 3x the threshold and all values are greater than threshold, it is considered a 3-way match.  It yields 8 players with 3-way matches")
+print("if This method uses 1.0 as the threshold and if the sum of the three competitor matches is greater than 3x the threshold and all values are greater than threshold, it is considered a 3-way match.  It yields 4 players with 3-way matches")
+display_threshold <- 0.01
+m<-melt(aggregate(.~Adversary, data=a[,-1],FUN=mean))
+for (n in levels(m$variable)) { #removes values less than display threoshold
+  if (mean(m[m$variable==n,]$value)<=display_threshold){
+    m <- m[!m$variable==n,]
+  }
+}
+m$Adversary <- as.factor(m$Adversary)
+p<- ggplot(m, aes(x= Adversary, y= variable, fill=value))+
+  geom_raster(aes(fill=value))+
+  labs(title="IPD - Strategy Inference Match Likelihood",subtitle=paste0(nrow(m)/3," highest matched strategies by Competitor\nDisplay Threshold: ",display_threshold),x="Competitor", y = "Strategy", fill = "Inference Match Likelihood") +
+  theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"),  panel.background= element_rect(fill="black"),panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid",
+                                 colour = "black"))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 
+
+#if a inference percent match is less than the threshold, replace it with zero
 a[,-c(1,2)]<- lapply(a[,-c(1,2)], function(x) ifelse(x<strat_threshold, 0, x))
 for (j in names(a[,-c(1,2)])){ #remove non-matched strategies (based on threshold)
-  if (max(a[,j])==0){
+  if (max(a[,j])==0){ 
     a[,j] <-NULL
   }
 }
@@ -1779,25 +1827,7 @@ ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 
 # m[m$value==0,]<- NA
 # m <- m[complete.cases(m),]
-display_threshold <- 0.25
-m<-melt(aggregate(.~Adversary, data=a[,-1],FUN=mean))
-for (n in levels(m$variable)) {
-  if (sum(m[m$variable==n,]$value)<=display_threshold){
-    m <- m[!m$variable==n,]
-  }
-}
 
-p<- ggplot(m, aes(x= Adversary, y= variable, fill=value))+
-  geom_raster(aes(fill=value))+
-  labs(title="IPD - Strategy Inference Match Likelihood",subtitle=paste0(nrow(m)/3," highest matched strategies by Competitor\nDisplay Threshold: ",display_threshold),x="Competitor", y = "Strategy", fill = "Inference Match Likelihood") +
-  theme(plot.title = element_text(size=12), axis.text.y = element_text(color = "grey20", size = 6, angle = 0, hjust = 1, vjust = 0, face = "plain"),  panel.background= element_rect(fill="black"),panel.border = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(size = 0.5, linetype = "solid",
-                                 colour = "black"))
-print(p)
-print(paste0("Insert ", p$labels$title," Plot"))
-ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 
 # p<-ggplot(n, aes(x= variable, y= value, group=Adversary))+geom_line(aes(group=Adversary))
 # 
@@ -1848,21 +1878,22 @@ for (i in pw_ids) {
 # pw_bestmatch$HumanAI <- as.factor(pw_bestmatch$HumanAI)
 print(paste0("Strategy Fingerprint of each player by competitor Note: matches less than ",strat_threshold*100,"% (",strat_threshold,") are listed as Unk"))
 
-#axl bestmatch create the matrix of ids vs strategies and percent match
+#axl bestmatch create the matrix of ids vs strategies and BEST matches
 axl_bestmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
 colnames(axl_bestmatch) <- c("id","Human","AI","HumanAI")
 axl_bestmatch$id <- pw_ids
 strat_threshold <- 0.9
 for (i in pw_ids) {
   
-  l<-axl_fp_df[axl_fp_df$id==i,]
-  t<-l[,3:length(axl_types)]
+  l<-axl_fp_df[axl_fp_df$id==i,] #subset the axl inference table by ID
+  t<-l[,3:length(axl_types)] #strip the ID and Adversary
   # s<-colnames(l)[apply(l,1,which.max)]
-  s<-colnames(t)[max.col(t)]
-  r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #ID and 
-  m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match
+  s<-colnames(t)[max.col(t)] #get the column names of the highest columns?
   
-  for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI)
+  # r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #get the list of column names which are a 3-wy match
+  # m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match #doesnt work
+  # 
+  for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI), put the matches into a text table with names
     if (length(which(t[q,]==t[q,s[q]]))>1) { #if there are ties
       if (max(t[q,]) < strat_threshold) { #if the accuracy is < threshold (0.81)
         s[q] <- "unk" # say the strategy is unknown
@@ -1872,7 +1903,7 @@ for (i in pw_ids) {
       # if ((grepl('^(.*)AllC(.*)$',s[q]))&((grepl('^(.*)nnet(.*)$',s[q]))|(grepl('^(.*)GLM(.*)$',s[q]))) ) { #if AllC included wth GLM & nnet, remove GLM & nnet
       #   
       # }
-    } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add accuracy figure
+    } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add "unk"
       s[q] <- "unk"
     } else if (max(t[q,]) >= strat_threshold){
       s[q] <- paste0(s[q],"(",max(t[q,]),")")# if no ties and >0.7, just add accuracy figure
@@ -1884,6 +1915,42 @@ for (i in pw_ids) {
   
 }
 
+#threshmatch is all inference matches above the threshold (not best)
+axl_threshmatch <- as.data.frame(matrix(NA, nrow=length(pw_ids), ncol=4))
+colnames(axl_threshmatch) <- c("id","Human","AI","HumanAI")
+axl_threshmatch$id <- pw_ids
+strat_threshold <- 0.9
+for (i in pw_ids) {
+  
+  l<-axl_fp_df[axl_fp_df$id==i,] #subset the axl inference table by ID
+  t<-l[,3:length(axl_types)] #strip the ID and Adversary
+  # s<-colnames(l)[apply(l,1,which.max)]
+  s<-colnames(t)[max.col(t)] #get the column names of the highest columns?
+  
+  # r<-colnames(l)[l[1,]==l[2,] & l[2,]==l[3,] & l[1,]==0] #get the list of column names which are a 3-wy match
+  # m<-l[,!colnames(l) %in% c(r,"id")] #remove columns which are no match #doesnt work
+  # 
+  for (q in c(1:3)) { #for each adversary (1=Human, 2=AI, 3=Human+AI), put the matches into a text table with names
+    if (length(which(t[q,]>=strat_threshold))>1) { #if there are ties
+      if (max(t[q,]) < strat_threshold) { #if the accuracy is < threshold (0.81)
+        s[q] <- "unk" # say the strategy is unknown
+      } else { #otherwise, combine all ties and the accuracy figure
+        s[q] <- paste0(paste(colnames(t)[t[q,]==t[q,s[q]]], collapse="/"),"(",max(t[q,]),")")
+      }
+      # if ((grepl('^(.*)AllC(.*)$',s[q]))&((grepl('^(.*)nnet(.*)$',s[q]))|(grepl('^(.*)GLM(.*)$',s[q]))) ) { #if AllC included wth GLM & nnet, remove GLM & nnet
+      #   
+      # }
+    } else if (max(t[q,]) < strat_threshold) { # if no ties and < 0.8, just add "unk"
+      s[q] <- "unk"
+    } else if (max(t[q,]) >= strat_threshold){
+      s[q] <- paste0(s[q],"(",max(t[q,]),")")# if no ties and >0.7, just add accuracy figure
+    }
+  }
+  axl_threshmatch[axl_threshmatch$id==i,]$Human <- s[1]
+  axl_threshmatch[axl_threshmatch$id==i,]$AI <- s[2]
+  axl_threshmatch[axl_threshmatch$id==i,]$HumanAI <- s[3]
+  
+}
 # ##stratEst function - doesn't work right, it seems...
 # a <- pw_all_data_with_demo
 # a <- a[,c("Adversary","id","period","my.decision")]
@@ -2917,15 +2984,15 @@ print("Correcting for game order does not affect the result...: A CMHtest shows 
 # switch_array <- rps_array
 rps_all_data_with_demo$stayed<-ifelse(rps_all_data_with_demo$Choice_of_Advisor==rps_all_data_with_demo$Choice.1,"Stayed","Switched")
 print(xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo))
-print(chisq.test(xtabs(~stayed+Adversary.1+id, data=rps_all_data_with_demo)))
-
+print(chisq.test(xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo)))
+print("Prev adversary affects whether they switched or stayed")
 print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
 print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
 print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
-print("RESULT: Participant's previous outcome is not significant in next chocie")
+print("RESULT: Participant's previous outcome and adversary is not significant in next chocie")
 print("prev Adversary where a participant switched:")
 print(xtabs(~Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
 print("prev Outcome where a participant switched:")
