@@ -815,7 +815,7 @@ ggplot(demo_data) + geom_histogram(stat="count", aes(machine_learning_experience
 
 
 #------------********IPD Analyses********--------------
-#--------------------IPD - Initial Data Characterization-----------------
+#--------------------IPD - Data Characterization-----------------
 print("----------------------------PW analysis-----------------------------")
 print("")
 print("         --PW: Aggregate Observed Choices--")
@@ -944,16 +944,35 @@ print(c)
 print("AMPLIFYING: Of those who varied their round 1 choice, they were most cooperative with the HUman and least cooperative with the Human+AI")
 
 # 
-# 
+k<- xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])
 print(l<-fisher.test(xtabs(~ Adversary + my.decision, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,])))
-print("H1.1.2T - fail to reject no variation")
-print(paste("HYPOTHESIS: A Fisher test of aggregate round 1 choices shows IV (Adversary) and DV (Round 1 Choice) are statistically independent at p < .05."))
-# 
+print("H1.1")
+print(paste("H0 (n.s.): There is no signifciant relationshpi between competitor and round 1 choice."))
+print(paste("H1 (p<0.05): There is a signifciant relationship between competitor and round 1 choice"))
+n<-c(1,1,1)
+print(l<-fisher.test(k[-3,]))
+n[1]<- l$p.value
+print(l<-fisher.test(k[-2,]))
+n[2] <- l$p.value
+print(l<-fisher.test(k[-1,]))
+n[3] <- l$p.value
+n<- n[order(n)]
+print("uncorrected p values (reordered)")
+print(n)
+print("corrected p values")
+print(p.adjust(n, method = "bonferroni"))
+print("pairwise fisher tests, with corrected p.values show...")
+
 c<-as.data.frame(xtabs(my.decision~id+Adversary, data=pw_all_data_with_demo[pw_all_data_with_demo$period==1,]))
 print(bartlett.test(Freq~Adversary, data=c))
 print("Characterization-the bartlett test shows the groups in c are not heteroschedastic, so a  kruskal test should be ok")
+# print(LeveneTest(Freq~Adversary, data=c))
+# print("Characterization-the Levene test shows the groups in c are not heteroschedastic, so a  kruskal test should be ok")
 print(l<-kruskal.test(Freq~Adversary, data=c))
-print("RESULT: a Kruskal-Wallis test shows no significant difference between the round 1 choices by competitor.")
+print("RESULT: a Kruskal-Wallis test shows competitor has no significant effect on round 1 choices.")
+print(paste("H0 (n.s.): Competitor has no effect on round 1 choice."))
+print(paste("H1 (p<0.05): Competitor has an effect on round 1 choice"))
+# 
 #if the result is signficiant, print(epsilonSquared(x = c$Freq, g = c$Adversary)) #>0.08 is moderate
 
 
@@ -1014,6 +1033,7 @@ print(shapiro.test(pw_df_1[pw_df_1$Adversary=="AI",]$Freq))#normal
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="Human",]$Freq))#normal
 print(shapiro.test(pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq))#normal
 print("RESULT: These Shapiro-Wilk tests on the PEace choices by adversary show normal distributions, although the AI data appears to be a worse fit to normal distribution. More data are needed. In fact, before the manipulation check fails were removed, the AI data departed significantly from normality.")
+print(LeveneTest(Freq~Adversary, data=pw_df_1))
 c<-as.data.frame(xtabs(my.decision~id+Adversary, data=pw_all_data_with_demo))
 print(bartlett.test(Freq~Adversary, data=c))
 leveneTest(Freq~Adversary, data=c)
@@ -1064,9 +1084,18 @@ print(chisq.test(pw_sum))
 print("RESULT: A Chi-Sq test  (X-squared = 11.891, df = 2, p-value = 0.002617) on the aggregate choices shows IV (Adversary) and DV (Aggregate Number of cooperation Choices) are statistically dependent at p <.01.")
 print("H1.2.2T - fail to reject the null (of a significant relations between competitor & cooperation rate)")
 print("       ----IPD: pairwise chisq - coop-competitor statistical analysis (H1.2.2T)----")
-print(chisq.test(pw_sum[-3,]))
-print(chisq.test(pw_sum[-2,]))
-print(chisq.test(pw_sum[-1,]))
+n<-c(1,1,1)
+print(l<-chisq.test(pw_sum[-3,]))
+n[1]<- l$p.value
+print(l<-chisq.test(pw_sum[-2,]))
+n[2] <- l$p.value
+print(l<-chisq.test(pw_sum[-1,]))
+n[3] <- l$p.value
+n<- n[order(n)]
+print("uncorrected p values (reordered")
+print(n)
+print("corrected p values")
+print(p.adjust(n, method = "bonferroni"))
 print("RESULT: pairwise chisq.test of all-round cooperation sums shows expected (p<0.05) in Human-AI pair, but n.s. difference in Human-HAI pair, despite differences in adversary gameplay")
 print("IMPLICATION: In this experiment, the group of participants varied their choices between the AI and human adversary, which could be explained by differences in adversary gameplay. However, there was no statistical difference between the Human and Human+AI treatments, indicating other factors at work.")
 print ("H1.2.2T - reject the null because of n.s. difference between Human and HAI conditions...")
@@ -1162,6 +1191,10 @@ print("RESULT: No difference in the Human treatment and the 50% cooperation expe
 # boxplot(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq, names=c("all_data(7)","Human+AI data")) #1= all_data, 2 = HAI, 3 = Human for comparison
 print(t.test(ad_p10[ad_p10$other.d==7,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq))
 print("RESULT: Significant difference in the Human+AI treatment and the 70% cooperation expected")
+
+print(t.test(ad_p10[ad_p10$other.d==5,]$my.d, pw_df_1[pw_df_1$Adversary=="Human+AI",]$Freq))
+print("RESULT: POSSIBLE DECOY EFFECT - n.s. difference in the Human+AI treatment and the 50% cooperation expected")
+
 
 p<- ggplot(data=plot.data, aes(Adversary, Freq))+
   geom_boxplot(aes(color=set))+
@@ -2021,7 +2054,16 @@ for (i in pw_ids) {
 #     }
 #   }
 # }
-
+b<- melt(axl_fp_df, by.id=c("id","Adversary"))
+# b<- b[b[,-c(1:3)]>=strat_threshold,]
+p<-b %>% 
+  arrange(value) %>%
+  mutate(id=reorder(variable,value)) %>% 
+  ggplot(aes(x= reorder(Adversary,value), y=variable))+
+  geom_raster(aes(fill=as.factor(value)))+
+  facet_wrap(~id, drop=TRUE)+
+  guides(fill = guide_legend(reverse = TRUE))
+print(p)
 
 
 # ---------------------further research - IPD - Effect of adversary on Memory-1/2 odds ---------
@@ -2945,8 +2987,8 @@ a<- as.data.frame(xtabs(~Choice_of_Advisor+id, data=rps_all_data_with_demo))
 print(friedman.test(Freq~Choice_of_Advisor|id, data=a))
 print("RESULT: Friedman test shows participants showed a significant difference in advisor choice")
 print(wilcox.test(a[a$Choice_of_Advisor=="human",]$Freq, a[a$Choice_of_Advisor=="AI",]$Freq, alternative="less"))
-print(wilcox.test(a[a$Choice_of_Advisor=="human",]$Freq, a[a$Choice_of_Advisor=="none",]$Freq, alternative="less"))
-print(wilcox.test(a[a$Choice_of_Advisor=="AI",]$Freq,a[a$Choice_of_Advisor=="none",]$Freq, alternative="less"))
+# print(wilcox.test(a[a$Choice_of_Advisor=="human",]$Freq, a[a$Choice_of_Advisor=="none",]$Freq, alternative="less"))
+print(wilcox.test(a[a$Choice_of_Advisor=="none",]$Freq,a[a$Choice_of_Advisor=="AI",]$Freq, alternative="less"))
 print("HYPOTHESIS: Participants chose no delegation most, followed by AI, then the human expert")
 
 
@@ -2965,18 +3007,18 @@ print("Correcting for game order does not affect the result...: A CMHtest shows 
 
 # #kruskal test vs friedman test?
 # a<-as.data.frame(xtabs(~id+Adversary+Choice_of_Advisor, data=rps_all_data_with_demo))
-# kruskal.test(list(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq,a[a$Adversary=="AI",]$Freq)) #kruskal not appropriate for repeated measures
-# friedman.test(Freq~Adversary|id, data=a)
+# # # kruskal.test(list(a[a$Adversary=="Human",]$Freq,a[a$Adversary=="Human+AI",]$Freq,a[a$Adversary=="AI",]$Freq)) #kruskal not appropriate for repeated measures
+# # friedman.test(Freq~Adversary|id, data=a)
 
-# rps_ids <- unique(rps_all_data_with_demo$id)
-# rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
-# #"fisher test p-values
-# rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
-# for (i in rps_ids){
-#   rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
-# }
-# d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
-# print(paste0("H3.2T - RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
+rps_ids <- unique(rps_all_data_with_demo$id)
+rps_fisher_test <- data.frame("id"=rps_ids,"All"=NA)
+#"fisher test p-values
+rps_array <- xtabs(~Adversary + Choice_of_Advisor + id, data=rps_all_data_with_demo)
+for (i in rps_ids){
+  rps_fisher_test[rps_fisher_test$id==i,"All"] <- fisher.test(rps_array[,,i])["p.value"]<0.05
+}
+d<- rps_fisher_test[rps_fisher_test$All=="TRUE",]$id
+print(paste0("H3.2T - RESULT: A Fisher test of individual sum choices (across rounds) showed ",length(d)," (", round(100*length(d)/length(rps_ids),1), "%) of participant(s) (",paste(d, collapse=", "),") showed a statistically significant variation in their advisor choices by adversary, at p < .05"))
 
 
 
