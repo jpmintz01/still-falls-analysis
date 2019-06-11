@@ -26,6 +26,7 @@ library(corrplot)
 library(stratEst)
 library(ggplot2)
 library(metap)
+library(coin)
 # library(plotly) #requires a login
 if(!require(psych)){install.packages("psych")}
 if(!require(nlme)){install.packages("nlme")}
@@ -2986,6 +2987,8 @@ print("RESULT: 18 (75%) of participants chose 'no advice' as their top choice, a
 a<- as.data.frame(xtabs(~Choice_of_Advisor+id, data=rps_all_data_with_demo))
 print(friedman.test(Freq~Choice_of_Advisor|id, data=a))
 print("RESULT: Friedman test shows participants showed a significant difference in advisor choice")
+print(KendallW(xtabs(Freq~Choice_of_Advisor+id, data=a)))
+print("Result: Kendall W = 0.59 is a large effect")
 print(wilcox.test(a[a$Choice_of_Advisor=="human",]$Freq, a[a$Choice_of_Advisor=="AI",]$Freq, alternative="less"))
 # print(wilcox.test(a[a$Choice_of_Advisor=="human",]$Freq, a[a$Choice_of_Advisor=="none",]$Freq, alternative="less"))
 print(wilcox.test(a[a$Choice_of_Advisor=="none",]$Freq,a[a$Choice_of_Advisor=="AI",]$Freq, alternative="less"))
@@ -3024,36 +3027,67 @@ print(paste0("H3.2T - RESULT: A Fisher test of individual sum choices (across ro
 
 #--------------------RPS - Switch-Loss Analysis (H4)----------------
 # switch_array <- rps_array
+rps_all_data_with_demo$Round <- as.numeric(as.character(rps_all_data_with_demo$Round))
 rps_all_data_with_demo$stayed<-ifelse(rps_all_data_with_demo$Choice_of_Advisor==rps_all_data_with_demo$Choice.1,"Stayed","Switched")
-print(xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo))
-print(chisq.test(xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo)))
-print("Prev adversary affects whether they switched or stayed")
-print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo))
+print(l<-xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
-print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo))
+print(l<-xtabs(~stayed+Choice.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
-print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo))
+print(l<-xtabs(~stayed+Outcome.1, data=rps_all_data_with_demo))
 print(chisq.test(l))
-print("RESULT: Participant's previous outcome and adversary is not significant in next chocie")
-print("prev Adversary where a participant switched:")
-print(xtabs(~Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
-print("prev Outcome where a participant switched:")
-print(xtabs(~Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
-print("prev Choice where a participant switched:")
-print(xtabs(~Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
-p<-ggplot(as.data.frame(xtabs(~stayed+Adversary.1+id, data=rps_all_data_with_demo)), aes(x=Freq, color=Adversary.1))+facet_grid(~stayed)+geom_density()
-print(p)
+print("Result: Adversary (p=0.02) and PRevious Choice (p=2.121e-07) are related to switch/stay, but previous outcome is not:(p=0.3343)")
+print(n<-xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1=="-1",]))
+print(fisher.test(n))
+# print(n<-xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==" 1",]))
+# print(chisq.test(n)) # adversary not related in Win frame
+# print(n<-xtabs(~stayed+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==" 0",]))# adverasry not related in draw frame
+# print(chisq.test(n))
+print("In the loss frame, previous adversary not related to switch/stay")
 
-print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
-print(fisher.test(l))
-print("RESULT: no variation in preference for choice based on previous outcome")
-print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
-print(fisher.test(l))
-print("RESULT: no variation in preference for choice based on previous Adversary")
 
-print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==-1,]))
-print(m<-chisq.test(l))
-print("RESULT: no variation in preference for choice based on previous Adversary")
+print(n<-xtabs(~stayed+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1=="-1",]))
+print(fisher.test(n))
+print(fisher.test(n[,-1]))
+print(fisher.test(n[,-2]))
+print(fisher.test(n[,-3]))
+print("in the loss frame, previous choice IS related to switch stay")
+
+
+# print(n<-xtabs(~stayed+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==" 1",]))
+# print(chisq.test(n))
+# print(chisq.test(n[,-2]))
+# print(n<-xtabs(~stayed+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==" 0",]))
+# print(chisq.test(n))
+# print("Prev adversary affects whether they switched or stayed, p = 0.02126")
+# print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo))
+# print(chisq.test(l))
+# print("previous choice affects switch/stay: X-squared = 338.03, df = 4, p-value < 2.2e-16")
+# print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo))
+# print(chisq.test(l))
+# rps_all_data_with_demo$Round <- as.numeric(as.character(rps_all_data_with_demo$Round))
+# print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Round>1,]))
+# print(chisq.test(l))
+# print("RESULT: Participant's previous outcome (X-squared = 6.279, df = 4, p-value = 0.1793) and adversary (X-squared = 4.0747, df = 4, p-value = 0.396) are not related to next choice")
+# print("prev Adversary where a participant switched:")
+
+# print(xtabs(~Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+# print("prev Outcome where a participant switched:")
+# print(xtabs(~Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+# print("prev Choice where a participant switched:")
+# print(xtabs(~Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+# p<-ggplot(as.data.frame(xtabs(~stayed+Adversary.1+id, data=rps_all_data_with_demo)), aes(x=Freq, color=Adversary.1))+facet_grid(~stayed)+geom_density()
+# print(p)
+# 
+# print(l<-xtabs(~Choice_of_Advisor+Outcome.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+# print(fisher.test(l))
+# print("RESULT: no variation in preference for choice based solely on previous outcome")
+# print(l<-xtabs(~Choice_of_Advisor+Adversary.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Choice_of_Advisor!=rps_all_data_with_demo$Choice.1,]))
+# print(fisher.test(l))
+# print("RESULT: no variation in preference for choice based on previous Adversary")
+# 
+# print(l<-xtabs(~Choice_of_Advisor+Choice.1, data=rps_all_data_with_demo[rps_all_data_with_demo$Outcome.1==-1,]))
+# print(m<-chisq.test(l))
+# print("RESULT: no variation in preference for choice based on previous Adversary")
 
 
 
@@ -3062,76 +3096,84 @@ print(Anova(q))
 print("RESULT: Multinomial logisitc regrssion shows the most significant variable is participant's previous choice, with round and choice-adversary significant, and choice-outcome p<0.10")
 
 
-rps_switch_df<-rps_long_ten_rounds
-rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
-levels(rps_switch_df$Payoff) <- c("Lose","Draw","Win")
-rps_switch_df$switch <- as.factor("Stay")
-levels(rps_switch_df$switch) <- c("Switch","Stay")
-rps_switch_df$prev_choice <- as.factor("none")
-levels(rps_switch_df$prev_choice) <- Advisor_list
-rps_switch_df$prev_outcome <- as.factor("Win")
-levels(rps_switch_df$prev_outcome) <- c("Lose","Draw","Win")
-rps_switch_df$prev_adversary <- as.factor("Human")
-levels(rps_switch_df$prev_adversary) <- Adversary_list
+# rps_switch_df<-rps_long_ten_rounds
+# rps_switch_df$Payoff <- as.factor(rps_switch_df$Payoff+2)
+# levels(rps_switch_df$Payoff) <- c("Lose","Draw","Win")
+# rps_switch_df$switch <- as.factor("Stay")
+# levels(rps_switch_df$switch) <- c("Switch","Stay")
+# rps_switch_df$prev_choice <- as.factor("none")
+# levels(rps_switch_df$prev_choice) <- Advisor_list
+# rps_switch_df$prev_outcome <- as.factor("Win")
+# levels(rps_switch_df$prev_outcome) <- c("Lose","Draw","Win")
+# rps_switch_df$prev_adversary <- as.factor("Human")
+# levels(rps_switch_df$prev_adversary) <- Adversary_list
+# 
 
+# for (i in rps_ids){
+#   
+#   for (j in Adversary_list){
+#     
+#     a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1)
+#     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
+#     b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1)
+#     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
+#     c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
+#     rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
+#   }
+# }
+# rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
+# rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
+rps_switch_array <- xtabs(~Adversary.1+Choice.1+stayed, rps_all_data_with_demo)
 
-for (i in rps_ids){
-  
-  for (j in Adversary_list){
-    
-    a<-lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Adversary, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_adversary <- a
-    b<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Choice_of_Advisor, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_choice <- b
-    c<- lag(rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$Payoff, 1)
-    rps_switch_df[rps_switch_df$id==i & rps_switch_df$Adversary==j,]$prev_outcome <- c
-  }
-}
-rps_switch_df$switch <- ifelse(rps_switch_df$prev_choice==rps_switch_df$Choice_of_Advisor,"Stay","Switch")
-rps_switch_array <- xtabs(~prev_adversary+prev_choice+switch, data=rps_switch_df)
+# a<-as.data.frame(xtabs(~id+prev_choice+switch, data=rps_switch_df[rps_switch_df$prev_outcome=="Lose",]))
+# 
+# #pairwise chisq.tests
+# print(xtabs(Freq~prev_choice+switch,data=a))
+# print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)))
+# print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-1,]))
+# print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-2,]))
+# print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-3,]))
 
+# a<-as.data.frame(xtabs(~Adversary.1+Choice.1+stayed+id, rps_all_data_with_demo))
+# b <- a[a$stayed=="Switched",]
+# b$ratio <- a[a$stayed=="Stayed",]$Freq/(a[a$stayed=="Stayed",]$Freq+a[a$stayed=="Switched",]$Freq)
+# b$stayed <- NULL
+# b$Freq <- NULL
+# p<-ggplot(b, aes(x=ratio, color=Choice.1))+geom_density()
+# print(p)
+# l<-xtabs(ratio~id+Choice.1, data=b)
+# print(friedman.test(l))
+# print("Characterization: In the loss frame alone a  friedman test shows stay/switch ratio has a signifcant relationship with previous choice")
+# 
+# n<- a[a$Choice.1!="human" & a$stayed=="Stayed",]
+# print(wilcoxsign_test(Freq~Choice.1, alternative="less", data=n)) #used this version instead of wilcox.test to get Pratt zeroes correction
+# n<- a[a$Choice.1!="human" & a$stayed=="Switched",] #AI-None comparison
+# print(wilcoxsign_test(Freq~Choice.1, alternative="less",data=n))
+# 
+# 
+# print(wilcox.test(a[a$Choice.1=="human" & a$stayed=="Stayed",]$Freq, a[a$Choice.1=="AI" & a$stayed=="Stayed",]$Freq, alternative="less",paired=TRUE))
+# 
+# 
+# print(wilcox.test(a[a$Choice.1=="human" & a$stayed=="Switched",]$Freq, a[a$Choice.1=="AI" & a$stayed=="Switched",]$Freq, alternative="less",paired=TRUE))
+# print(wilcox.test(a[a$Choice.1=="human" & a$stayed=="Stayed",]$Freq, a[a$Choice.1=="none" & a$stayed=="Stayed",]$Freq, alternative="less",paired=TRUE))
+# print(wilcox.test(a[a$Choice.1=="human" & a$stayed=="Switched",]$Freq, a[a$Choice.1=="none" & a$stayed=="Switched",]$Freq, alternative="less",paired=TRUE))
+# print(wilcox.test(a[a$Choice.1=="AI" & a$stayed=="Stayed",]$Freq, a[a$Choice.1=="none" & a$stayed=="Stayed",]$Freq, alternative="less",paired=TRUE))
+# print(wilcox.test(a[a$Choice.1=="AI" & a$stayed=="Switched",]$Freq, a[a$Choice.1=="none" & a$stayed=="Switched",]$Freq, alternative="less",paired=TRUE))
+# 
+# print("result shows sigificant differences in whether participants stayed or switched, by previous choice, with ")
+# print(xtabs(Freq~prev_choice+switch,data=a)[,1]/xtabs(Freq~prev_choice+switch,data=a)[,2])
+# print("result shows AI more likely to stay than human, and none more likely to stay than both in whether participants stayed or switched, by adverasry" )
 
-a<-as.data.frame(xtabs(~id+prev_choice+switch, data=rps_switch_df[rps_switch_df$prev_outcome=="Lose",]))
-
-#pairwise chisq.tests
-print(xtabs(Freq~prev_choice+switch,data=a))
-print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)))
-print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-1,]))
-print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-2,]))
-print(chisq.test(xtabs(Freq~prev_choice+switch,data=a)[-3,]))
-
-b <- a[a$switch=="Switch",]
-b$ratio <- a[a$switch=="Stay",]$Freq/(a[a$switch=="Stay",]$Freq+a[a$switch=="Switch",]$Freq)
-b$switch <- NULL
-b$Freq <- NULL
-p<-ggplot(b, aes(x=ratio, color=prev_choice))+geom_density()
-print(p)
-l<-xtabs(ratio~id+prev_choice, data=b)
-print(friedman.test(l))
-print("Characterization: In the loss frame alone a  friedman test shows stay/switch ratio has a signifcant relationship with previous choice")
-print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Stay",]$Freq, a[a$prev_choice=="AI" & a$switch=="Stay",]$Freq, alternative="less",paired=TRUE))
-print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Stay",]$Freq, a[a$prev_choice=="none" & a$switch=="Stay",]$Freq, alternative="less",paired=TRUE))
-print(wilcox.test(a[a$prev_choice=="AI" & a$switch=="Stay",]$Freq, a[a$prev_choice=="none" & a$switch=="Stay",]$Freq,alternative="less", paired=TRUE))
-
-
-print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Switch",]$Freq, a[a$prev_choice=="AI" & a$switch=="Switch",]$Freq, alternative="less", paired=TRUE))
-print(wilcox.test(a[a$prev_choice=="human" & a$switch=="Switch",]$Freq, a[a$prev_choice=="none" & a$switch=="Switch",]$Freq, alternative="less",paired=TRUE))
-print(wilcox.test(a[a$prev_choice=="none" & a$switch=="Switch",]$Freq, a[a$prev_choice=="AI" & a$switch=="Switch",]$Freq,paired=TRUE))
-
-print("result shows sigificant differences in whether participants stayed or switched, by adverasry" )
-print(xtabs(Freq~prev_choice+switch,data=a)[,1]/xtabs(Freq~prev_choice+switch,data=a)[,2])
-print("result shows AI more likely to stay than human, and none more likely to stay than both in whether participants stayed or switched, by adverasry" )
-
-l<-rps_switch_df
-l<- l[l$Round>1,]
-l$switch <- as.factor(l$switch)
-print(contrasts(l$prev_adversary))
-print(contrasts(l$prev_outcome))
-print(contrasts(l$prev_choice))
-q<- glm(switch ~ Round+prev_choice+prev_outcome+prev_adversary+prev_outcome:prev_adversary+prev_choice:prev_adversary+prev_outcome:prev_choice+Round:prev_choice+Round:prev_adversary+Round:prev_outcome, data=l,family = "binomial")
-print(summary(q))
-print(Anova(q))
-print("RESULT: a binomial logistic regression shows previous choice is the most signifciant factor  and that prev_adversary is significant as well, but prev_outcome is not, individiually or as an interaction, and neither round nor other interactions are significant")
+# l<-rps_switch_df
+# l<- l[l$Round>1,]
+# l$switch <- as.factor(l$switch)
+# print(contrasts(l$prev_adversary))
+# print(contrasts(l$prev_outcome))
+# print(contrasts(l$prev_choice))
+# q<- glm(switch ~ Round+prev_choice+prev_outcome+prev_adversary+prev_outcome:prev_adversary+prev_choice:prev_adversary+prev_outcome:prev_choice+Round:prev_choice+Round:prev_adversary+Round:prev_outcome, data=l,family = "binomial")
+# print(summary(q))
+# print(Anova(q))
+# print("RESULT: a binomial logistic regression shows previous choice is the most signifciant factor  and that prev_adversary is significant as well, but prev_outcome is not, individiually or as an interaction, and neither round nor other interactions are significant")
 
 
 # id Round Adversary Choice_of_Advisor Payoff switch prev_choice prev_outcome prev_adversary
@@ -3142,13 +3184,13 @@ print("RESULT: a binomial logistic regression shows previous choice is the most 
 # b$switch <- NULL
 # b$Freq <- NULL
 # d<- as.data.frame(xtabs(ratio~id+prev_choice, data=b[b$prev_outcome=="Lose",]))
-p <- ggplot(data=b, aes(x=prev_choice, y=ratio))+geom_boxplot()+labs(title="Stay Ratio after a Loss (stay-switch)", y="Stay Ratio", x="Previous Delegate")
-print(p)
-
-
-print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="human",]$ratio))
-print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="none",]$ratio))
-print("RESULT: despite a significant relationship between stay/switch ratio (in general and in the loss frame), there are no significant differences (after a loss) between the propensity to stay with the AI and teh propensity to stay with the other delegates.  This is possibly due to the design, and the comparison with human choices has such a small quantity, the noise is too high")
+# p <- ggplot(data=b, aes(x=prev_choice, y=ratio))+geom_boxplot()+labs(title="Stay Ratio after a Loss (stay-switch)", y="Stay Ratio", x="Previous Delegate")
+# print(p)
+# 
+# 
+# print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="human",]$ratio))
+# print(wilcox.test(b[b$prev_choice=="AI",]$ratio,b[b$prev_choice=="none",]$ratio))
+# print("RESULT: despite a significant relationship between stay/switch ratio (in general and in the loss frame), there are no significant differences (after a loss) between the propensity to stay with the AI and teh propensity to stay with the other delegates.  This is possibly due to the design, and the comparison with human choices has such a small quantity, the noise is too high")
 
 # 
 # print("--post-hoc pairwise (AI-NoAdvice) - remove the human advisor since the counts are so low as to affect the result:")
