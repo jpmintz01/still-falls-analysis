@@ -1858,6 +1858,7 @@ p<-c %>%
 print(p)
 print(paste0("Insert ", p$labels$title," Plot"))
 ggsave(paste0(p$labels$title,".jpg"), plot=p, device="jpg")
+match_df<-c
 
 l<- length(which(c[c$Adversary=="Human",]$match!=0))
 x<- c(rep(0,length(pw_ids)-l),rep(1,l))
@@ -2727,7 +2728,53 @@ print(chisq.test(xtabs(~ Adversary + my.decision, data = pw_all_data_with_demo[p
 print("RESULT: A Chi-Sq test of cooperation for those who PLAYED PW SECOND did NOT show a statistically significant relationship between competitor and cooperation at p <. 05.")
 print("RESULT: Participants who played PW first showed a statistically significant difference in warlike-ness by adversary (as expected).  HOWEVER, participants who played PW second DID NOT show a statistically significant difference in Peace choices by adversary, even through the adversaries' gameplay varied significantly and the same as those who played pw first .        NOTE: Was there something about playing RPS first that made participants more warlike toward the Human+AI adversary?")
 print("RESULt: does this mean there was some conditioning factor in the RPS game?")
+a.1<- pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]
+a.1$id <- as.character(a.1$id)
+a.1$id <- as.factor(a.1$id)
+a.1$pw_order <- as.numeric(a.1$pw_order)
+a.2<- pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]
+a.2$id <- as.character(a.2$id)
+a.2$id <- as.factor(a.2$id)
+a.2$pw_order <- as.numeric(a.2$pw_order)
+a.1<-a.1[a.1$my.decision==1,]
+a1<- as.data.frame(xtabs(~my.decision+id+Adversary+pw_order, data=a.1))
+a.2<-a.2[a.2$my.decision==1,]
+a2<-as.data.frame(xtabs(~my.decision+id+Adversary+pw_order, data=a.2))
+a<- rbind(a1, a2)
 
+p<-ggplot(data=a, aes(x=pw_order,y=Freq,color=Adversary))+
+  geom_boxplot()+
+labs(title="IPD Counterbalancing (all round)", x="IPD Play Order", y = "Cooperation", color = "Competitor") +
+  scale_y_discrete(limits=c(0:10))+
+  theme(plot.title = element_text(size=12))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
+
+a.1<- pw_all_data_with_demo[pw_all_data_with_demo$pw_order==1,]
+a.1<-a.1[a.1$period==1,]
+a.1$id <- as.character(a.1$id)
+a.1$id <- as.factor(a.1$id)
+a.1$pw_order <- as.numeric(a.1$pw_order)
+a.2<- pw_all_data_with_demo[pw_all_data_with_demo$pw_order==2,]
+a.1<-a.1[a.1$period==1,]
+a.2$id <- as.character(a.2$id)
+a.2$id <- as.factor(a.2$id)
+a.2$pw_order <- as.numeric(a.2$pw_order)
+a.1<-a.1[a.1$my.decision==1,]
+a1<- as.data.frame(xtabs(~my.decision+id+Adversary+pw_order, data=a.1))
+a.2<-a.2[a.2$my.decision==1,]
+a2<-as.data.frame(xtabs(~my.decision+id+Adversary+pw_order, data=a.2))
+a<- rbind(a1, a2)
+
+p<-ggplot(data=a, aes(x=pw_order,y=Freq,color=Adversary))+
+  geom_boxplot()+
+  labs(title="IPD Counterbalancing (round 1)", x="IPD Play Order", y = "Sample Cooperation", color = "Competitor") +
+  scale_y_discrete(limits=c(0:10))+
+  theme(plot.title = element_text(size=12))
+print(p)
+print(paste0("Insert ", p$labels$title," Plot"))
+ggsave(paste0(p$labels$title,".pdf"), plot=p, device="pdf")
 
 # m <- glmer(my.decision ~ Adversary+ pw_order + (1|id), data=pw_all_data_with_demo, family=binomial(link="logit"))
 # # print(summary(m))
@@ -3394,6 +3441,14 @@ print("result: game order showed a significant (p=0.001) but small(CramerV = .12
 # p <-ggplot(n[n$Choice_of_Advisor=="AI",], aes(x=rps_order, y=Freq))+geom_boxplot()#+position_dodge(vars(Choice_of_Advisor))
 # print(p)
 
+n<-as.data.frame(summarise(group_by(rps_all_data_with_demo,id,Choice_of_Advisor,pw_order),count =n()))
+ggplot(data=n, aes(x=pw_order, y=count, color=Choice_of_Advisor))+geom_boxplot()
+t.test(n[n$Choice_of_Advisor=="AI" & n$pw_order==1, ]$count, n[n$Choice_of_Advisor=="AI" & n$pw_order==2, ]$count)
+t.test(n[n$Choice_of_Advisor=="human" & n$pw_order==1, ]$count, n[n$Choice_of_Advisor=="human" & n$pw_order==2, ]$count)
+t.test(n[n$Choice_of_Advisor=="none" & n$pw_order==1, ]$count, n[n$Choice_of_Advisor=="none" & n$pw_order==2, ]$count)
+
+
+
 print(n<-xtabs(~  rps_order+Choice_of_Advisor , data = rps_all_data_with_demo))
 print(n<-cbind(n,n[,1]+n[,2]))
 print(x<-chisq.test(n[,c(3,4)]))
@@ -3453,6 +3508,27 @@ print("RESULT: A CMH/Mantelhaen test shows that choice of advisor and adversary 
 # print("RESULT: A fisher test on the participants' rps_order play order and whether they showed a difference by adversary showed there was not a statistically significant relationshop between pw_order and variation in decision-making by adversary, p > .05")
 
 #--------------------RPS - Demographics <-> Choices - Data Analysis-----------------
+q<- multinom(Choice_of_Advisor ~ 
+               gender
+             +service
+             +school
+             +age #
+             +rank
+             +years_military_experience#
+             +machine_learning_experience#
+             +game_theory_experience
+             , data=rps_all_data_with_demo)
+summary(q)
+print(l<-Anova(q))
+print(round(p.adjust(l$`Pr(>Chisq)`, method="bonferroni"), 3))
+
+
+q<- multinom(Choice_of_Advisor ~ pw_order+rps_order, data=rps_all_data_with_demo)
+summary(q)
+print(l<-Anova(q))
+print(round(p.adjust(l$`Pr(>Chisq)`, method="bonferroni"), 10))
+
+
 # n <- demo_relevant_data
 # o <- rps_fisher_test[,c("id","All")]
 # n <- merge(n,o, by="id")
@@ -3604,14 +3680,28 @@ k$Adversary<-NULL
 k$Freq<-NULL
 r<-melt(k, by=c("id"))
 r[is.na(r)] <- 0
-p<- ggplot(data=r, aes(x=id, group=variable, y=value))+
-  geom_line(aes(color=variable))
+
+p<- ggplot(data=k, aes(x=ratio, y=p))+
+  geom_point()
 print(p)
+
+a<-as.data.frame(xtabs(~my.decision+Adversary+id, data=pw_all_data_with_demo))
+a <- a[a$my.decision==1,]
+b<-as.data.frame(xtabs(~Choice_of_Advisor+id, data=rps_all_data_with_demo))
+n<-merge(a[a$Adversary=="AI",], b[b$Choice_of_Advisor=="AI",], by=c("id"))
+cor.test(n$Freq.x,n$Freq.y, method="kendall")
+m<-merge(a[a$Adversary=="Human",], b[b$Choice_of_Advisor=="human",], by=c("id"))
+cor.test(m$Freq.x,m$Freq.y, method="kendall")
+
+ggplot(m, aes(x=Freq.x, y=Freq.y))+geom_point()
+
 
 print("The multi-game analyses should form the bases for the AI-impact index. ")
 print("This index consists of the following sub-indices:")
 print("1. Trust Index - shown as being on one end of a scale which looks at cooperation rate with the AI competitor as well as the rate of use with the AI advisor")
-print("2. Competition Index - showing statistically significant variation BETWEEN COMPETITORS/adversaries in three measures: IPD Round 1, IPD strategy, RPS Choice of Advisor. Examples which do NOT fit this (IPD round 1 = all same, IPD strategy = all same (allD, ALlC, or all mem-zero, or any all same), RPS choice of advisor being all same or no variation")
+print("2. Variation Index - showing statistically significant variation BETWEEN COMPETITORS/adversaries in three measures: IPD Round 1, IPD strategy, RPS Choice of Advisor. Examples which do NOT fit this (IPD round 1 = all same, IPD strategy = all same (allD, ALlC, or all mem-zero, or any all same), RPS choice of advisor being all same or no variation")
+
+
 print("3. Fragility of Trust Index - IPD round 1 Defect (w/AI) (extra points if Coop w/other competitiors), IPD Memory comparison? (mem 1 defect/cooperate vs mem 1+1 defect/cooperate), RPS switch stay (greater switch w/AI advisor than human advisor/no advisor) ")
 print("4. John Henry Index -IPD round 1 w/HAI different than Human & AI,  IPD less cooperative with Human+AI than expected, IPD memory longer w/HAI than others, ?")
 print("Decision Time Index - RPS decision time shorter vs AI (and HUman+AI?)")
@@ -3661,10 +3751,27 @@ o <-as.data.frame(colSums(rps_array[,1,]))
 o$id <- rownames(o)
 names(o)[1] <- "AI_Advisor"
 p<- merge(n,o, by="id")
-print(wilcox.test(p$Coop_w_AI, p$AI_Advisor, paired=TRUE))
-print("RESULT: A wilcox test (V = 45.5, p-value = 0.008913) showed a statistically significant relationship between the (within-sample) Cooperativeness against the AI and the (within-sample) likelihood of Choosing the AI advisor")
-# print(cor.test(p$Coop_w_AI, p$AI_Advisor, method="spearman"))
-# print("RESULT: Spearman correlation test (a rank test) (S = 3987.5446, p-value = 0.6441073, rho=-0.09128204218) shows little to no statistical correlation between those who chose Peace with the AI and those who chose the AI Advisor more")
+print(cor.test(p$Coop_w_AI, p$AI_Advisor, method="spearman"))
+print("RESULT: Spearman correlation test (a rank test) (S = 3987.5446, p-value = 0.6441073, rho=-0.09128204218) shows little to no statistical correlation between those who chose Peace with the AI and those who chose the AI Advisor more")
 
 
+
+#variation index
+vary_df <-as.data.frame(matrix(0, nrow=24, ncol=5))
+names(vary_df) <- c("id","PW1","Infer_hom","RPS_vary", "RPS_same")
+vary_df$id <- pw_ids
+vary_df$RPS_vary <- 0
+a<-xtabs(~Choice_of_Advisor+Adversary+id, data=rps_all_data_with_demo)
+for (i in pw_ids){#find those who varied RPS choices by ID
+  x<-fisher.test(a[,,i])
+  vary_df[vary_df$id==i,]$RPS_vary <- ifelse(x$p.value < 0.05,1,0)
+  
+  x<-rowSums(a[,,i])
+  vary_df[vary_df$id==i,]$RPS_same <- ifelse(max(x)>=29,1,0)
+  
+  k<-sum(pw_all_data_with_demo[pw_all_data_with_demo$id==i&pw_all_data_with_demo$period=="1",]$my.decision)
+  vary_df[vary_df$id==i,]$PW1 <- ifelse(k %in% c(0,3),0,1) #a 1 indicates variation in initial choice
+  
+  
+}
 
